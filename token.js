@@ -14,10 +14,8 @@ if (raindropToken == "XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX") {
     );
     localStorage.setItem("token", localToken);
     token = localStorage.token;
-    getGrid(token);
   } else {
     token = localStorage.token;
-    getGrid(token);
   }
 } else {
   token = raindropToken;

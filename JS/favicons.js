@@ -11,7 +11,7 @@ function googlefavicon(adress) {
   splitadress = splitadress.slice(0, 3);
   splitadress = splitadress.join("/");
   return (newadress =
-    "http://www.google.com/s2/favicons?sz=" +
+    "https://www.google.com/s2/favicons?sz=" +
     resolution +
     "&domain=" +
     splitadress);
