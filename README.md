@@ -4,32 +4,31 @@ Raindrop Homepage is just a minimalist interface to display your Raindrop bookma
 
 I made this app/page because for me, it's the best way to have simple quick and easy access to all my favorites on all my browsers and devices without having to worry about syncing all my browsers. Especially because safari can only be synced with others browsers on Windows with the iCloud plugin, wish is a pain in my ass...
 
-<h3>to use it, this is fairly simple.</h3><
-
+<h3>to use it, this is fairly simple.</h3><br>
 
 <ol>
-<li> make sure you are log-in on your Raindrop Account</li>
+<li> make sure you are log-in on your Raindrop Account</li><br>
 
 
-<li> click on this link https://app.raindrop.io/settings/integrations</li>
+<li> click on this link https://app.raindrop.io/settings/integrations</li><br>
 
 
-<li> click the <b>+ Create a new app</b> button</li>
+<li> click the <b>+ Create a new app</b> button</li><br>
 
 
-<li>  Name your app as you wish, like "MyUsername Homepage" and accept the raindrop Api Terms & Guidelines</li>
+<li>  Name your app as you wish, like "MyUsername Homepage" and accept the raindrop Api Terms & Guidelines</li><br>
 
 
-<li> click on the app name you just created</li>
+<li> click on the app name you just created</li><br>
 
 
-<li> click on <b>Create test token</b> and copy it</li>
+<li> click on <b>Create test token</b> and copy it</li><br>
 
 
-<li>  paste it on my own github page: https://virgile-fr.github.io/Raindrop-HomePage/ / OR / in the token.js file if you plan to use it on your own</li>
+  <li>  paste it on <a href="https://virgile-fr.github.io/Raindrop-HomePage/">my own github page</a>  / OR / in the token.js file if you plan to use it on your own</li><br>
 
 
-<li> and it's done ✅ you can set this as your launchpage / new tab in your browser</li>
+<li> and it's done ✅ you can set this page as your launchpage / new tab in your browser</li><br>
 </ol>
 
 
