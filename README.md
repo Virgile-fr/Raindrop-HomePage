@@ -1,4 +1,5 @@
 # Raindrop-HomePage
+<img src="./raindrop homepage 0.1.jpeg">
 Raindrop Homepage is just a minimalist interface to display your Raindrop bookmarks marked as favorites. This application is not intended to replicate the interface of Raindrop.io.
 
 I made this app/page because for me, it's the best way to have simple quick and easy access to all my favorites on all my browsers and devices without having to worry about syncing all my browsers. Especially because safari can only be synced with others browsers on Windows with the iCloud plugin, wish is a pain in my ass... 
