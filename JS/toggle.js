@@ -1,16 +1,16 @@
-const toggle = document.querySelector('input');
+const toggle = document.querySelector("input");
 
-function deleteGrid () {
+function deleteGrid() {
   grid.innerHTML = "";
 }
 
-toggle.addEventListener('change', function() {
+toggle.addEventListener("change", function () {
   if (this.checked) {
-    deleteGrid ()
+    deleteGrid();
     fetchCardsCovers();
     localStorage.setItem("switch", "on");
   } else {
-    deleteGrid ()
+    deleteGrid();
     fetchCardsIcons();
     localStorage.removeItem("switch");
   }

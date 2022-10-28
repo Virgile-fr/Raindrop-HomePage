@@ -6,7 +6,7 @@ function favicon(adress) {
 }
 
 function googlefavicon(adress) {
-  let resolution = 256
+  let resolution = 256;
   let splitadress = adress.split("/");
   splitadress = splitadress.slice(0, 3);
   splitadress = splitadress.join("/");
@@ -15,13 +15,14 @@ function googlefavicon(adress) {
     resolution +
     "&domain=" +
     splitadress);
-  }
+}
 
 function duckduckgofavicon(adress) {
   let splitadress = adress.split("/");
   splitadress = splitadress.slice(2, 3);
   splitadress = splitadress.join("/");
-  return (newadress = "https://icons.duckduckgo.com/ip2/" + splitadress + ".ico");
+  return (newadress =
+    "https://icons.duckduckgo.com/ip2/" + splitadress + ".ico");
 }
 
 function statvoofavicon(adress) {
