@@ -7,6 +7,8 @@ I made this app/page because for me, it's the best way to have simple quick and 
 <h3>to use it, this is fairly simple.</h3>
 
 <ol>
+<li> Download the content of this app and host is wherever you want</li>
+
 <li> make sure you are log-in in your Raindrop Account</li>
 
 <li> go to this link https://app.raindrop.io/settings/integrations </li>
@@ -19,14 +21,10 @@ I made this app/page because for me, it's the best way to have simple quick and 
 
 <li> click on "Create test token" and copy it  </li>
 
-<li>  paste it here and click ok.  </li>
+<li>  paste it on the token.js file and save it </li>
 
-<li> set this as your homepage / new tab in your browser, and it's done. 🙂</li>
+<li> open the index.html and set this as your homepage / new tab in your browser, and it's done. 🙂</li>
 </ol>
-
-<b>Note that as for now Raindrop-Homepage cannot store your token on a secure location, so it will be stored in the local Storage of your browser, so keep in mind that if you clear the cache of your browser, you will have to do it again...</b>
-
-If you want to set it once for all, you will have to host this app on your own server and edit the token.js file with your own token. 
 
 <i>NB: - for safari in iOS, you cannot set a homepage, so simply  add the webpage icon on the home screen and use it instead of safari.
 
