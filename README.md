@@ -26,7 +26,7 @@ I made this app/page because for me, it's the best way to have simple quick and 
 <li> open the index.html and set this as your homepage / new tab in your browser, and it's done. 🙂</li>
 </ol>
 
-<i>NB: - for safari in iOS, you cannot set a homepage, so simply  add the webpage icon on the home screen and use it instead of safari.
+<i><b>NB: - for safari in iOS, you cannot set a homepage, so simply  add the webpage icon on the home screen and use it instead of safari.</b>
 
 - the switch on the top right let you change from favicon view to cover view.
 
