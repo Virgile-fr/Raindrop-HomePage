@@ -16,7 +16,7 @@ toggle.addEventListener("change", function () {
   }
 });
 
-function getGrid() {
+async function getGrid() {
   if (toggle.checked || localStorage.switch == "on") {
     fetchCardsCovers();
     toggle.checked = true;

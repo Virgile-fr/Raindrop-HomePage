@@ -6,10 +6,10 @@ input[type=checkbox] {
 
 label {
   cursor: pointer;
-  text-indent: -9999px;
-  width: 40px;
+  text-indent: -999999px;
+  width: 30px;
   height: 20px;
-  background: grey;
+  background: rgb(91, 114, 114);
   display: block;
   border-radius: 100px;
   position: relative;
@@ -18,24 +18,20 @@ label {
 label:after {
   content: '';
   position: absolute;
-  top: 2px;
+  top: 3px;
   left: 3px;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   background: #fff;
-  border-radius: 90px;
+  border-radius: 100px;
   transition: 0.3s;
 }
 
 input:checked+label {
-  background: #bada55;
+  background: #3be696;
 }
 
 input:checked+label:after {
   left: calc(100% - 3px);
   transform: translateX(-100%);
-}
-
-label:active:after {
-  width: 26px;
 }

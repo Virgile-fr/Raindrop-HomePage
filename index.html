@@ -8,6 +8,8 @@
   <meta name="apple-mobile-web-app-capable" content="no">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="HomePage">
+  <link rel="icon"
+    href="data:image/svg+xml, <svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22> <text y=%22.9em%22 font-size=%2290%22> 🧭 </text> </svg>">
   <link rel="apple-touch-icon"
     href="https://support.apple.com/library/content/dam/edam/applecare/images/en_US/iOS/ios15-safari-icon.png">
   <title>HomePage</title>
@@ -16,20 +18,32 @@
   <link href="./CSS/grid.css" rel="stylesheet">
   <link href="./CSS/header.css" rel="stylesheet">
   <link href="./CSS/toggle.css" rel="stylesheet">
+  <link href="./CSS/colors.css" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/5e8187de28.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
+
   <header>
-    <h1>🧭 Favorites</h1>
-    <input type="checkbox" id="switch" /><label for="switch">Toggle</label>
+    <div style="display:flex; align-items:center;">
+    <img src="https://miro.medium.com/max/1024/1*JtxOMEcB0N7yoGiHjFf1Gg.png"
+    height="30px" width="30px" style="margin:0 10px;">
+    <h1>Favorites</h1></div>
+    <div style="display:flex; align-items:center;">
+      <i class="fa-solid fa-star" style="font-size: 20px; margin-right:6px; color:#707070;"></i>
+      <input type="checkbox" id="switch" /><label for="switch">Toggle</label>
+      <i class="fa-regular fa-image" style="font-size: 20px; margin-left:15px; color:#707070; margin-right: 10px;"></i>
+    </div>
   </header>
+
   <div id="grid"></div>
+
   <script type="text/javascript" src="./token.js"></script>
   <script type="text/javascript" src="./JS/favicons.js"></script>
   <script type="text/javascript" src="./JS/inserthtml.js"></script>
   <script type="text/javascript" src="./JS/fetch.js"></script>
   <script type="text/javascript" src="./JS/toggle.js"></script>
   <script> getGrid() </script>
-</body>
 
+</body>
 </html>

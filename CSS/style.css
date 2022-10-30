@@ -4,7 +4,7 @@
     'Segoe UI', Roboto, Oxygen, Ubuntu,
     Cantarell, 'Open Sans', 'Helvetica Neue',
     sans-serif;
-  color: rgb(62, 64, 73)
+  color: var(--text-color);
 }
 
 a {
@@ -12,10 +12,11 @@ a {
 }
 
 body {
-  background-color: #dfe1e5;
-  background-image: linear-gradient(0deg, #dfe1e5 0%, #d7ebf0 35%, #f0e6da 65%, #dfe1e5 100%);
+  background-color: var(--body-background-color);
+  background-image: var(--body-background-image);
   /* background-attachment: fixed; */
-  padding: 3vw 10vw;
+  padding: 3vw 10vw 10vw 10vw;
+  margin:0;
 }
 
 /* No Scrollbar */

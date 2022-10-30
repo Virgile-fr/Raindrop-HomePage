@@ -1,0 +1,23 @@
+/* Light Theme */
+
+@media (prefers-color-scheme: light) { :root {
+--card-backgroud: rgba(255, 255, 255, 0.3);
+--card-border: solid 0.5px #c9c9c9;
+--card-backgroud-hover: rgba(255, 255, 255, 0.8);
+--image-background-color: rgb(41, 56, 74);
+--body-background-color: #dfe1e5;
+--body-background-image: linear-gradient(0deg, #dfe1e5 0%, #d7ebf0 25%, #f4e8d4 50%, #d7ebf0 75%, #dfe1e5 100%);
+--text-color: rgb(62, 64, 73);
+--image-border-color:solid 0.5px #c9c9c9;
+}}
+
+@media (prefers-color-scheme: dark) { :root {
+--card-backgroud: #222222;
+--card-border: solid 1px #363636;
+--card-backgroud-hover: #171717;
+--image-background-color: rgb(37, 37, 37);
+--body-background-color: #26252C;
+--body-background-image: linear-gradient(0deg, #26252C 0%, #332416 35%, #12272d 65%, #26252C 100%);
+--text-color: rgb(192, 194, 205);
+--image-border-color:solid 1px #363636;
+}}

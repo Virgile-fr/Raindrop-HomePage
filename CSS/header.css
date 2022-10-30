@@ -3,4 +3,12 @@ header {
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  border-bottom: var(--card-border);
+  margin-bottom: 3vh;
+  padding: 3vh 0;
+}
+
+header > h1{
+  margin-bottom: 0px;
+  margin-top: 0px;
 }
