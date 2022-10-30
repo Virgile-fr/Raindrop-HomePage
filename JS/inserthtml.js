@@ -2,7 +2,7 @@ let grid = document.getElementById("grid");
 
 function smallerTitle(title) {
   if (title.length > 14) {
-    return title.substring(0, 13) + "..";
+    return title.substring(0, 12) + "..";
   } else return title;
 }
 
