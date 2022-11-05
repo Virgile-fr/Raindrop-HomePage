@@ -1,5 +1,5 @@
 // 💧 Enter Your Raindrop Token here 👇 //
-const raindropToken = "XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX";
+let raindropToken = "XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX";
 
 let token;
 
