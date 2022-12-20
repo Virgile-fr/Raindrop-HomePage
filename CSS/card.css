@@ -21,7 +21,7 @@
 .image {
   margin-top: 10px;
   background-color: var(--image-background-color);
-  background-size: 83%;
+  background-size: 80%;
   background-repeat: no-repeat;
   background-position: center;
   border-radius: calc((var(--radius-images)) + 2px);
