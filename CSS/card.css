@@ -29,6 +29,17 @@
   border: var(--image-border-color);
 }
 
+.cover {
+  margin-top: 10px;
+  background-color: var(--image-background-color);
+  background-size: 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: calc((var(--radius-images)) + 2px);
+  width: 100%;
+  border: var(--image-border-color);
+}
+
 .title {
   margin: 5px 0px;
   display: flex;
