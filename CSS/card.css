@@ -36,7 +36,7 @@
   text-indent: 2px;
 }
 
-.cover-cards .image { aspect-ratio: 3/2 ;}
+.cover-cards .image { aspect-ratio: 3/2 ; border: var(--image-border-color);}
 .cover-cards .title { aspect-ratio: 6/1 ;}
 
 .icon-cards .title { aspect-ratio: 6/1 ;}
