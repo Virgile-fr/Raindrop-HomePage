@@ -25,7 +25,6 @@
   background-repeat: no-repeat;
   background-position: center;
   border-radius: calc((var(--radius-images)) + 2px);
-  border: var(--image-border-color);
 }
 
 .title {
@@ -60,6 +59,7 @@
   box-sizing: border-box;
   backdrop-filter: blur(60px) brightness(0.8);
   -webkit-backdrop-filter: blur(40px);
+  border: var(--image-border-color);
 }
 
 .card:hover .filter {
