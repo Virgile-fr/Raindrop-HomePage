@@ -10,11 +10,11 @@ function test(lien, titre) {
   let content = `
   <a href="${lien}" target="_blank">
     <div class="card icon-cards">
-      <div class="image" style="background-image:url(${googlefavicon(lien)});">
+      <!-- this line is for filter icon : <div class="image" style="background-image:url(${googlefavicon(lien)});"> -->
       <div class="filter">
           <img class="icon" src=${googlefavicon(lien)}>
         </div>
-        </div>
+        <!--  this line is for filter icon : </div> -->
         <div class="title" title="${titre}">${smallerTitle(titre)}</div>
     </div>
   </a>`;

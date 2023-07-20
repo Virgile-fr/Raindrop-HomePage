@@ -52,8 +52,10 @@
 .filter {
   display: grid;
   place-items: center;
-  height: 100%;
-  width: 100%;
+  /* height: 100%;
+  width: 100%; */
+  aspect-ratio: 4/3;
+  margin-top: 10px;
   border-radius: var(--radius-images);
   overflow: hidden;
   box-sizing: border-box;
