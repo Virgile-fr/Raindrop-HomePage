@@ -33,8 +33,27 @@ function fetchCardsIcons() {
         grid.insertAdjacentHTML("beforeend", content);
       })
     );
+} 
+
+
+// new fetch function with filter by created at ....
+function fetchCardsCovers() {
+  fetch("https://api.raindrop.io/rest/v1/raindrops/0?search=❤️&perpage=50", {
+    method: "GET",
+    headers: { Authorization: "Bearer " + token },
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      const sortedItems = data.items.sort((a, b) => new Date(b.created) - new Date(a.created));
+
+      sortedItems.forEach((result) => {
+        let content = test2(result.link, result.title, result.cover);
+        grid.insertAdjacentHTML("beforeend", content);
+      });
+    });
 }
 
+/* old fetch function
 function fetchCardsCovers() {
   fetch("https://api.raindrop.io/rest/v1/raindrops/0?search=❤️&perpage=50", {
     method: "GET",
@@ -48,7 +67,7 @@ function fetchCardsCovers() {
         grid.insertAdjacentHTML("beforeend", content);
       })
     );
-}
+} */
 
 // result.cover = preview in raindrop
 // result.link = url of the link
