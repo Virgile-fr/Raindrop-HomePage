@@ -34,8 +34,8 @@ function fetchCardsIcons() {
         let content = test(result.link, result.title);
 
         grid.insertAdjacentHTML("beforeend", content);
-      })
-    );
+      });
+    });
 } 
 
 
