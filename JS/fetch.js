@@ -44,7 +44,7 @@ function fetchCardsCovers() {
   })
     .then((response) => response.json())
     .then((data) => {
-      const sortedItems = data.items.sort((a, b) => new Date(a.created) - new Date(b.created));
+      const sortedItems = data.items.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
 
       sortedItems.forEach((result) => {
         let content = test2(result.link, result.title, result.cover);
