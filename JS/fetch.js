@@ -27,7 +27,10 @@ function fetchCardsIcons() {
   })
     .then((response) => response.json())
     .then((data) =>
-      data.items.forEach((result) => {
+      // reorgnise data by creation date (most recent first)
+      const sortedItems = data.items.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
+
+      sortedItems.forEach((result) => {
         let content = test(result.link, result.title);
 
         grid.insertAdjacentHTML("beforeend", content);
@@ -35,20 +38,23 @@ function fetchCardsIcons() {
     );
 } 
 
+
 function fetchCardsCovers() {
   fetch("https://api.raindrop.io/rest/v1/raindrops/0?search=❤️&perpage=50", {
     method: "GET",
     headers: { Authorization: "Bearer " + token },
   })
     .then((response) => response.json())
-    .then((data) =>
-      data.items.forEach((result) => {
-        let content = test2(result.link, result.title, result.cover);
+    .then((data) => {
+      // reorgnise data by creation date (most recent first)
+      const sortedItems = data.items.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
 
+      sortedItems.forEach((result) => {
+        let content = test2(result.link, result.title, result.cover);
         grid.insertAdjacentHTML("beforeend", content);
-      })
-    );
-} 
+      });
+    });
+}
 
 // result.cover = preview in raindrop
 // result.link = url of the link
