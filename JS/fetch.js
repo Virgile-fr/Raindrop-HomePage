@@ -26,7 +26,7 @@ function fetchCardsIcons() {
     headers: { Authorization: "Bearer " + token },
   })
     .then((response) => response.json())
-    .then((data) =>
+    .then((data) => {
       // reorgnise data by creation date (most recent first)
       const sortedItems = data.items.sort((a, b) => new Date(b.created).getTime() - new Date(a.created).getTime());
 
