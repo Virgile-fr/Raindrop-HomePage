@@ -13,13 +13,27 @@ function computeDominantColor(image) {
 }
 
 function applyFilterBackground(filter, color) {
-  const darkened = {
-    r: Math.round(color.r * 0.9),
-    g: Math.round(color.g * 0.9),
-    b: Math.round(color.b * 0.9),
-  };
+  const clamp = (value) => Math.min(255, Math.max(0, Math.round(value)));
+  const luminance =
+    (0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b) / 255;
 
-  filter.style.background = `linear-gradient(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.12)), rgb(${darkened.r}, ${darkened.g}, ${darkened.b})`;
+  const isTooDark = luminance < 0.35;
+
+  const adjustedColor = isTooDark
+    ? {
+        r: clamp(color.r + (255 - color.r) * 0.25),
+        g: clamp(color.g + (255 - color.g) * 0.25),
+        b: clamp(color.b + (255 - color.b) * 0.25),
+      }
+    : {
+        r: clamp(color.r * 0.8),
+        g: clamp(color.g * 0.8),
+        b: clamp(color.b * 0.8),
+      };
+
+  const overlayOpacity = isTooDark ? 0.12 : 0.18;
+
+  filter.style.background = `linear-gradient(rgba(0, 0, 0, ${overlayOpacity}), rgba(0, 0, 0, ${overlayOpacity})), rgb(${adjustedColor.r}, ${adjustedColor.g}, ${adjustedColor.b})`;
 }
 
 function colorizeIconBackground(icon) {
