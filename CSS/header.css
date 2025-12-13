@@ -12,3 +12,11 @@ header h1{
   margin-bottom: 0px;
   margin-top: 0px;
 }
+
+.favorite-priority-toggle {
+  cursor: pointer;
+}
+
+.favorite-priority-toggle:hover {
+  color: white;
+}
