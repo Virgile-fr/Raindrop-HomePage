@@ -87,6 +87,7 @@ async function renderFavoriteCards(renderer) {
     const content = sortedItems.map(renderer).join("");
 
     grid.insertAdjacentHTML("beforeend", content);
+    refreshIconFilterColors();
   } catch (error) {
     console.error("Failed to render favorites", error);
   }
