@@ -11,7 +11,7 @@ function smallerTitle(title) {
 function test(lien, titre) {
   const vemetricIcon = vemetricfavicon(lien);
   const googleIcon = googlefavicon(lien);
-  const initialIcon = googleIcon ?? vemetricIcon ?? "";
+  const initialIcon = vemetricIcon ?? googleIcon ?? "";
   let content = `
   <a href="${lien}" target="_blank">
     <div class="card icon-cards">
