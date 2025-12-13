@@ -2,8 +2,14 @@
 
 <img src="https://repository-images.githubusercontent.com/558617324/589431b0-1132-48c0-b422-1ba6bd9df962">
 
-Raindrop Homepage is a minimal start page to display your **Raindrop.io bookmarks marked as favorites**.  
+Raindrop Homepage is a minimal start page to display your **Raindrop.io bookmarks marked as favorites**.
 It is **not** intended to replicate the full Raindrop.io interface, only to give you a clean, fast way to open your favorite links from any browser or device.
+
+---
+
+## 🆕 Usage-based sorting
+
+Favorites are now automatically sorted by how often you open them: the most-used links float to the top, while rarely opened ones appear last. If two favorites are used equally, the most recently added one is shown first.
 
 ---
 
