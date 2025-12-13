@@ -1,15 +1,112 @@
+function clamp(value, min = 0, max = 255) {
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const delta = max - min;
+
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (delta !== 0) {
+    s = delta / (1 - Math.abs(2 * l - 1));
+
+    switch (max) {
+      case r:
+        h = ((g - b) / delta) % 6;
+        break;
+      case g:
+        h = (b - r) / delta + 2;
+        break;
+      default:
+        h = (r - g) / delta + 4;
+    }
+
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+
+  return { h, s, l };
+}
+
+function hslToRgb(h, s, l) {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
+  if (h < 60) {
+    r = c;
+    g = x;
+  } else if (h < 120) {
+    r = x;
+    g = c;
+  } else if (h < 180) {
+    g = c;
+    b = x;
+  } else if (h < 240) {
+    g = x;
+    b = c;
+  } else if (h < 300) {
+    r = x;
+    b = c;
+  } else {
+    r = c;
+    b = x;
+  }
+
+  return {
+    r: clamp((r + m) * 255),
+    g: clamp((g + m) * 255),
+    b: clamp((b + m) * 255),
+  };
+}
+
 function computeDominantColor(image) {
   const canvas = document.createElement("canvas");
-  canvas.width = 1;
-  canvas.height = 1;
+  const sampleSize = 12;
+  canvas.width = sampleSize;
+  canvas.height = sampleSize;
 
   const context = canvas.getContext("2d");
   if (!context) return null;
 
   try {
-    context.drawImage(image, 0, 0, 1, 1);
-    const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
-    return { r, g, b };
+    context.drawImage(image, 0, 0, sampleSize, sampleSize);
+    const { data } = context.getImageData(0, 0, sampleSize, sampleSize);
+
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    let count = 0;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const alpha = data[i + 3] / 255;
+      if (alpha < 0.05) continue;
+
+      r += data[i] * alpha;
+      g += data[i + 1] * alpha;
+      b += data[i + 2] * alpha;
+      count += alpha;
+    }
+
+    if (count === 0) return null;
+
+    return {
+      r: r / count,
+      g: g / count,
+      b: b / count,
+    };
   } catch (error) {
     console.warn("Unable to compute dominant color", error);
     return null;
@@ -17,27 +114,27 @@ function computeDominantColor(image) {
 }
 
 function applyFilterBackground(filter, color) {
-  const clamp = (value) => Math.min(255, Math.max(0, Math.round(value)));
-  const luminance =
-    (0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b) / 255;
+  const { h, s, l } = rgbToHsl(color.r, color.g, color.b);
 
-  const isTooDark = luminance < 0.35;
+  const balancedSaturation = Math.min(0.62, Math.max(0.28, s * 0.9 + 0.12));
+  const contrastBias = (0.5 - l) * 0.35;
+  const baseLightness = Math.min(
+    0.62,
+    Math.max(0.32, l + contrastBias + 0.08)
+  );
+  const accentLightness = Math.min(
+    0.68,
+    Math.max(0.26, baseLightness + (l < 0.5 ? 0.08 : -0.08))
+  );
 
-  const adjustedColor = isTooDark
-    ? {
-        r: clamp(color.r + (255 - color.r) * 0.25),
-        g: clamp(color.g + (255 - color.g) * 0.25),
-        b: clamp(color.b + (255 - color.b) * 0.25),
-      }
-    : {
-        r: clamp(color.r * 0.8),
-        g: clamp(color.g * 0.8),
-        b: clamp(color.b * 0.8),
-      };
+  const baseColor = hslToRgb(h, balancedSaturation, baseLightness);
+  const accentColor = hslToRgb(h, balancedSaturation * 0.92, accentLightness);
 
-  const overlayOpacity = isTooDark ? 0.12 : 0.18;
+  const overlayIsDark = baseLightness > 0.5;
+  const overlayOpacity = overlayIsDark ? 0.18 : 0.12;
+  const overlayTone = overlayIsDark ? "0, 0, 0" : "255, 255, 255";
 
-  filter.style.background = `linear-gradient(rgba(0, 0, 0, ${overlayOpacity}), rgba(0, 0, 0, ${overlayOpacity})), rgb(${adjustedColor.r}, ${adjustedColor.g}, ${adjustedColor.b})`;
+  filter.style.background = `linear-gradient(rgba(${overlayTone}, ${overlayOpacity}), rgba(${overlayTone}, ${overlayOpacity})), linear-gradient(135deg, rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b}), rgb(${accentColor.r}, ${accentColor.g}, ${accentColor.b}))`;
 }
 
 function colorizeIconBackground(icon) {
