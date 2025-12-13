@@ -80,6 +80,18 @@ function getFaviconPreference(address) {
   return { primary: vemetricIcon, fallback: googleIcon };
 }
 
+function allowsCrossOriginLoading(url) {
+  if (!url) return false;
+
+  const blockedHosts = ["www.google.com"];
+  try {
+    const hostname = new URL(url).hostname;
+    return !blockedHosts.includes(hostname);
+  } catch {
+    return false;
+  }
+}
+
 function updateFaviconPriorityIndicator() {
   const toggleIcon = document.querySelector(".favorite-priority-toggle");
 
