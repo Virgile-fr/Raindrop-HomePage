@@ -9,7 +9,8 @@ function smallerTitle(title) {
 }
 
 function test(lien, titre) {
-  const vemetricIcon = vemetricfavicon(lien);
+//  const vemetricIcon = vemetricfavicon(lien);
+  const vemetricIcon = googlefavicon(lien);
   const googleIcon = googlefavicon(lien);
   const initialIcon = vemetricIcon ?? googleIcon ?? "";
   let content = `
