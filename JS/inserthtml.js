@@ -1,5 +1,7 @@
 let grid = document.getElementById("grid");
 
+grid.addEventListener("click", handleCardClick);
+
 function smallerTitle(title) {
   if (title.length > 14) {
     return title.substring(0, 12) + "..";
@@ -31,4 +33,18 @@ function test2(lien, titre, image) {
     </div>
   </a>`;
   return content;
+}
+
+function handleCardClick(event) {
+  const anchor = event.target.closest("a");
+
+  if (!anchor || !grid.contains(anchor)) {
+    return;
+  }
+
+  const link = anchor.getAttribute("href");
+
+  if (link) {
+    recordUsage(link);
+  }
 }
