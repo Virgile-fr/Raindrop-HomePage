@@ -103,6 +103,7 @@ function fetchCardsCovers() {
 // result.cover = preview in raindrop
 // result.link = url of the link
 // result.title = name of the link
+// ${vemetricfavicon(result.link)} = Vemetric Favicon API icon of the link
 // ${googlefavicon(result.link)} = google favicon of the link
 // ${favicon(result.link)} = favicon of the link
 // ${statvoofavicon(result.link)} = statvoofavicon favicon of the link
