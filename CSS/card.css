@@ -52,7 +52,7 @@
     border: 2px solid rgba(255,255,255,.2);
 }
 
-.filter:hover .icon{
+.card:hover .icon{
     background: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.6));
     transition: all 0.4s ease-out;
 }
