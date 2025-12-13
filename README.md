@@ -89,7 +89,7 @@ Raindrop Homepage offers two display modes that you can toggle using the switch 
 
 ### 🌐 Favicon view
 
-* Icons are fetched using the **Google Icons API**, which is one of the best free options available.
+* Icons are fetched using the **Vemetric Favicon API** by default, with the **Google Icons API** kept as a fallback for robustness.
 * Some favicons might still appear in low resolution depending on the site.
 * Each card uses a `backdrop-filter` effect for a frosted glass style background.
 * Technically, it would be possible to fetch `apple-touch-icon` tags from each site, but this is not implemented yet.

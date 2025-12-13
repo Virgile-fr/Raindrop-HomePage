@@ -17,6 +17,13 @@ function googlefavicon(adress) {
     splitadress);
 }
 
+function vemetricfavicon(adress) {
+  let splitadress = adress.split("/");
+  splitadress = splitadress.slice(2, 3);
+  splitadress = splitadress.join("/");
+  return (newadress = `https://favicon-api.vemetric.com/v1/?domain=${splitadress}`);
+}
+
 function duckduckgofavicon(adress) {
   let splitadress = adress.split("/");
   splitadress = splitadress.slice(2, 3);
