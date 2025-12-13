@@ -6,10 +6,14 @@ function computeDominantColor(image) {
   const context = canvas.getContext("2d");
   if (!context) return null;
 
-  context.drawImage(image, 0, 0, 1, 1);
-  const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
-
-  return { r, g, b };
+  try {
+    context.drawImage(image, 0, 0, 1, 1);
+    const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
+    return { r, g, b };
+  } catch (error) {
+    console.warn("Unable to compute dominant color", error);
+    return null;
+  }
 }
 
 function applyFilterBackground(filter, color) {

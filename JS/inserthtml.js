@@ -12,12 +12,15 @@ function test(lien, titre) {
   const { primary, fallback } = getFaviconPreference(lien);
   const initialIcon = primary ?? fallback ?? "";
   const fallbackIcon = fallback ?? "";
+  const crossOriginAttr = allowsCrossOriginLoading(initialIcon)
+    ? ' crossOrigin="anonymous"'
+    : "";
   let content = `
   <a href="${lien}" target="_blank">
     <div class="card icon-cards">
       <!-- this line is for filter icon : <div class="image" style="background-image:url(${googlefavicon(lien)});"> -->
       <div class="filter">
-          <img class="icon" src="${initialIcon}" crossOrigin="anonymous" onerror="this.onerror=null; this.src='${fallbackIcon}'">
+          <img class="icon" src="${initialIcon}"${crossOriginAttr} onerror="this.onerror=null; this.src='${fallbackIcon}'">
         </div>
         <!--  this line is for filter icon : </div> -->
         <div class="title" title="${titre}">${smallerTitle(titre)}</div>
