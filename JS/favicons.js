@@ -83,7 +83,13 @@ function getFaviconPreference(address) {
 function allowsCrossOriginLoading(url) {
   if (!url) return false;
 
-  const blockedHosts = ["www.google.com"];
+  const blockedHosts = [
+    "www.google.com",
+    "t0.gstatic.com",
+    "t1.gstatic.com",
+    "t2.gstatic.com",
+    "t3.gstatic.com",
+  ];
   try {
     const hostname = new URL(url).hostname;
     return !blockedHosts.includes(hostname);
