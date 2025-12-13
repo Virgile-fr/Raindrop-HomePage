@@ -9,15 +9,13 @@ function smallerTitle(title) {
 }
 
 function test(lien, titre) {
-  const vemetricIcon = vemetricfavicon(lien);
-  const googleIcon = googlefavicon(lien);
-  const initialIcon = vemetricIcon ?? googleIcon ?? "";
+  const { primaryIcon, fallbackIcon } = getIconSources(lien);
   let content = `
   <a href="${lien}" target="_blank">
     <div class="card icon-cards">
       <!-- this line is for filter icon : <div class="image" style="background-image:url(${googlefavicon(lien)});"> -->
       <div class="filter">
-          <img class="icon" src="${initialIcon}" crossOrigin="anonymous" onerror="this.onerror=null; this.src='${googleIcon ?? ''}'">
+          <img class="icon" src="${primaryIcon}" crossOrigin="anonymous" onerror="this.onerror=null; this.src='${fallbackIcon}'">
         </div>
         <!--  this line is for filter icon : </div> -->
         <div class="title" title="${titre}">${smallerTitle(titre)}</div>
