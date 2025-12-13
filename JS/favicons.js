@@ -11,18 +11,22 @@ function extractDomain(address) {
 }
 
 function favicon(adress) {
-  const domain = extractDomain(adress);
-  if (!domain) return null;
-
-  return `https://${domain}/favicon.ico`;
+  let splitadress = adress.split("/");
+  splitadress = splitadress.slice(0, 3);
+  splitadress = splitadress.join("/");
+  return (newadress = splitadress + "/favicon.ico");
 }
 
 function googlefavicon(adress) {
-  const resolution = 256;
-  const domain = extractDomain(adress);
-  if (!domain) return null;
-
-  return `https://www.google.com/s2/favicons?sz=${resolution}&domain=${domain}`;
+  let resolution = 256;
+  let splitadress = adress.split("/");
+  splitadress = splitadress.slice(0, 3);
+  splitadress = splitadress.join("/");
+  return (newadress =
+    "https://www.google.com/s2/favicons?sz=" +
+    resolution +
+    "&domain=" +
+    splitadress);
 }
 
 function vemetricfavicon(adress) {
@@ -33,15 +37,16 @@ function vemetricfavicon(adress) {
 }
 
 function duckduckgofavicon(adress) {
-  const domain = extractDomain(adress);
-  if (!domain) return null;
-
-  return `https://icons.duckduckgo.com/ip2/${domain}.ico`;
+  let splitadress = adress.split("/");
+  splitadress = splitadress.slice(2, 3);
+  splitadress = splitadress.join("/");
+  return (newadress =
+    "https://icons.duckduckgo.com/ip2/" + splitadress + ".ico");
 }
 
 function statvoofavicon(adress) {
-  const domain = extractDomain(adress);
-  if (!domain) return null;
-
-  return `https://api.statvoo.com/favicon/?url=https://${domain}`;
+  let splitadress = adress.split("/");
+  splitadress = splitadress.slice(0, 3);
+  splitadress = splitadress.join("/");
+  return (newadress = "https://api.statvoo.com/favicon/?url=" + splitadress);
 }
