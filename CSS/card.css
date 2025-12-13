@@ -46,7 +46,7 @@
     height: var(--icon-size);
     width: var(--icon-size);
     border-radius: var(--icon-radius);
-    padding: 10px;
+    padding: 8px;
     box-shadow: 0px 0px 70px #00000030;
     background: linear-gradient(rgb(255 255 255 / 48%), rgb(255 255 255 / 35%));
     border: 2px solid rgba(255,255,255,.2);
@@ -54,6 +54,7 @@
 
 .filter:hover .icon{
     background: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.6));
+    transition: all 0.4s ease-out;
 }
 
 .filter {
