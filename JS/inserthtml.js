@@ -20,7 +20,7 @@ function test(lien, titre) {
     <div class="card icon-cards">
       <!-- this line is for filter icon : <div class="image" style="background-image:url(${googlefavicon(lien)});"> -->
       <div class="filter">
-          <img class="icon" data-color-key="${lien}" src="${initialIcon}"${crossOriginAttr} onerror="this.onerror=null; this.src='${fallbackIcon}'">
+          <img class="icon" src="${initialIcon}"${crossOriginAttr} onerror="this.onerror=null; this.src='${fallbackIcon}'">
         </div>
         <!--  this line is for filter icon : </div> -->
         <div class="title" title="${titre}">${smallerTitle(titre)}</div>
