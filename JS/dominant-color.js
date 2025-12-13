@@ -72,6 +72,38 @@ function hslToRgb(h, s, l) {
   };
 }
 
+function hashStringToHue(value) {
+  if (!value) return 210;
+
+  const hash = Array.from(value).reduce(
+    (accumulator, character) => (accumulator * 31 + character.charCodeAt(0)) >>> 0,
+    7
+  );
+
+  return hash % 360;
+}
+
+function generateVibrantColorFromKey(key) {
+  const hue = hashStringToHue(key);
+  const saturation = 0.78;
+  const lightness = 0.52;
+
+  return hslToRgb(hue, saturation, lightness);
+}
+
+function canSampleImage(image) {
+  try {
+    const imageUrl = new URL(image.src, window.location.href);
+    const sameOrigin = imageUrl.origin === window.location.origin;
+    const hasCors = image.crossOrigin === "anonymous";
+
+    return sameOrigin || hasCors;
+  } catch (error) {
+    console.warn("Unable to evaluate image origin", error);
+    return false;
+  }
+}
+
 function computeDominantColor(image) {
   const canvas = document.createElement("canvas");
   const sampleSize = 12;
