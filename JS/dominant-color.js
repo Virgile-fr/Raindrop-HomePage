@@ -72,6 +72,38 @@ function hslToRgb(h, s, l) {
   };
 }
 
+function hashStringToHue(value) {
+  if (!value) return 210;
+
+  const hash = Array.from(value).reduce(
+    (accumulator, character) => (accumulator * 31 + character.charCodeAt(0)) >>> 0,
+    7
+  );
+
+  return hash % 360;
+}
+
+function generateVibrantColorFromKey(key) {
+  const hue = hashStringToHue(key);
+  const saturation = 0.78;
+  const lightness = 0.52;
+
+  return hslToRgb(hue, saturation, lightness);
+}
+
+function canSampleImage(image) {
+  try {
+    const imageUrl = new URL(image.src, window.location.href);
+    const sameOrigin = imageUrl.origin === window.location.origin;
+    const hasCors = image.crossOrigin === "anonymous";
+
+    return sameOrigin || hasCors;
+  } catch (error) {
+    console.warn("Unable to evaluate image origin", error);
+    return false;
+  }
+}
+
 function computeDominantColor(image) {
   const canvas = document.createElement("canvas");
   const sampleSize = 12;
@@ -116,22 +148,22 @@ function computeDominantColor(image) {
 function applyFilterBackground(filter, color) {
   const { h, s, l } = rgbToHsl(color.r, color.g, color.b);
 
-  const balancedSaturation = Math.min(0.62, Math.max(0.28, s * 0.9 + 0.12));
-  const contrastBias = (0.5 - l) * 0.35;
+  const balancedSaturation = Math.min(0.9, Math.max(0.36, s * 1.2 + 0.2));
+  const contrastBias = (0.5 - l) * 0.42;
   const baseLightness = Math.min(
-    0.62,
-    Math.max(0.32, l + contrastBias + 0.08)
+    0.68,
+    Math.max(0.34, l + contrastBias + 0.12)
   );
   const accentLightness = Math.min(
-    0.68,
-    Math.max(0.26, baseLightness + (l < 0.5 ? 0.08 : -0.08))
+    0.72,
+    Math.max(0.3, baseLightness + (l < 0.5 ? 0.1 : -0.06))
   );
 
   const baseColor = hslToRgb(h, balancedSaturation, baseLightness);
   const accentColor = hslToRgb(h, balancedSaturation * 0.92, accentLightness);
 
   const overlayIsDark = baseLightness > 0.5;
-  const overlayOpacity = overlayIsDark ? 0.18 : 0.12;
+  const overlayOpacity = overlayIsDark ? 0.22 : 0.14;
   const overlayTone = overlayIsDark ? "0, 0, 0" : "255, 255, 255";
 
   filter.style.background = `linear-gradient(rgba(${overlayTone}, ${overlayOpacity}), rgba(${overlayTone}, ${overlayOpacity})), linear-gradient(135deg, rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b}), rgb(${accentColor.r}, ${accentColor.g}, ${accentColor.b}))`;
@@ -143,10 +175,12 @@ function colorizeIconBackground(icon) {
   const filter = icon.closest(".filter");
   if (!filter) return;
 
-  const color = computeDominantColor(icon);
-  if (!color) return;
+  const canReadPixels = canSampleImage(icon);
+  const colorKey = icon.dataset.colorKey || icon.currentSrc || icon.src;
+  const color = canReadPixels ? computeDominantColor(icon) : null;
+  const fallbackColor = color ?? generateVibrantColorFromKey(colorKey);
 
-  applyFilterBackground(filter, color);
+  applyFilterBackground(filter, fallbackColor);
   icon.dataset.colorized = "true";
 }
 
