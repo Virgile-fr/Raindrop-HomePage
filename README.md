@@ -1,139 +1,133 @@
-# ☁️ Raindrop Homepage
-
 <img src="./readme.png">
+<h1 align="center">Raindrop Homepage</h1>
+<p align=center>A lightweight start page that displays your <b>Raindrop.io favorites</b> in a clean grid, fast to open and easy to use.  
+This is <b>not</b> a Raindrop clone, it’s a focused homepage dashboard.</p>
+<br><br><br>
 
-Raindrop Homepage is a minimal start page to display your **Raindrop.io bookmarks marked as favorites**.
-It is **not** intended to replicate the full Raindrop.io interface, only to give you a clean, fast way to open your favorite links from any browser or device.
+## 🆕 What’s new
 
----
+- Better favicon fetching: **Vemetric Favicon API** by default, **Google** as fallback
+- New algorithm to auto-pick an **icon background color** based on the favicon
+- Refined **icon style inside cards** for a more cohesive look
+- Removed the previous **50 favorites limit**
+<br>
 
-## 🆕 Usage-based sorting
 
-Favorites are now automatically sorted by how often you open them: the most-used links float to the top, while rarely opened ones appear last. If two favorites are used equally, the most recently added one is shown first.
+## ❓ Why
 
----
+Browser bookmark sync is often annoying, especially across mixed ecosystems.  
+With Raindrop Homepage, you only need:
 
-## ✨ Why this project?
+1. A Raindrop account
+2. A test token
+3. One URL set as your start page (or new tab)
+<br>
 
-I built this page because for my own use it is the simplest way to:
 
-- ✅ Access all my Raindrop favorites quickly
-- 🌐 Use the same favorites across all browsers and devices
-- 🔁 Avoid dealing with browser sync, especially on safari that only syncs favs with other browsers on Windows using the iCloud plugin
+## 🧩 Features
 
-Set Raindrop Homepage as your **start page** or **new tab page** and you get a lightweight, always up to date favorites dashboard.
+- Usage-based sorting, your most opened favorites rise to the top
+- Two views:
+  - **Favicon view** (compact, fast scanning)
+  - **Cover view** (more visual, uses Raindrop covers)
+- No backend server, everything runs in your browser
+<br>
 
----
 
-## 🚀 Live usage
+## 🚀 Try it
 
 Public instance:
 
 ```text
 https://virgile-fr.github.io/Raindrop-HomePage/
 ````
+<br>
 
-You have **two ways** to provide your Raindrop test token:
 
-### 1. 🔑 Quick method: token in the URL
+## 🔑 Add your Raindrop token
 
-Append your Raindrop test token at the end of the URL, for example:
+You have two options:
+
+
+<br>
+
+### 🅰️ Token in the URL
+
+Append your token at the end of the URL:
 
 ```text
-https://virgile-fr.github.io/Raindrop-HomePage/XXXXX-XXXXXX-XXXXX-XXX
+https://virgile-fr.github.io/Raindrop-HomePage/YOUR_TEST_TOKEN
 ```
 
-Raindrop Homepage will read that token, use it to call the Raindrop API and store it in your browser `localStorage`.
-Do not share this URL publicly since it contains your token.
+The app will read it and store it in `localStorage`.
 
-### 2. 💬 Token prompt / local storage
+> ⚠️ Do not share that URL: the token will be visible in the address bar, history, and logs.
 
-If no valid token is found, the page will display a prompt asking you to paste your **Raindrop test token**.
-Once entered, it is stored in `localStorage` so you do not have to paste it again on the same browser.
+<br>
 
-> ⚠️ If you clear your browser cache or storage, the token will be removed and the prompt will appear again.
+### 🅱️ Paste at lauch
 
----
+If no token is found, the page prompts you to paste it. It’s then stored in `localStorage` for that browser.
+> ⚠️ If you clear your browser data, you’ll be asked again for the token.
 
-## 🧩 How to get your Raindrop test token
+<br>
 
-1. Make sure you are logged in to your **Raindrop.io** account.
+## 🧾 Get a Raindrop test token
+
+1. Log in to Raindrop.io
 2. Open:
    `https://app.raindrop.io/settings/integrations`
-3. Click **“+ Create a new app”**.
-4. Choose any name, for example: `MyUsername Homepage`.
-5. Accept the **Raindrop API Terms & Guidelines**.
-6. Click on the app you just created.
-7. Click **“Create test token”** and copy the token.
-8. Use it:
+3. Click **+ Create a new app**
+4. Name it (anything) and accept the terms
+5. Open your new app
+6. Click **Create test token**
+7. Copy it, then use Option A or Option B above
 
-   * Either by pasting it in the Raindrop Homepage prompt
-   * Or by appending it after the URL like this:
-     `https://virgile-fr.github.io/Raindrop-HomePage/YOUR_TEST_TOKEN`
+<br>
 
----
+## 🏠 Set it as start page / new tab
 
-## 🏗️ Self-hosting / using the code locally
+* **Start page**: set the URL in your browser homepage settings
+* **New tab (Chromium browsers)**: use a “new tab redirect” extension, then point it to your Raindrop Homepage URL
+  Example extension: *New Tab Redirect* : https://chromewebstore.google.com/detail/icpgjfneehieebagbmdbhnlpiopdcmna?utm_source=item-share-cb (or any equivalent)
 
-If you want to host your own instance (for example on GitHub Pages or your own server):
+<br>
 
-1. Clone the repository.
-2. Optionally, set your token directly in `token.js` if you do not want to use the prompt or URL method.
-3. Deploy the static files to your hosting (GitHub Pages, Netlify, Vercel, etc.).
+## 📱 iOS Safari tip
 
----
+iOS Safari cannot set a custom homepage the same way as desktop browsers.
+Best workaround:
 
-## 👀 Views and layout
+1. Open the page in Safari
+2. Share button → **Add to Home Screen**
+3. Launch it from the home screen icon for an app-like experience
 
-Raindrop Homepage offers two display modes that you can toggle using the switch in the top right corner.
-
-### 🌐 Favicon view
-
-* Icons are fetched using the **Vemetric Favicon API** by default, with the **Google Icons API** kept as a fallback for robustness.
-* Some favicons might still appear in low resolution depending on the site.
-* Each card uses a `backdrop-filter` effect for a frosted glass style background.
-* Technically, it would be possible to fetch `apple-touch-icon` tags from each site, but this is not implemented yet.
-
-### 🖼️ Cover view
-
-* Uses the **covers automatically generated by Raindrop.io**.
-* Covers can be customized directly in the Raindrop app.
-* This view is useful if you prefer a more visual, card based layout instead of tiny icons.
-
----
-
-## 📱 Safari and mobile usage
-
-* On **iOS Safari**, you cannot set a custom homepage.
-* Recommended workflow:
-
-  1. Open Raindrop Homepage in Safari.
-  2. Use **“Add to Home Screen”**.
-  3. Launch it from the icon on your home screen instead of opening Safari directly.
-
-This gives you a near “app like” experience for your Raindrop favorites.
-
----
+<br>
 
 ## 🔒 Token storage and security
 
-* The app uses your **Raindrop test token** only from **your browser** to call the Raindrop API.
-* The token is stored in **`localStorage`** on your device, not on a remote server.
-* Clearing site data or cache will remove the token and trigger the token prompt again.
-* If you use the URL method, remember that the token is visible in the address bar and in your browser history, so avoid sharing that URL.
+* The token is used **only in your browser** to call the Raindrop API
+* Stored locally in **`localStorage`**, never on a remote server
+* If you use the URL method, treat it like a password
 
----
+<br>
+
+## 🏗️ Self-hosting
+
+1. Clone the repo
+2. Deploy as static files (GitHub Pages, Netlify, Vercel, etc.)
+3. Optionally set a token in `token.js` if you prefer not to use URL or prompt
+
+<br>
 
 ## 🧾 Notes
 
-* This project is an **unofficial** tool built on top of the **Raindrop.io API**.
-* It is not affiliated with or endorsed by Raindrop.io.
-* It is a small, focused utility to make Raindrop favorites feel like a simple homepage.
+* This project is an **unofficial** tool built on top of the **Raindrop.io API**
+* Not affiliated with or endorsed by Raindrop.io
 
----
+<br>
 
 ## 🤝 Contributing
 
-Suggestions, issues and pull requests are welcome.
-
-If you have ideas such as better favicon fetching, improved layout, or safer token handling, feel free to open an issue or PR.
+Issues and PRs are welcome.
+If you have ideas (layout tweaks, favicon improvements, safer token handling), feel free to open an issue.
