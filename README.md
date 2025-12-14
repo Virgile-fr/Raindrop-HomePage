@@ -1,4 +1,4 @@
-# ⭐ Raindrop Homepage
+# ☁️ Raindrop Homepage
 
 <img src="./cover.png">
 
