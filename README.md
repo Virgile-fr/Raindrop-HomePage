@@ -1,6 +1,6 @@
 # ⭐ Raindrop Homepage
 
-<img src="https://repository-images.githubusercontent.com/558617324/589431b0-1132-48c0-b422-1ba6bd9df962">
+<img src="./cover.png">
 
 Raindrop Homepage is a minimal start page to display your **Raindrop.io bookmarks marked as favorites**.
 It is **not** intended to replicate the full Raindrop.io interface, only to give you a clean, fast way to open your favorite links from any browser or device.
