@@ -8,7 +8,6 @@
 .card {
   background-color: var(--card-backgroud);
   border-radius: var(--radius-cards);
-  padding: 0 10px;
   border: var(--card-border);
   box-sizing: content-box;
 }
@@ -19,15 +18,15 @@
 }
 
 .image {
-  margin-top: 10px;
   background-color: var(--image-background-color);
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
-  border-radius: calc((var(--radius-images)) + 2px);
+  border-radius: var(--radius-images) var(--radius-images) 0px 0px;
 }
 
 .title {
+  padding-left: 6px;
   margin: 5px 0px;
   display: flex;
   align-items: center;
@@ -36,7 +35,7 @@
   text-indent: 2px;
 }
 
-.cover-cards .image { aspect-ratio: 3/2 ; border: var(--image-border-color);}
+.cover-cards .image { aspect-ratio: 16/9 ; border: var(--image-border-color);}
 .cover-cards .title { aspect-ratio: 6/1 ;}
 
 .icon-cards .title { aspect-ratio: 6/1 ;}
@@ -47,9 +46,9 @@
     width: var(--icon-size);
     border-radius: var(--icon-radius);
     padding: 8px;
-    box-shadow: 0px 56px 90px #ffffff;
-    background: linear-gradient(rgb(255 255 255 / 48%), rgb(255 255 255 / 35%));
-    border: 2px solid rgba(255,255,255,.2);
+    box-shadow: 65px 39px 106px #ffffff;
+    background: linear-gradient(rgb(255 255 255 / 40%), rgb(255 255 255 / 20%));
+    border: 1px solid rgba(255,255,255,.2);
 }
 
 .card:hover .icon{
@@ -63,8 +62,7 @@
   /* height: 100%;
   width: 100%; */
   aspect-ratio: 4/3;
-  margin-top: 10px;
-  border-radius: var(--radius-images);
+  border-radius: var(--radius-images) var(--radius-images) 0px 0px;
   overflow: hidden;
   box-sizing: border-box;
   backdrop-filter: blur(60px) brightness(0.8);
