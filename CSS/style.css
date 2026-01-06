@@ -14,24 +14,16 @@ a {
 body {
   background-color: var(--body-background-color);
   background-image: var(--body-background-image);
-  /* background-attachment: fixed; */
   padding: 3vw 10vw 10vw 10vw;
-  margin:0;
+  margin: 0;
 }
 
-/* No Scrollbar */
+/* Hide scrollbars */
 * {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 *::-webkit-scrollbar {
-  display: none !important;
-}
-
-.element::-webkit-scrollbar {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 0;
-  height: 0;
+  display: none;
 }

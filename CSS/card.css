@@ -22,18 +22,15 @@
   border-radius: var(--radius-cards);
   border: var(--card-border);
   box-sizing: content-box;
-  transition: background-color 0.2s, box-shadow 0.2s;
-  transition: box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1)
+  transition: background-color var(--transition-fast),
+              box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              transform var(--transition-fast);
 }
 
 .card:hover {
   background-color: var(--card-backgroud-hover);
-  box-shadow: rgba(0, 0, 0, 0.07) 0px 1px 2px,
-    rgba(0, 0, 0, 0.07) 0px 2px 4px,
-    rgba(0, 0, 0, 0.07) 0px 4px 8px,
-    rgba(0, 0, 0, 0.07) 0px 8px 16px,
-    rgba(0, 0, 0, 0.07) 0px 16px 32px,
-    rgba(0, 0, 0, 0.07) 0px 32px 64px;
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
 }
 
 .image {
@@ -84,7 +81,9 @@
   background: linear-gradient(var(--icon-g1), var(--icon-g2));
 
   /* On transitionne les variables, pas le background */
-  transition: --icon-g1 2s, --icon-g2, box-shadow 0.4s ease;
+  transition: --icon-g1 var(--transition-slow) ease,
+              --icon-g2 var(--transition-slow) ease,
+              box-shadow 0.4s ease;
 }
 
 .card:hover .icon {
@@ -103,4 +102,62 @@
   box-sizing: border-box;
   border-bottom: var(--image-border-color);
   filter: saturate(1.1);
+}
+
+/* ===========================
+   Animations
+   =========================== */
+
+/* Grid fade transitions */
+#grid.fade-out {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity var(--transition-normal),
+              transform var(--transition-normal);
+}
+
+#grid.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--transition-normal),
+              transform var(--transition-normal);
+}
+
+/* Card entrance animation */
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card {
+  animation: cardEnter 0.4s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* Staggered animation delay for cards */
+.card:nth-child(1) { animation-delay: 0.02s; }
+.card:nth-child(2) { animation-delay: 0.04s; }
+.card:nth-child(3) { animation-delay: 0.06s; }
+.card:nth-child(4) { animation-delay: 0.08s; }
+.card:nth-child(5) { animation-delay: 0.10s; }
+.card:nth-child(6) { animation-delay: 0.12s; }
+.card:nth-child(7) { animation-delay: 0.14s; }
+.card:nth-child(8) { animation-delay: 0.16s; }
+.card:nth-child(9) { animation-delay: 0.18s; }
+.card:nth-child(10) { animation-delay: 0.20s; }
+.card:nth-child(11) { animation-delay: 0.22s; }
+.card:nth-child(12) { animation-delay: 0.24s; }
+.card:nth-child(13) { animation-delay: 0.26s; }
+.card:nth-child(14) { animation-delay: 0.28s; }
+.card:nth-child(15) { animation-delay: 0.30s; }
+.card:nth-child(16) { animation-delay: 0.32s; }
+
+/* Active state feedback on click */
+.card:active {
+  transform: translateY(-1px) scale(0.98);
 }

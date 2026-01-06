@@ -1,23 +1,66 @@
+/* ===========================
+   CSS Variables & Theming
+   =========================== */
+
+:root {
+  /* Timing Variables */
+  --transition-fast: 0.2s;
+  --transition-normal: 0.3s;
+  --transition-slow: 0.6s;
+
+  /* Shadows */
+  --shadow-hover: rgba(0, 0, 0, 0.07) 0px 1px 2px,
+    rgba(0, 0, 0, 0.07) 0px 2px 4px,
+    rgba(0, 0, 0, 0.07) 0px 4px 8px,
+    rgba(0, 0, 0, 0.07) 0px 8px 16px,
+    rgba(0, 0, 0, 0.07) 0px 16px 32px,
+    rgba(0, 0, 0, 0.07) 0px 32px 64px;
+}
+
 /* Light Theme */
+@media (prefers-color-scheme: light) {
+  :root {
+    --card-backgroud: rgba(255, 255, 255, 0.3);
+    --card-border: solid 0.5px #c9c9c9;
+    --card-backgroud-hover: rgba(255, 255, 255, 0.8);
+    --image-background-color: rgb(41, 56, 74);
+    --body-background-color: #dfe1e5;
+    --body-background-image: linear-gradient(0deg, #dfe1e5 0%, #d7ebf0 25%, #f4e8d4 50%, #d7ebf0 75%, #dfe1e5 100%);
+    --text-color: rgb(62, 64, 73);
+    --image-border-color: solid 0.5px #c9c9c9;
 
-@media (prefers-color-scheme: light) { :root {
---card-backgroud: rgba(255, 255, 255, 0.3);
---card-border: solid 0.5px #c9c9c9;
---card-backgroud-hover: rgba(255, 255, 255, 0.8);
---image-background-color: rgb(41, 56, 74);
---body-background-color: #dfe1e5;
---body-background-image: linear-gradient(0deg, #dfe1e5 0%, #d7ebf0 25%, #f4e8d4 50%, #d7ebf0 75%, #dfe1e5 100%);
---text-color: rgb(62, 64, 73);
---image-border-color:solid 0.5px #c9c9c9;
-}}
+    /* Icons */
+    --icon-color: #707070;
+    --icon-color-hover: #3a3a3a;
+    --icon-color-active: #3be696;
 
-@media (prefers-color-scheme: dark) { :root {
---card-backgroud: #222222;
---card-border: solid 1px #363636;
---card-backgroud-hover: #171717;
---image-background-color: rgb(37, 37, 37);
---body-background-color: #26252C;
---body-background-image: linear-gradient(0deg, #26252C 0%, #332416 35%, #12272d 65%, #26252C 100%);
---text-color: rgb(192, 194, 205);
---image-border-color:solid 1px #363636;
-}}
+    /* Toggle */
+    --toggle-bg: rgb(91, 114, 114);
+    --toggle-bg-active: #3be696;
+    --toggle-knob: #fff;
+  }
+}
+
+/* Dark Theme */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --card-backgroud: #222222;
+    --card-border: solid 1px #363636;
+    --card-backgroud-hover: #171717;
+    --image-background-color: rgb(37, 37, 37);
+    --body-background-color: #26252C;
+    --body-background-image: linear-gradient(0deg, #26252C 0%, #332416 35%, #12272d 65%, #26252C 100%);
+    --text-color: rgb(192, 194, 205);
+    --image-border-color: solid 1px #363636;
+
+    /* Icons */
+    --icon-color: #707070;
+    --icon-color-hover: #ffffff;
+    --icon-color-active: #3be696;
+
+    /* Toggle */
+    --toggle-bg: rgb(91, 114, 114);
+    --toggle-bg-active: #3be696;
+    --toggle-knob: #fff;
+  }
+}

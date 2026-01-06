@@ -1,53 +1,65 @@
+/* Responsive Grid Layout */
 #grid {
   display: grid;
   gap: 1rem;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(8, 1fr); /* 8 columns by default */
+  opacity: 1;
+  transform: translateY(0);
 }
 
+/* 7 columns - Extra large screens */
 @media screen and (max-width: 1800px) {
   #grid {
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(7, 1fr);
   }
 }
 
+/* 6 columns - Large screens */
 @media screen and (max-width: 1500px) {
   #grid {
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(6, 1fr);
   }
 }
 
+/* 5 columns - Desktop */
 @media screen and (max-width: 1200px) {
   #grid {
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(5, 1fr);
   }
 }
 
+/* 4 columns - Tablet landscape */
 @media screen and (max-width: 900px) {
   #grid {
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
+/* 3 columns - Tablet portrait */
 @media screen and (max-width: 700px) {
   #grid {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
+/* 3 columns - Mobile with reduced gap */
 @media screen and (max-width: 500px) {
   #grid {
-    gap:0.5rem;
+    gap: 0.5rem;
   }
+
   body {
     padding: 0 1rem 1rem 1rem;
   }
 }
 
+/* 2 columns - Small mobile */
 @media screen and (max-width: 410px) {
   #grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
+
   body {
-    padding: 1rem 1rem;
+    padding: 1rem;
   }
 }

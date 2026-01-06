@@ -8,15 +8,60 @@ header {
   padding: 4vh 0;
 }
 
-header h1{
-  margin-bottom: 0px;
-  margin-top: 0px;
+header h1 {
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
-.favorite-priority-toggle {
+.header-left,
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.header-logo {
+  margin: 0 10px;
+  transition: transform var(--transition-fast),
+              opacity var(--transition-fast);
+}
+
+.header-logo:hover {
+  transform: scale(1.1) rotate(5deg);
+  opacity: 0.8;
+}
+
+.header-icon {
+  font-size: 20px;
+  color: var(--icon-color);
+  transition: color var(--transition-normal),
+              transform var(--transition-fast);
   cursor: pointer;
 }
 
-.favorite-priority-toggle:hover {
-  color: white;
+.header-icon:hover {
+  color: var(--icon-color-hover);
+  transform: scale(1.1);
+}
+
+.header-icon:active {
+  transform: scale(0.95);
+}
+
+.favorite-priority-toggle {
+  margin-right: 6px;
+}
+
+.favorite-priority-toggle.active {
+  color: var(--icon-color-active);
+}
+
+.header-image-icon {
+  margin-left: 15px;
+  margin-right: 10px;
+}
+
+/* Visual indicator for toggle state */
+.header-right .header-icon.mode-active {
+  color: var(--icon-color-active);
+  filter: drop-shadow(0 0 4px var(--icon-color-active));
 }
