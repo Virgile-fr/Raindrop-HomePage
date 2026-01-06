@@ -4,16 +4,30 @@ const MAX_FAVORITE_PAGES = 2;
 const FAVORITE_QUERY = encodeURIComponent("❤️");
 
 async function fetchJson(url) {
-  const response = await fetch(url, {
-    method: "GET",
-    headers: { Authorization: "Bearer " + token },
-  });
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { Authorization: "Bearer " + token },
+    });
 
-  if (!response.ok) {
-    throw new Error(`Request failed: ${response.status}`);
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error("Token invalide. Veuillez vérifier votre token Raindrop.");
+      } else if (response.status === 403) {
+        throw new Error("Accès refusé. Vérifiez les permissions de votre token.");
+      } else if (response.status === 429) {
+        throw new Error("Trop de requêtes. Veuillez patienter quelques instants.");
+      }
+      throw new Error(`Erreur de requête: ${response.status} - ${response.statusText}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error("Erreur de réseau. Vérifiez votre connexion internet.");
+    }
+    throw error;
   }
-
-  return response.json();
 }
 
 async function fetchcollections() {
@@ -90,15 +104,24 @@ async function renderFavoriteCards(renderer) {
     refreshIconFilterColors();
   } catch (error) {
     console.error("Failed to render favorites", error);
+
+    const errorMessage = document.createElement("div");
+    errorMessage.style.cssText = "padding: 40px; text-align: center; color: #ff4444; font-size: 14px; max-width: 600px; margin: 0 auto;";
+    errorMessage.innerHTML = `
+      <h2 style="margin-bottom: 16px;">⚠️ Erreur de chargement</h2>
+      <p style="margin-bottom: 12px;">${error.message || "Impossible de charger vos favoris."}</p>
+      <p style="font-size: 12px; opacity: 0.8;">Vérifiez votre token et votre connexion internet.</p>
+    `;
+    grid.appendChild(errorMessage);
   }
 }
 
 function fetchCardsIcons() {
-  renderFavoriteCards((result) => test(result.link, result.title));
+  renderFavoriteCards((result) => renderIconCard(result.link, result.title));
 }
 
 function fetchCardsCovers() {
-  renderFavoriteCards((result) => test2(result.link, result.title, result.cover));
+  renderFavoriteCards((result) => renderCoverCard(result.link, result.title, result.cover));
 }
 
 // result.cover = preview in raindrop
