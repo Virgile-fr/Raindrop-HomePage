@@ -83,20 +83,10 @@ function getFaviconPreference(address) {
 function allowsCrossOriginLoading(url) {
   if (!url) return false;
 
-  // Allow CORS for external favicon services
-  const faviconServices = [
-    "www.google.com",
-    "gstatic.com",
-    "favicon.vemetric.com",
-    "icons.duckduckgo.com",
-    "api.statvoo.com"
-  ];
-
+  const blockedHosts = ["www.google.com"];
   try {
     const hostname = new URL(url).hostname;
-    // Allow CORS for known favicon services and any external domains
-    return faviconServices.some(service => hostname.includes(service)) ||
-           hostname !== window.location.hostname;
+    return !blockedHosts.includes(hostname);
   } catch {
     return false;
   }

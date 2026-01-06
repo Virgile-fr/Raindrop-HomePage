@@ -140,11 +140,6 @@ function applyFilterBackground(filter, color) {
 function colorizeIconBackground(icon) {
   if (icon.dataset.colorized) return;
 
-  // Don't try to colorize images that failed to load
-  if (!icon.complete || icon.naturalWidth === 0 || icon.naturalHeight === 0) {
-    return;
-  }
-
   const filter = icon.closest(".filter");
   if (!filter) return;
 
