@@ -1,4 +1,4 @@
-const GOOGLE_FAVICON_PRIORITY_KEY = "googleFaviconPriority";
+const DUCKDUCKGO_FAVICON_PRIORITY_KEY = "duckduckgoFaviconPriority";
 
 function extractDomain(address) {
   try {
@@ -31,12 +31,11 @@ function favicon(adress) {
   return (newadress = splitadress + "/favicon.ico");
 }
 
-function googlefavicon(adress) {
-  let resolution = 256;
-  const domain = extractHost(adress);
+function duckduckgofavicon(adress) {
+  const domain = extractDomain(adress);
   if (!domain) return null;
 
-  return `https://www.google.com/s2/favicons?sz=${resolution}&domain=${domain}`;
+  return `https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`;
 }
 
 function vemetricfavicon(adress) {
@@ -46,14 +45,6 @@ function vemetricfavicon(adress) {
   return `https://favicon.vemetric.com/${encodeURIComponent(domain)}`;
 }
 
-function duckduckgofavicon(adress) {
-  let splitadress = adress.split("/");
-  splitadress = splitadress.slice(2, 3);
-  splitadress = splitadress.join("/");
-  return (newadress =
-    "https://icons.duckduckgo.com/ip2/" + splitadress + ".ico");
-}
-
 function statvoofavicon(adress) {
   let splitadress = adress.split("/");
   splitadress = splitadress.slice(0, 3);
@@ -61,23 +52,23 @@ function statvoofavicon(adress) {
   return (newadress = "https://api.statvoo.com/favicon/?url=" + splitadress);
 }
 
-function isGoogleFaviconPriority() {
-  return localStorage.getItem(GOOGLE_FAVICON_PRIORITY_KEY) === "true";
+function isDuckDuckGoFaviconPriority() {
+  return localStorage.getItem(DUCKDUCKGO_FAVICON_PRIORITY_KEY) === "true";
 }
 
-function setGoogleFaviconPriority(isGoogleFirst) {
-  localStorage.setItem(GOOGLE_FAVICON_PRIORITY_KEY, isGoogleFirst);
+function setDuckDuckGoFaviconPriority(isDuckDuckGoFirst) {
+  localStorage.setItem(DUCKDUCKGO_FAVICON_PRIORITY_KEY, isDuckDuckGoFirst);
 }
 
 function getFaviconPreference(address) {
   const vemetricIcon = vemetricfavicon(address);
-  const googleIcon = googlefavicon(address);
+  const duckduckgoIcon = duckduckgofavicon(address);
 
-  if (isGoogleFaviconPriority()) {
-    return { primary: googleIcon, fallback: vemetricIcon };
+  if (isDuckDuckGoFaviconPriority()) {
+    return { primary: duckduckgoIcon, fallback: vemetricIcon };
   }
 
-  return { primary: vemetricIcon, fallback: googleIcon };
+  return { primary: vemetricIcon, fallback: duckduckgoIcon };
 }
 
 function allowsCrossOriginLoading(url) {
@@ -85,8 +76,6 @@ function allowsCrossOriginLoading(url) {
 
   // Allow CORS for external favicon services
   const faviconServices = [
-    "www.google.com",
-    "gstatic.com",
     "favicon.vemetric.com",
     "icons.duckduckgo.com",
     "api.statvoo.com"
@@ -109,18 +98,18 @@ function updateFaviconPriorityIndicator() {
     return;
   }
 
-  toggleIcon.classList.toggle("google-priority", isGoogleFaviconPriority());
+  toggleIcon.classList.toggle("duckduckgo-priority", isDuckDuckGoFaviconPriority());
   toggleIcon.setAttribute(
     "title",
-    isGoogleFaviconPriority()
-      ? "Icônes Google en priorité (cliquer pour inverser)"
+    isDuckDuckGoFaviconPriority()
+      ? "Icônes DuckDuckGo en priorité (cliquer pour inverser)"
       : "Icônes Vemetric en priorité (cliquer pour inverser)"
   );
 }
 
 function toggleFaviconPriority() {
-  const newPriority = !isGoogleFaviconPriority();
-  setGoogleFaviconPriority(newPriority);
+  const newPriority = !isDuckDuckGoFaviconPriority();
+  setDuckDuckGoFaviconPriority(newPriority);
   updateFaviconPriorityIndicator();
 
   if (typeof toggle !== "undefined" && !toggle.checked) {
