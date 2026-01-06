@@ -23,9 +23,11 @@ function renderIconCard(lien, titre) {
   const { primary, fallback } = getFaviconPreference(lien);
   const initialIcon = primary ?? fallback ?? "";
   const fallbackIcon = fallback ?? "";
-  const crossOriginAttr = allowsCrossOriginLoading(initialIcon)
-    ? ' crossOrigin="anonymous"'
-    : "";
+
+  // Enable CORS for both primary and fallback if either supports it
+  const useCrossOrigin = allowsCrossOriginLoading(initialIcon) ||
+                          allowsCrossOriginLoading(fallbackIcon);
+  const crossOriginAttr = useCrossOrigin ? ' crossOrigin="anonymous"' : "";
 
   const escapedUrl = escapeHtml(lien);
   const escapedTitle = escapeHtml(titre);
@@ -36,7 +38,7 @@ function renderIconCard(lien, titre) {
   <a href="${escapedUrl}" target="_blank" rel="noopener noreferrer">
     <div class="card icon-cards">
       <div class="filter">
-          <img class="icon" src="${escapedIcon}"${crossOriginAttr} alt="${escapedTitle}" loading="lazy" onerror="this.onerror=null; this.src='${escapedFallback}'">
+          <img class="icon" src="${escapedIcon}"${crossOriginAttr} alt="${escapedTitle}" loading="lazy" onerror="this.onerror=null; this.removeAttribute('data-colorized'); this.src='${escapedFallback}'">
         </div>
         <div class="title" title="${escapedTitle}">${escapeHtml(smallerTitle(titre))}</div>
     </div>
