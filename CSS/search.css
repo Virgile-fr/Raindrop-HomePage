@@ -98,3 +98,8 @@ header > .header-group { flex-shrink: 0; }
   #search-engine-name { font-size: 11px; padding-right: 7px; }
   .search-pill { padding: 0 12px; gap: 7px; }
 }
+
+.search-engine-section { margin-top: 5px; padding: 10px 10px 5px; border-top: 1px solid var(--search-line); font-size: 10px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--search-muted); }
+.search-engine-logo { border: 0; }
+.search-engine-logo svg { width: 20px; height: 20px; }
+.search-engine-key { font: inherit; font-size: 11px; color: var(--search-muted); border: 1px solid var(--search-line); border-radius: 5px; padding: 2px 6px; }

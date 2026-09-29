@@ -244,3 +244,9 @@ a new tab. Search terms are not sent to external services until submission and
 are not stored. The header wraps the search onto its own row on narrow screens.
 
 No tests or browser validation were run for this change, as requested.
+
+The dropdown also lists all seven engines below bookmark matches. Click an engine
+or select it with the arrow keys to search the current text without typing a
+prefix. With no bookmark matches, Enter defaults to Google; an explicitly selected
+engine or prefix takes precedence. Empty queries never navigate. Engine searches
+remain local until a click or Enter confirms them.
