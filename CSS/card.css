@@ -128,3 +128,26 @@
   .card, .card .icon { transform: none !important; }
   .card::after { display: none; }
 }
+
+/* A thin moving specular rim: brighter toward the light, quiet opposite it. */
+@supports (mask-composite: exclude) or (-webkit-mask-composite: xor) {
+  .card::before {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    inset: -1px;
+    padding: 1px;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: calc(var(--float-light, 0) * 3);
+    background: radial-gradient(ellipse at var(--float-light-x, 50%) var(--float-light-y, 40%),
+      #fff 0%, rgba(255, 255, 255, .85) 22%, rgba(255, 255, 255, .24) 55%, rgba(255, 255, 255, .06) 80%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card::before { display: none; }
+}
