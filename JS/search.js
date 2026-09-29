@@ -31,6 +31,7 @@
   let active = -1;
   let composing = false;
   let renderedRows = [];
+  let rowActions = [];
   let lastAnnouncement = "";
 
   const normalize = value => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("fr");
@@ -97,6 +98,7 @@
     active = -1;
     input.removeAttribute("aria-activedescendant");
     renderedRows = [];
+    rowActions = [];
     const fragment = document.createDocumentFragment();
     if (!mode && text) {
       matches.slice(0, 8).forEach((entry, index) => {
@@ -128,6 +130,51 @@
           if (active !== index) { active = index; paintActive(); }
         });
         renderedRows.push(row);
+        rowActions.push(newTab => openMatch(index, newTab));
+        fragment.append(row);
+      });
+    }
+    if (text) {
+      const separator = document.createElement("div");
+      separator.className = "search-engine-section";
+      separator.textContent = "Rechercher sur";
+      separator.setAttribute("role", "presentation");
+      fragment.append(separator);
+      const engineKeys = mode ? [mode, ...Object.keys(engines).filter(key => key !== mode)] : Object.keys(engines);
+      engineKeys.forEach(key => {
+        const engine = engines[key];
+        const index = renderedRows.length;
+        const row = document.createElement("div");
+        row.id = `search-result-${index}`;
+        row.className = "search-result search-engine-result";
+        row.setAttribute("role", "option");
+        row.setAttribute("aria-selected", "false");
+        row.setAttribute("aria-label", `Rechercher ${text} sur ${engine.name}`);
+        const logo = document.createElement("span");
+        logo.className = "search-result-initial search-engine-logo";
+        logo.innerHTML = engine.icon; // Fixed local icons, never query markup.
+        const copy = document.createElement("span");
+        copy.className = "search-result-copy";
+        const title = document.createElement("span");
+        title.className = "search-result-title";
+        title.textContent = engine.name;
+        const term = document.createElement("span");
+        term.className = "search-result-domain";
+        term.textContent = text;
+        copy.append(title, term);
+        const hint = document.createElement("kbd");
+        hint.className = "search-engine-key";
+        hint.textContent = key;
+        hint.setAttribute("aria-hidden", "true");
+        row.append(logo, copy, hint);
+        const action = newTab => navigate(engine.url(encodeURIComponent(query())), newTab);
+        row.addEventListener("pointerdown", event => event.preventDefault());
+        row.addEventListener("click", event => action(event.ctrlKey || event.metaKey || event.shiftKey));
+        row.addEventListener("pointermove", () => {
+          if (active !== index) { active = index; paintActive(); }
+        });
+        renderedRows.push(row);
+        rowActions.push(action);
         fragment.append(row);
       });
     }
@@ -137,7 +184,7 @@
     if (mode) {
       caption.textContent = text ? `Entrée pour rechercher sur ${engines[mode].name}` : `Rechercher sur ${engines[mode].name}`;
     } else if (text) {
-      caption.textContent = matches.length ? `${matches.length} favori${matches.length > 1 ? "s" : ""} · ↑ ↓ pour choisir · Entrée pour ouvrir` : "Aucun favori trouvé";
+      caption.textContent = matches.length ? `${matches.length} favori${matches.length > 1 ? "s" : ""} · ↑ ↓ pour choisir · Entrée pour ouvrir` : "Aucun favori · Entrée pour rechercher sur Google";
       if (indexedCards.length === 0 && grid.getAttribute("aria-busy") === "true") caption.textContent = "Chargement des favoris…";
     } else caption.textContent = "Vos favoris, ou un raccourci suivi d’un espace";
     if (focused()) {
@@ -193,9 +240,9 @@
     } else if (event.key === "Enter") {
       event.preventDefault();
       if (!query()) return;
-      if (mode) navigate(engines[mode].url(encodeURIComponent(query())), event.ctrlKey || event.metaKey);
-      else openMatch(active < 0 ? 0 : active, event.ctrlKey || event.metaKey);
-    } else if (!mode && renderedRows.length && ["ArrowDown", "ArrowUp"].includes(event.key)) {
+      const action = rowActions[active < 0 ? 0 : active];
+      if (action) action(event.ctrlKey || event.metaKey);
+    } else if (renderedRows.length && ["ArrowDown", "ArrowUp"].includes(event.key)) {
       event.preventDefault();
       panel.hidden = false;
       input.setAttribute("aria-expanded", "true");
