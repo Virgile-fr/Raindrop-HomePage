@@ -34,7 +34,7 @@ and close the tab (other applications' storage is preserved):
 for (const key of [
   'token', 'raindropFavoritesCacheV1', 'favoriteUsageCounts',
   'googleFaviconPriority', 'iconApiProvidersV1', 'switch',
-  'iconSampledColorsV1', 'vemetricMetadataV1'
+  'iconSampledColorsV1', 'vemetricMetadataV1', 'googlePlaceholderV1'
 ]) localStorage.removeItem(key);
 ```
 
@@ -58,6 +58,12 @@ for (const key of [
   not the Raindrop token. Colors are cached locally for 30 days (500 URLs).
 - Vemetric metadata is read with an unauthenticated request to identify its
   default placeholder and cached locally for 24 hours (500 URLs).
+
+- Google placeholder detection fetches a readable image through wsrv.nl without
+  credentials and compares it with a local reference. Results are cached for
+  24 hours (500 URLs). The same response supplies the sampled color.
+- Initials icons are generated locally with canvas and do not transmit titles
+  or images to a third-party service.
 
 ## Reporting
 

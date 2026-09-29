@@ -5,31 +5,54 @@ const ICON_PROVIDERS_KEY = "iconApiProvidersV1";
 const ICON_PROVIDERS = {
   vemetric: {
     name: "Vemetric",
-    description: "128 px · gratuit, sans clé · couleurs des cartes",
+    description: "128 px · free, no API key · sampled card colors",
     cors: true,
     url: domain => `https://favicon.vemetric.com/${domain}?size=128`,
   },
   google: {
     name: "Google",
-    description: "128 px demandés · couleur analysée de l’icône · icône générique possible",
+    description: "128 px requested · sampled icon colors · known placeholder detection",
     cors: false,
     url: domain => `https://www.google.com/s2/favicons?sz=128&domain=${domain}`,
   },
   faviconim: {
     name: "Favicon.im",
-    description: "Jusqu’à 256 px · gratuit, sans clé · disponibilité variable",
+    description: "Up to 256 px · free, no API key · availability varies",
     cors: true,
     url: domain => `https://a.favicon.im/${domain}?larger=true&throw-error-on-404=true`,
   },
   iconhorse: {
     name: "Icon Horse",
-    description: "1 000 icônes/mois · rechargements susceptibles de consommer le quota",
+    description: "1,000 icons/month · reloads may count toward the quota",
     cors: false,
     url: domain => `https://icon.horse/icon/${domain}`,
   },
 };
 const RECOMMENDED_ICON_PROVIDERS = ["vemetric", "google"];
-const FALLBACK_ICON = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 42 42"><text x="21" y="30" text-anchor="middle" font-size="30">★</text></svg>');
+function createInitialIcon(address, title = "") {
+  const domain = new URL(address).hostname.replace(/^www\./, "");
+  const words = (String(title).trim() || domain.split(".")[0]).match(/[\p{L}\p{N}]+/gu) || ["?"];
+  const letters = (words.length > 1 ? Array.from(words[0])[0] + Array.from(words[1])[0] : Array.from(words[0]).slice(0, 2).join(""))
+    .toLocaleUpperCase("en");
+  let hash = 0;
+  for (const character of domain) hash = ((hash * 31) + character.codePointAt(0)) >>> 0;
+  const background = `hsl(${hash % 360}, 55%, 38%)`;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 128;
+  const context = canvas.getContext("2d");
+  if (context) {
+    context.fillStyle = background;
+    context.fillRect(0, 0, 128, 128);
+    context.fillStyle = "#ffffff";
+    context.font = "600 54px system-ui, sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(letters, 64, 67, 110);
+    return canvas.toDataURL("image/png");
+  }
+  // Letters are restricted to Unicode letters/numbers, so they are safe XML.
+  return "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="${background}"/><text x="64" y="84" text-anchor="middle" font-family="sans-serif" font-size="54" font-weight="600" fill="white">${letters}</text></svg>`);
+}
 
 function readIconProviders() {
   const saved = storage.readJSON(ICON_PROVIDERS_KEY, null);
@@ -95,7 +118,7 @@ function isVemetricDefault(source) {
   return request;
 }
 
-function loadFavicon(image, address) {
+function loadFavicon(image, address, title) {
   const urls = getFaviconPreference(address);
   const sources = [];
   selectedIconProviders.forEach((id, index) => {
@@ -103,7 +126,7 @@ function loadFavicon(image, address) {
     if (ICON_PROVIDERS[id].cors) sources.push({ id, url, cors: true });
     sources.push({ id, url, cors: false });
   });
-  sources.push({ id: "local", url: FALLBACK_ICON, cors: false });
+  sources.push({ id: "local", url: null, cors: false });
   let index = 0;
   let current;
   let generation = 0;
@@ -114,7 +137,7 @@ function loadFavicon(image, address) {
     delete image.dataset.colorized;
     if (current.cors) image.crossOrigin = "anonymous";
     else image.removeAttribute("crossorigin");
-    image.src = current.url;
+    image.src = current.url || createInitialIcon(address, title);
   };
   image.addEventListener("error", loadNext);
   image.addEventListener("load", async () => {
@@ -127,6 +150,12 @@ function loadFavicon(image, address) {
       loadNext();
       return;
     }
+    if (loaded.id === "google" && await isGoogleDefault(loaded.url)) {
+      if (generation !== loadedGeneration) return;
+      while (sources[index]?.id === "google") index += 1;
+      loadNext();
+      return;
+    }
     if (generation === loadedGeneration) await colorizeIconBackground(image);
   });
   loadNext();
@@ -135,8 +164,8 @@ function loadFavicon(image, address) {
 function updateFaviconPriorityIndicator() {
   const button = document.querySelector(".favorite-priority-toggle");
   const first = selectedIconProviders[0];
-  const label = `Icônes ${ICON_PROVIDERS[first].name} en priorité` +
-    (selectedIconProviders.length > 1 ? " (cliquer pour passer au service suivant)" : "");
+  const label = `${ICON_PROVIDERS[first].name} icons first` +
+    (selectedIconProviders.length > 1 ? " (click to use the next provider)" : "");
   button.classList.toggle("google-priority", first === "google");
   button.title = label;
   button.setAttribute("aria-label", label);
@@ -189,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       const moveControls = document.createElement("div");
       moveControls.className = "provider-move";
-      for (const [direction, symbol, wording] of [[-1, "↑", "Monter"], [1, "↓", "Descendre"]]) {
+      for (const [direction, symbol, wording] of [[-1, "↑", "Move up"], [1, "↓", "Move down"]]) {
         const button = document.createElement("button");
         button.type = "button";
         button.textContent = symbol;
@@ -217,7 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function updateSaveState() {
     saveButton.disabled = draftEnabled.size === 0;
-    feedback.textContent = draftEnabled.size ? "" : "Sélectionnez au moins un service.";
+    feedback.textContent = draftEnabled.size ? "" : "Select at least one provider.";
   }
 
   document.getElementById("icons-api").addEventListener("click", () => {

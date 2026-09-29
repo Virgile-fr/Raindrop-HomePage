@@ -34,7 +34,7 @@ document.getElementById("change-token").addEventListener("click", async (event) 
 
 async function getGrid() {
   if (!token) {
-    setStatus("Saisissez votre token Raindrop pour afficher vos favoris.");
+    setStatus("Enter your Raindrop token to display your favorites.");
     return;
   }
   await restoreFavoritesCache();

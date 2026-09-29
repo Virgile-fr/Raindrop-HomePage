@@ -34,7 +34,7 @@
   let rowActions = [];
   let lastAnnouncement = "";
 
-  const normalize = value => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("fr");
+  const normalize = value => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("en");
   const focused = () => root.contains(document.activeElement);
   const query = () => input.value.trim();
 
@@ -52,8 +52,8 @@
     badge.textContent = engine?.name || "";
     badge.hidden = !engine;
     root.classList.toggle("has-engine", Boolean(engine));
-    input.placeholder = engine ? "Votre recherche…" : "Rechercher…";
-    input.setAttribute("aria-label", engine ? `Rechercher sur ${engine.name}` : "Rechercher dans les favoris");
+    input.placeholder = engine ? "Your search…" : "Search…";
+    input.setAttribute("aria-label", engine ? `Search on ${engine.name}` : "Search favorites");
   }
 
   function closePanel() {
@@ -109,7 +109,7 @@
         row.setAttribute("aria-selected", "false");
         const initial = document.createElement("span");
         initial.className = "search-result-initial";
-        initial.textContent = Array.from(entry.title)[0]?.toLocaleUpperCase("fr") || "↗";
+        initial.textContent = Array.from(entry.title)[0]?.toLocaleUpperCase("en") || "↗";
         const copy = document.createElement("span");
         copy.className = "search-result-copy";
         const title = document.createElement("span");
@@ -137,7 +137,7 @@
     if (text) {
       const separator = document.createElement("div");
       separator.className = "search-engine-section";
-      separator.textContent = "Rechercher sur";
+      separator.textContent = "Search on";
       separator.setAttribute("role", "presentation");
       fragment.append(separator);
       const engineKeys = mode ? [mode, ...Object.keys(engines).filter(key => key !== mode)] : Object.keys(engines);
@@ -149,7 +149,7 @@
         row.className = "search-result search-engine-result";
         row.setAttribute("role", "option");
         row.setAttribute("aria-selected", "false");
-        row.setAttribute("aria-label", `Rechercher ${text} sur ${engine.name}`);
+        row.setAttribute("aria-label", `Search for ${text} on ${engine.name}`);
         const logo = document.createElement("span");
         logo.className = "search-result-initial search-engine-logo";
         logo.innerHTML = engine.icon; // Fixed local icons, never query markup.
@@ -182,16 +182,16 @@
     results.hidden = renderedRows.length === 0;
     tips.hidden = Boolean(mode || text);
     if (mode) {
-      caption.textContent = text ? `Entrée pour rechercher sur ${engines[mode].name}` : `Rechercher sur ${engines[mode].name}`;
+      caption.textContent = text ? `Press Enter to search on ${engines[mode].name}` : `Search on ${engines[mode].name}`;
     } else if (text) {
-      caption.textContent = matches.length ? `${matches.length} favori${matches.length > 1 ? "s" : ""} · ↑ ↓ pour choisir · Entrée pour ouvrir` : "Aucun favori · Entrée pour rechercher sur Google";
-      if (indexedCards.length === 0 && grid.getAttribute("aria-busy") === "true") caption.textContent = "Chargement des favoris…";
-    } else caption.textContent = "Vos favoris, ou un raccourci suivi d’un espace";
+      caption.textContent = matches.length ? `${matches.length} favorite${matches.length > 1 ? "s" : ""} · ↑ ↓ to select · Enter to open` : "No favorites · Press Enter to search Google";
+      if (indexedCards.length === 0 && grid.getAttribute("aria-busy") === "true") caption.textContent = "Loading favorites…";
+    } else caption.textContent = "Your favorites, or a shortcut followed by a space";
     if (focused()) {
       panel.hidden = false;
       input.setAttribute("aria-expanded", String(renderedRows.length > 0));
     } else closePanel();
-    announce(mode ? `${engines[mode].name}. Entrée pour rechercher.` : text ? caption.textContent : "Recherche dans les favoris");
+    announce(mode ? `${engines[mode].name}. Press Enter to search.` : text ? caption.textContent : "Searching favorites");
   }
 
   function processInput() {

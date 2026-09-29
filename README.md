@@ -172,7 +172,7 @@ with the arrows, then save. Changes apply immediately and are remembered locally
 The star in the header cycles the enabled services' priority. Existing
 Google/Vemetric preferences are preserved until changed.
 
-**Ordre conseillé** selects Vemetric → Google. Favicon.im remains optional after a user-reported loading failure. This is a suggested
+**Recommended order** selects Vemetric → Google. Favicon.im remains optional after a user-reported loading failure. This is a suggested
 order based on the providers' documented features, not measured performance.
 
 | Service | Configuration | Notes |
@@ -188,7 +188,7 @@ or `sourceUrl: "default.svg"` skips directly to the next provider. `source:
 "fallback"` means a real favicon candidate and is not rejected. Metadata is cached
 locally for 24 hours (up to 500 URLs), and requests are deduplicated within the tab.
 If metadata cannot be read, the image is preserved rather than discarding a
-possibly valid icon. Other providers' generic images are not detected.
+possibly valid icon. Google's known generic globe is also detected using the reference image; unknown placeholders from other providers are not detected.
 
 All providers use the same `computeDominantColor` and `applyFilterBackground`
 functions (12×12 sampling and the original gradient). There is no blurred-image
@@ -250,3 +250,29 @@ or select it with the arrow keys to search the current text without typing a
 prefix. With no bookmark matches, Enter defaults to Google; an explicitly selected
 engine or prefix takes precedence. Empty queries never navigate. Engine searches
 remain local until a click or Enter confirms them.
+
+## English interface and missing icons
+
+All application text is English, including search hints, accessible labels,
+provider descriptions, loading states, errors and empty states. Bookmark titles
+remain exactly as supplied by Raindrop.
+
+When the provider chain is exhausted, the app generates a local PNG with one or
+two white initials taken from the bookmark title (hostname if missing). Its
+background hue is stable for that hostname. The actual generated pixels are
+sampled by the same color-analysis function used for external favicons, and the
+same gradient is applied to the card. No relay is needed for generated initials.
+
+The Google URL supplied by the user returned a 16×16 PNG globe (726 bytes) with
+HTTP 404. Normal image errors continue to advance the provider chain. For images
+that do load, a readable copy through the existing wsrv.nl relay is compared
+pixel-for-pixel against the captured globe reference. No rejection based solely
+on file size, dimensions, or color. An explicit upstream 404/410 reported by the
+relay also triggers fallback. Provider/network/relay errors that cannot prove a
+missing icon preserve the displayed image; a new or resized placeholder variant
+may need an updated reference. Successful detection is cached for 24 hours
+(up to 500 URLs) under `googlePlaceholderV1`. Readable image pixels also populate
+the existing color cache, avoiding a second color request.
+
+No test suite or browser validation was run for these changes. The Google URL
+was retrieved to inspect the missing-icon response requested by the user.
