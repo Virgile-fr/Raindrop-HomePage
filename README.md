@@ -214,3 +214,33 @@ Sources consulted 2026-09-29: provider documentation and Vemetric's open-source
 with `source: "default"`, `sourceUrl: "default.svg"`, `bytes: 629`. Detection uses
 metadata, not that size, because encodings/resizing can change the byte length.
 No tests or benchmarks were run for this change.
+
+## Keyboard search
+
+The pill between Favorites and the view controls filters loaded bookmarks as you
+type (title and URL; case/accent insensitive, multiple words). The grid is filtered
+in place without reloading images or calling Raindrop. Up to eight suggestions
+appear under the field; all matching cards remain visible in the grid.
+
+Type anywhere on the page to start, or use Ctrl/Cmd+K. Other editable fields,
+open dialogs, text selections, browser shortcuts and composition are respected.
+There is no autofocus on page load, avoiding an unsolicited mobile keyboard.
+
+| Prefix + space | Destination |
+| --- | --- |
+| `g ` | Google |
+| `y ` | YouTube |
+| `i ` | Google Images |
+| `b ` | Brave Search |
+| `h ` | Hugging Face full-text search |
+| `x ` | X |
+| `s ` | Spotify |
+
+A recognized prefix becomes an engine icon/name inside the pill. Enter submits
+only a non-empty query. Backspace in an empty engine field returns to bookmarks;
+Escape or the clear control resets search. Arrow keys select bookmark suggestions;
+Enter opens the selected (or first) match and records usage. Ctrl/Cmd+Enter opens
+a new tab. Search terms are not sent to external services until submission and
+are not stored. The header wraps the search onto its own row on narrow screens.
+
+No tests or browser validation were run for this change, as requested.

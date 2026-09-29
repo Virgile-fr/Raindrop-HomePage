@@ -16,6 +16,7 @@
   <link href="./CSS/card.css" rel="stylesheet">
   <link href="./CSS/grid.css" rel="stylesheet">
   <link href="./CSS/header.css" rel="stylesheet">
+  <link href="./CSS/search.css" rel="stylesheet">
   <link href="./CSS/toggle.css" rel="stylesheet">
   <link href="./CSS/colors.css" rel="stylesheet">
   <script src="./JS/storage.js" defer></script>
@@ -25,6 +26,7 @@
   <script src="./JS/dominant-color.js" defer></script>
   <script src="./JS/fetch.js" defer></script>
   <script src="./JS/toggle.js" defer></script>
+  <script src="./JS/search.js" defer></script>
 </head>
 <body>
   <header>
@@ -33,6 +35,24 @@
         <img src="https://miro.medium.com/max/1024/1*JtxOMEcB0N7yoGiHjFf1Gg.png" width="30" height="30" alt="" decoding="async">
       </a>
       <h1>Favorites</h1>
+    </div>
+    <div id="homepage-search" class="homepage-search" role="search" aria-label="Favoris et moteurs de recherche">
+      <div class="search-pill">
+        <span id="search-icon" aria-hidden="true"></span>
+        <span id="search-engine-name" hidden></span>
+        <input id="search-input" type="text" role="combobox" aria-autocomplete="list" aria-controls="search-results" aria-expanded="false" aria-label="Rechercher dans les favoris" aria-describedby="search-help" placeholder="Rechercher…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+        <kbd id="search-shortcut" aria-hidden="true">⌘ / Ctrl K</kbd>
+        <button id="search-clear" type="button" aria-label="Effacer la recherche et revenir aux favoris" hidden><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      </div>
+      <div id="search-panel" class="search-panel" hidden>
+        <p id="search-caption"></p>
+        <div id="search-results" role="listbox" aria-label="Favoris correspondants"></div>
+        <ul id="search-tips" aria-label="Raccourcis suivis d’un espace">
+          <li><kbd>g</kbd> Google</li><li><kbd>y</kbd> YouTube</li><li><kbd>i</kbd> Images</li><li><kbd>b</kbd> Brave</li><li><kbd>h</kbd> Hugging Face</li><li><kbd>x</kbd> X</li><li><kbd>s</kbd> Spotify</li>
+        </ul>
+      </div>
+      <span id="search-help" class="sr-only">Tapez pour filtrer les favoris. Une lettre suivie d’un espace choisit un moteur : g Google, y YouTube, i Google Images, b Brave, h Hugging Face, x X, s Spotify. Flèches pour choisir un favori, Entrée pour ouvrir, Échap pour effacer. Retour arrière dans un champ vide quitte le moteur.</span>
+      <span id="search-announcement" class="sr-only" role="status" aria-live="polite"></span>
     </div>
     <div class="header-group controls">
       <button type="button" class="favorite-priority-toggle icon-button" aria-label="Changer la source des icônes" aria-pressed="false">
@@ -46,6 +66,7 @@
   <main>
     <div class="status" role="status" aria-live="polite"><span id="status-message"></span> <button id="retry" type="button" hidden>Réessayer</button></div>
     <div id="grid" aria-label="Favoris"></div>
+    <p id="search-empty" hidden>Aucun favori ne correspond à cette recherche.</p>
     <noscript>Activez JavaScript pour afficher vos favoris Raindrop.</noscript>
   </main>
   <footer>
