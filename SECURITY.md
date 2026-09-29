@@ -2,7 +2,7 @@
 
 ## Credentials
 
-Enter your Raindrop test token in the browser prompt or use **Configurer le token**.
+Enter your Raindrop test token in the browser prompt or use **token**.
 Never place a real token in `token.js`, a commit, or a shared URL. The app sends
 it only to `https://api.raindrop.io` as an Authorization Bearer header.
 
@@ -33,7 +33,7 @@ and close the tab (other applications' storage is preserved):
 ```js
 for (const key of [
   'token', 'raindropFavoritesCacheV1', 'favoriteUsageCounts',
-  'googleFaviconPriority', 'switch'
+  'googleFaviconPriority', 'iconApiProvidersV1', 'switch'
 ]) localStorage.removeItem(key);
 ```
 
@@ -49,7 +49,7 @@ for (const key of [
 - Favicon services receive bookmark hostnames; cover hosts receive image requests.
   Those third parties do not receive the Raindrop token.
 - Google favicons are displayed without CORS and are not read through canvas.
-  Vemetric images use anonymous CORS for background-color extraction. Each
+  Vemetric and Favicon.im images use anonymous CORS for background-color extraction. Each
   fallback explicitly resets the CORS attribute for the new provider.
 
 ## Reporting

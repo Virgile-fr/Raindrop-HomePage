@@ -46,6 +46,21 @@
     <div id="grid" aria-label="Favoris"></div>
     <noscript>Activez JavaScript pour afficher vos favoris Raindrop.</noscript>
   </main>
-  <footer><button id="change-token" type="button">Configurer le token</button></footer>
+  <footer>
+    <button id="change-token" type="button">token</button>
+    <button id="icons-api" type="button" aria-haspopup="dialog">icons api</button>
+  </footer>
+  <dialog id="icons-dialog" aria-labelledby="icons-dialog-title" aria-describedby="icons-dialog-description">
+    <h2 id="icons-dialog-title">Icons API</h2>
+    <p id="icons-dialog-description">Activez les services souhaités et classez-les par priorité. En cas d’erreur de chargement, le suivant prend le relais.</p>
+    <ul id="icons-provider-list"></ul>
+    <p class="icons-note">La qualité varie selon le site. Une icône générique renvoyée par un service ne déclenche pas le suivant. Les services utilisés reçoivent le nom de domaine du favori.</p>
+    <p id="icons-feedback" role="status"></p>
+    <div class="icons-dialog-actions">
+      <button id="icons-recommended" type="button">Ordre conseillé</button>
+      <button id="icons-cancel" type="button">Annuler</button>
+      <button id="icons-save" type="button">Enregistrer</button>
+    </div>
+  </dialog>
 </body>
 </html>
