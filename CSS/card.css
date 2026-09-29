@@ -110,19 +110,3 @@
 .cover-cards .image { overflow: hidden; }
 .cover-cards .image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 #grid > a { min-width: 0; }
-
-/* When pixel access is unavailable, let CSS blur the displayed artwork.
-   No canvas access, proxy or different icon provider is required. */
-.filter { position: relative; isolation: isolate; }
-.filter::before {
-  content: "";
-  position: absolute;
-  inset: -30%;
-  z-index: -1;
-  pointer-events: none;
-  background-image: var(--icon-backdrop, none);
-  background-position: center;
-  background-size: cover;
-  filter: blur(18px) saturate(1.2);
-  opacity: .8;
-}
