@@ -27,11 +27,11 @@ input[type=checkbox] {
   transition: 0.3s;
 }
 
-input:checked+#switch + label {
+#switch:checked + label {
   background: #3be696;
 }
 
-input:checked+#switch + label:after {
+#switch:checked + label:after {
   left: calc(100% - 3px);
   transform: translateX(-100%);
 }
