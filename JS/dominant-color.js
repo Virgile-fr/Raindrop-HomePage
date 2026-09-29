@@ -141,18 +141,20 @@ function applyFilterBackground(filter, color) {
 }
 
 function colorizeIconBackground(icon) {
-  if (icon.dataset.colorized || !icon.naturalWidth || icon.crossOrigin !== "anonymous") return;
+  if (icon.dataset.colorized) return true;
+  if (!icon.naturalWidth || icon.crossOrigin !== "anonymous") return false;
 
   const filter = icon.closest(".filter");
-  if (!filter) return;
+  if (!filter) return false;
 
   const source = icon.currentSrc || icon.src;
   const color = dominantColorCache.has(source)
     ? dominantColorCache.get(source)
     : computeDominantColor(icon);
   dominantColorCache.set(source, color);
-  if (!color) return;
+  if (!color) return false;
 
   applyFilterBackground(filter, color);
   icon.dataset.colorized = "true";
+  return true;
 }

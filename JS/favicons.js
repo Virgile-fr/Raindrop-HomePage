@@ -11,24 +11,24 @@ const ICON_PROVIDERS = {
   },
   google: {
     name: "Google",
-    description: "128 px demandés · source historique · icône générique possible",
+    description: "128 px demandés · fond coloré depuis l’icône · icône générique possible",
     cors: false,
     url: domain => `https://www.google.com/s2/favicons?sz=128&domain=${domain}`,
   },
   faviconim: {
     name: "Favicon.im",
-    description: "Jusqu’à 256 px · gratuit, sans clé · couleurs des cartes",
+    description: "Jusqu’à 256 px · gratuit, sans clé · disponibilité variable",
     cors: true,
     url: domain => `https://a.favicon.im/${domain}?larger=true&throw-error-on-404=true`,
   },
   iconhorse: {
     name: "Icon Horse",
-    description: "Sans clé · offre gratuite limitée à 1 000 icônes/mois · icône générique possible",
+    description: "1 000 icônes/mois · rechargements susceptibles de consommer le quota",
     cors: false,
     url: domain => `https://icon.horse/icon/${domain}`,
   },
 };
-const RECOMMENDED_ICON_PROVIDERS = ["faviconim", "vemetric", "google"];
+const RECOMMENDED_ICON_PROVIDERS = ["vemetric", "google"];
 const FALLBACK_ICON = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 42 42"><text x="21" y="30" text-anchor="middle" font-size="30">★</text></svg>');
 
 function readIconProviders() {
@@ -50,23 +50,36 @@ function getFaviconPreference(address) {
 }
 
 function loadFavicon(image, address) {
-  const sources = [...getFaviconPreference(address), FALLBACK_ICON];
-  const corsSources = selectedIconProviders.map(id => ICON_PROVIDERS[id].cors);
+  const urls = getFaviconPreference(address);
+  const sources = [];
+  selectedIconProviders.forEach((id, index) => {
+    const url = urls[index];
+    // A displayed image does not need readable pixels. If anonymous CORS
+    // fails (including after a redirect), retry the same image normally.
+    if (ICON_PROVIDERS[id].cors) sources.push({ url, cors: true });
+    sources.push({ url, cors: false });
+  });
+  sources.push({ url: FALLBACK_ICON, cors: false });
   let index = 0;
   const loadNext = () => {
     if (index === sources.length) return;
-    const source = sources[index];
-    const cors = corsSources[index++];
+    const source = sources[index++];
     delete image.dataset.colorized;
-    // Canvas is used only for services explicitly supporting CORS.
-    // Reset this attribute on every fallback (especially before Google).
-    if (cors) image.crossOrigin = "anonymous";
+    if (source.cors) image.crossOrigin = "anonymous";
     else image.removeAttribute("crossorigin");
-    image.src = source;
+    image.src = source.url;
   };
   image.addEventListener("error", loadNext);
   image.addEventListener("load", () => {
-    if (image.crossOrigin === "anonymous") colorizeIconBackground(image);
+    const frame = image.closest(".filter");
+    if (!frame) return;
+    if (colorizeIconBackground(image)) {
+      frame.style.removeProperty("--icon-backdrop");
+    } else {
+      // CSS can display/blur the loaded icon without reading its pixels.
+      // This preserves artwork-based colors without a proxy or another API.
+      frame.style.setProperty("--icon-backdrop", `url("${image.currentSrc || image.src}")`);
+    }
   });
   loadNext();
 }
@@ -167,7 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.getElementById("icons-cancel").addEventListener("click", () => dialog.close());
   document.getElementById("icons-recommended").addEventListener("click", () => {
-    draftOrder = [...RECOMMENDED_ICON_PROVIDERS, "iconhorse"];
+    draftOrder = [...RECOMMENDED_ICON_PROVIDERS, ...Object.keys(ICON_PROVIDERS).filter(id => !RECOMMENDED_ICON_PROVIDERS.includes(id))];
     draftEnabled = new Set(RECOMMENDED_ICON_PROVIDERS);
     renderProviderOptions();
   });
