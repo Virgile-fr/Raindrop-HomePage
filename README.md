@@ -172,18 +172,33 @@ with the arrows, then save. Changes apply immediately and are remembered locally
 The star in the header cycles the enabled services' priority. Existing
 Google/Vemetric preferences are preserved until changed.
 
-**Ordre conseillé** selects Favicon.im → Vemetric → Google. This is a suggested
+**Ordre conseillé** selects Vemetric → Google. Favicon.im remains optional after a user-reported loading failure. This is a suggested
 order based on the providers' documented features, not measured performance.
 
 | Service | Configuration | Notes |
 | --- | --- | --- |
 | [Favicon.im](https://favicon.im/api) | Up to 256 px; explicit 404 on missing icon | Free for reasonable use; no key; CORS for card colors |
 | [Vemetric](https://vemetric.com/favicon-api) | 128 px | Free; no key; CORS for card colors |
-| Google | 128 px requested | Existing provider; displayed without CORS; may return a generic icon |
+| Google | 128 px requested | Displayed without CORS; blurred artwork background; may return a generic icon |
 | [Icon Horse](https://icon.horse/) | Best available icon | Opt-in; free tier limited to 1,000 icons/month; generic fallback |
 
 Only enabled providers are contacted, in order on image load errors. A successful
 generic placeholder cannot be distinguished from a real icon automatically.
-Icon Horse is displayed without CORS; it does not supply the card's sampled color.
+Icon Horse and Google are displayed without CORS. When pixels cannot be sampled,
+the card uses a blurred CSS background from the displayed icon. This is an
+artwork-based visual fallback, not the sampled-color gradient. No proxy or
+additional provider is contacted for colors. The same image URL is reused;
+HTTP caching remains controlled by the browser and the provider.
 Provider features/limits above were consulted on 2026-09-29. No service benchmarks
 were run. To clear these settings, remove `iconApiProvidersV1` from localStorage.
+
+CORS-enabled providers are retried once without CORS before moving to the next
+provider. This addresses blocked pixel access/redirects without claiming to fix
+all provider-side failures. Favicon.im's documented URL is unchanged; its failure
+was reported by the user and was not reproduced with tests.
+
+Icon Horse's public page does not clearly define whether its 1,000/month allowance
+counts requests or unique icons. Repeated network image requests may consume the
+allowance; browser caching is not a quota guarantee. The application has no durable
+local image cache and does not enforce the provider's quota. Keep Icon Horse
+disabled for a frequently reloaded homepage if quota usage is a concern.

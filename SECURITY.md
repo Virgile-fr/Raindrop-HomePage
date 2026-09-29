@@ -49,8 +49,10 @@ for (const key of [
 - Favicon services receive bookmark hostnames; cover hosts receive image requests.
   Those third parties do not receive the Raindrop token.
 - Google favicons are displayed without CORS and are not read through canvas.
-  Vemetric and Favicon.im images use anonymous CORS for background-color extraction. Each
-  fallback explicitly resets the CORS attribute for the new provider.
+  Vemetric and Favicon.im first use anonymous CORS for background-color extraction.
+  On failure, the same image is retried without CORS before the next provider.
+  Each fallback resets the CORS attribute. Where pixel access is unavailable,
+  CSS blurs the displayed image for the background without reading its pixels.
 
 ## Reporting
 
