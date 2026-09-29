@@ -118,10 +118,102 @@ function isVemetricDefault(source) {
   return request;
 }
 
+const ICON_RESULT_KEY = "iconResultsV1";
+const cachedIconResults = storage.readJSON(ICON_RESULT_KEY, {});
+const iconResults = new Map(Object.entries(cachedIconResults && typeof cachedIconResults === "object" ? cachedIconResults : {}));
+const pendingIconResults = new Map();
+let iconSaveTimer;
+
+function persistIconResults() {
+  clearTimeout(iconSaveTimer);
+  iconSaveTimer = setTimeout(() => {
+    // Bound both entry count and encoded image storage; retain newest results.
+    let bytes = 0;
+    const entries = [...iconResults].reverse().filter(([, value]) => {
+      if (!value || value.expires <= Date.now()) return false;
+      const size = JSON.stringify(value).length * 2;
+      if (bytes + size > 2000000) return false;
+      bytes += size;
+      return true;
+    }).slice(0, 500);
+    storage.set(ICON_RESULT_KEY, JSON.stringify(Object.fromEntries(entries.reverse())));
+  }, 150);
+}
+
+function iconRequestUrl(source) {
+  const epoch = storage.get("iconCacheEpoch");
+  if (!epoch) return source;
+  const url = new URL(source);
+  url.searchParams.set("_refresh", epoch);
+  return url.href;
+}
+
+function paintCachedIcon(image, result) {
+  image.removeAttribute("crossorigin");
+  image.src = result.src;
+  if (validIconColor(result.color)) {
+    // Cards may still be inside their construction fragment.
+    queueMicrotask(() => {
+      const filter = image.closest(".filter");
+      if (filter) applyFilterBackground(filter, result.color);
+    });
+  }
+}
+
+const waitingIcons = new WeakMap();
+const iconVisibility = typeof IntersectionObserver === "function" ? new IntersectionObserver(entries => {
+  for (const entry of entries) if (entry.isIntersecting) {
+    iconVisibility.unobserve(entry.target);
+    const start = waitingIcons.get(entry.target);
+    waitingIcons.delete(entry.target);
+    start?.();
+  }
+}, { rootMargin: "300px" }) : null;
+
 function loadFavicon(image, address, title) {
-  const urls = getFaviconPreference(address);
+  const key = JSON.stringify([new URL(address).hostname, selectedIconProviders, title]);
+  const providers = [...selectedIconProviders];
+  const start = (ignoreCache = false) => {
+    const saved = iconResults.get(key);
+    if (!ignoreCache && saved && saved.expires > Date.now() && typeof saved.src === "string" &&
+        /^(data:image\/|https:\/\/)/.test(saved.src)) {
+      image.onerror = () => {
+        image.onerror = null;
+        iconResults.delete(key);
+        persistIconResults();
+        start(true);
+      };
+      paintCachedIcon(image, saved);
+      return;
+    }
+    if (pendingIconResults.has(key)) {
+      pendingIconResults.get(key).then(result => paintCachedIcon(image, result));
+      return;
+    }
+    let finish;
+    pendingIconResults.set(key, new Promise(resolve => { finish = resolve; }));
+    resolveFavicon(image, address, title, providers, result => {
+      iconResults.delete(key);
+      iconResults.set(key, result);
+      while (iconResults.size > 500) iconResults.delete(iconResults.keys().next().value);
+      persistIconResults();
+      pendingIconResults.delete(key);
+      finish(result);
+    });
+  };
+  const saved = iconResults.get(key);
+  if (saved?.expires > Date.now() || !iconVisibility) start();
+  else {
+    waitingIcons.set(image, start);
+    iconVisibility.observe(image);
+  }
+}
+
+function resolveFavicon(image, address, title, providers, finish) {
+  const domain = encodeURIComponent(new URL(address).hostname);
+  const urls = providers.map(id => iconRequestUrl(ICON_PROVIDERS[id].url(domain)));
   const sources = [];
-  selectedIconProviders.forEach((id, index) => {
+  providers.forEach((id, index) => {
     const url = urls[index];
     if (ICON_PROVIDERS[id].cors) sources.push({ id, url, cors: true });
     sources.push({ id, url, cors: false });
@@ -130,7 +222,11 @@ function loadFavicon(image, address, title) {
   let index = 0;
   let current;
   let generation = 0;
+  let timeout;
+  let hadError = false;
+  image.loading = "eager";
   const loadNext = () => {
+    clearTimeout(timeout);
     if (index === sources.length) return;
     current = sources[index++];
     generation += 1;
@@ -138,9 +234,12 @@ function loadFavicon(image, address, title) {
     if (current.cors) image.crossOrigin = "anonymous";
     else image.removeAttribute("crossorigin");
     image.src = current.url || createInitialIcon(address, title);
+    if (current.id !== "local") timeout = setTimeout(() => { hadError = true; loadNext(); }, 5000);
   };
-  image.addEventListener("error", loadNext);
-  image.addEventListener("load", async () => {
+  const onError = () => { hadError = true; loadNext(); };
+  image.addEventListener("error", onError);
+  const onLoad = async () => {
+    clearTimeout(timeout);
     const loaded = current;
     const loadedGeneration = generation;
     if (loaded.id === "vemetric" && await isVemetricDefault(loaded.url)) {
@@ -156,8 +255,25 @@ function loadFavicon(image, address, title) {
       loadNext();
       return;
     }
-    if (generation === loadedGeneration) await colorizeIconBackground(image);
-  });
+    if (generation !== loadedGeneration) return;
+    await colorizeIconBackground(image);
+    if (generation !== loadedGeneration) return;
+    const source = image.currentSrc || image.src;
+    const color = computeDominantColor(image) || dominantColorCache.get(source) || iconColors[source]?.color;
+    let src = source;
+    if (loaded.cors) {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = 128;
+        canvas.getContext("2d").drawImage(image, 0, 0, 128, 128);
+        src = canvas.toDataURL("image/png");
+      } catch { /* The resolved URL still avoids provider probing. */ }
+    }
+    image.removeEventListener("error", onError);
+    image.removeEventListener("load", onLoad);
+    finish({ src, color, expires: Date.now() + (hadError ? 15 * 60000 : loaded.id === "local" ? 86400000 : 7 * 86400000) });
+  };
+  image.addEventListener("load", onLoad);
   loadNext();
 }
 
