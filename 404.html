@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; connect-src 'self' https://api.raindrop.io; object-src 'none'; base-uri 'self'; form-action 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; connect-src 'self' https://api.raindrop.io https://favicon.vemetric.com; object-src 'none'; base-uri 'self'; form-action 'none';">
   <meta name="description" content="Vos favoris Raindrop dans une page d’accueil rapide et minimaliste.">
   <meta name="apple-mobile-web-app-title" content="HomePage">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧭%3C/text%3E%3C/svg%3E">
@@ -56,7 +56,7 @@
     <h2 id="icons-dialog-title">Icons API</h2>
     <p id="icons-dialog-description">Activez les services souhaités et classez-les par priorité. En cas d’erreur de chargement, le suivant prend le relais.</p>
     <ul id="icons-provider-list"></ul>
-    <p class="icons-note">Ordre conseillé : Vemetric puis Google. Icon Horse est à réserver à un usage occasionnel : le cache du navigateur ne garantit pas la préservation du quota. La qualité varie selon le site. Une icône générique renvoyée par un service ne déclenche pas le suivant. Les services utilisés reçoivent le nom de domaine du favori.</p>
+    <p class="icons-note">Ordre conseillé : Vemetric puis Google. Icon Horse est à réserver à un usage occasionnel : le cache du navigateur ne garantit pas la préservation du quota. La qualité varie selon le site. L’icône par défaut de Vemetric déclenche le service suivant. Les icônes génériques des autres services ne sont pas détectées automatiquement. Les services utilisés reçoivent le nom de domaine du favori. Si nécessaire, wsrv.nl reçoit l’URL de l’icône pour permettre l’analyse de sa couleur.</p>
     <p id="icons-feedback" role="status"></p>
     <div class="icons-dialog-actions">
       <button id="icons-recommended" type="button">Ordre conseillé</button>

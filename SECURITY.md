@@ -33,7 +33,8 @@ and close the tab (other applications' storage is preserved):
 ```js
 for (const key of [
   'token', 'raindropFavoritesCacheV1', 'favoriteUsageCounts',
-  'googleFaviconPriority', 'iconApiProvidersV1', 'switch'
+  'googleFaviconPriority', 'iconApiProvidersV1', 'switch',
+  'iconSampledColorsV1', 'vemetricMetadataV1'
 ]) localStorage.removeItem(key);
 ```
 
@@ -52,7 +53,11 @@ for (const key of [
   Vemetric and Favicon.im first use anonymous CORS for background-color extraction.
   On failure, the same image is retried without CORS before the next provider.
   Each fallback resets the CORS attribute. Where pixel access is unavailable,
-  CSS blurs the displayed image for the background without reading its pixels.
+  a PNG copy of the public favicon is requested through wsrv.nl and analyzed
+  using the same canvas algorithm. The relay receives the favicon URL/domain,
+  not the Raindrop token. Colors are cached locally for 30 days (500 URLs).
+- Vemetric metadata is read with an unauthenticated request to identify its
+  default placeholder and cached locally for 24 hours (500 URLs).
 
 ## Reporting
 

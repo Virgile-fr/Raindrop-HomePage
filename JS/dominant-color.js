@@ -1,6 +1,53 @@
 "use strict";
 
 const dominantColorCache = new Map();
+const ICON_COLORS_KEY = "iconSampledColorsV1";
+const ICON_COLOR_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
+const savedIconColors = storage.readJSON(ICON_COLORS_KEY, {});
+const iconColors = savedIconColors && typeof savedIconColors === "object" && !Array.isArray(savedIconColors)
+  ? savedIconColors : {};
+const pendingIconColors = new Map();
+
+function validIconColor(color) {
+  return color && [color.r, color.g, color.b].every(value => Number.isFinite(value) && value >= 0 && value <= 255);
+}
+
+function rememberIconColor(source, color) {
+  iconColors[source] = { color, savedAt: Date.now() };
+  const entries = Object.entries(iconColors)
+    .filter(([, entry]) => entry && Date.now() - entry.savedAt < ICON_COLOR_MAX_AGE)
+    .sort((a, b) => b[1].savedAt - a[1].savedAt).slice(0, 500);
+  for (const key of Object.keys(iconColors)) delete iconColors[key];
+  Object.assign(iconColors, Object.fromEntries(entries));
+  storage.set(ICON_COLORS_KEY, JSON.stringify(iconColors));
+}
+
+function fetchReadableIconColor(source) {
+  if (pendingIconColors.has(source)) return pendingIconColors.get(source);
+  const request = new Promise(resolve => {
+    const sample = new Image();
+    sample.crossOrigin = "anonymous";
+    sample.referrerPolicy = "no-referrer";
+    let settled = false;
+    const finish = color => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      sample.onload = null;
+      sample.onerror = null;
+      if (!color) sample.removeAttribute("src");
+      resolve(color);
+    };
+    const timeout = setTimeout(() => finish(null), 8000);
+    sample.onload = () => finish(computeDominantColor(sample));
+    sample.onerror = () => finish(null);
+    // Same artwork, no blur/tint/crop/resize: the original 12px sampling
+    // algorithm below remains the sole source of the resulting gradient.
+    sample.src = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png`;
+  });
+  pendingIconColors.set(source, request);
+  return request;
+}
 
 function clamp(value, min = 0, max = 255) {
   return Math.min(max, Math.max(min, Math.round(value)));
@@ -140,20 +187,25 @@ function applyFilterBackground(filter, color) {
   filter.style.background = `linear-gradient(rgba(${overlayTone}, ${overlayOpacity}), rgba(${overlayTone}, ${overlayOpacity})), linear-gradient(135deg, rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b}), rgb(${accentColor.r}, ${accentColor.g}, ${accentColor.b}))`;
 }
 
-function colorizeIconBackground(icon) {
+async function colorizeIconBackground(icon) {
   if (icon.dataset.colorized) return true;
-  if (!icon.naturalWidth || icon.crossOrigin !== "anonymous") return false;
-
+  if (!icon.naturalWidth) return false;
   const filter = icon.closest(".filter");
   if (!filter) return false;
-
   const source = icon.currentSrc || icon.src;
-  const color = dominantColorCache.has(source)
-    ? dominantColorCache.get(source)
-    : computeDominantColor(icon);
+  if (!source.startsWith("https://")) return false;
+  const saved = iconColors[source];
+  let color = dominantColorCache.get(source);
+  if (!validIconColor(color) && saved && validIconColor(saved.color) &&
+      Number.isFinite(saved.savedAt) && Date.now() >= saved.savedAt &&
+      Date.now() - saved.savedAt < ICON_COLOR_MAX_AGE) color = saved.color;
+  if (!validIconColor(color) && icon.crossOrigin === "anonymous") color = computeDominantColor(icon);
+  if (!validIconColor(color)) color = await fetchReadableIconColor(source);
+  if (!validIconColor(color)) return false;
   dominantColorCache.set(source, color);
-  if (!color) return false;
-
+  if (!saved || saved.color !== color) rememberIconColor(source, color);
+  // A late sample must never recolor an icon that has since fallen back.
+  if ((icon.currentSrc || icon.src) !== source) return false;
   applyFilterBackground(filter, color);
   icon.dataset.colorized = "true";
   return true;

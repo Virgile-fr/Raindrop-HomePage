@@ -11,7 +11,7 @@ const ICON_PROVIDERS = {
   },
   google: {
     name: "Google",
-    description: "128 px demandés · fond coloré depuis l’icône · icône générique possible",
+    description: "128 px demandés · couleur analysée de l’icône · icône générique possible",
     cors: false,
     url: domain => `https://www.google.com/s2/favicons?sz=128&domain=${domain}`,
   },
@@ -49,37 +49,85 @@ function getFaviconPreference(address) {
   return selectedIconProviders.map(id => ICON_PROVIDERS[id].url(domain));
 }
 
+const VEMETRIC_METADATA_KEY = "vemetricMetadataV1";
+const VEMETRIC_METADATA_MAX_AGE = 24 * 60 * 60 * 1000;
+const storedVemetricMetadata = storage.readJSON(VEMETRIC_METADATA_KEY, {});
+const vemetricMetadata = storedVemetricMetadata && typeof storedVemetricMetadata === "object" && !Array.isArray(storedVemetricMetadata)
+  ? storedVemetricMetadata : {};
+const pendingVemetricMetadata = new Map();
+
+function isVemetricDefault(source) {
+  const cached = vemetricMetadata[source];
+  if (cached && typeof cached.isDefault === "boolean" && Number.isFinite(cached.savedAt) &&
+      Date.now() >= cached.savedAt && Date.now() - cached.savedAt < VEMETRIC_METADATA_MAX_AGE) {
+    return Promise.resolve(cached.isDefault);
+  }
+  if (pendingVemetricMetadata.has(source)) return pendingVemetricMetadata.get(source);
+  const request = (async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      const metadataUrl = new URL(source);
+      metadataUrl.searchParams.set("response", "json");
+      const response = await fetch(metadataUrl, { signal: controller.signal, credentials: "omit", referrerPolicy: "no-referrer" });
+      if (!response.ok) return false;
+      const metadata = await response.json();
+      if (typeof metadata.source !== "string") return false;
+      // "fallback" is a real /favicon.ico candidate; only "default" is
+      // the generated placeholder. Never reject an image based on bytes.
+      const isDefault = metadata.source === "default" || metadata.sourceUrl === "default.svg";
+      vemetricMetadata[source] = { isDefault, savedAt: Date.now() };
+      const entries = Object.entries(vemetricMetadata)
+        .filter(([, entry]) => entry && Date.now() - entry.savedAt < VEMETRIC_METADATA_MAX_AGE)
+        .sort((a, b) => b[1].savedAt - a[1].savedAt).slice(0, 500);
+      for (const key of Object.keys(vemetricMetadata)) delete vemetricMetadata[key];
+      Object.assign(vemetricMetadata, Object.fromEntries(entries));
+      storage.set(VEMETRIC_METADATA_KEY, JSON.stringify(vemetricMetadata));
+      return isDefault;
+    } catch {
+      // Metadata unavailable: preserve a potentially valid icon.
+      return false;
+    } finally {
+      clearTimeout(timeout);
+    }
+  })();
+  pendingVemetricMetadata.set(source, request);
+  return request;
+}
+
 function loadFavicon(image, address) {
   const urls = getFaviconPreference(address);
   const sources = [];
   selectedIconProviders.forEach((id, index) => {
     const url = urls[index];
-    // A displayed image does not need readable pixels. If anonymous CORS
-    // fails (including after a redirect), retry the same image normally.
-    if (ICON_PROVIDERS[id].cors) sources.push({ url, cors: true });
-    sources.push({ url, cors: false });
+    if (ICON_PROVIDERS[id].cors) sources.push({ id, url, cors: true });
+    sources.push({ id, url, cors: false });
   });
-  sources.push({ url: FALLBACK_ICON, cors: false });
+  sources.push({ id: "local", url: FALLBACK_ICON, cors: false });
   let index = 0;
+  let current;
+  let generation = 0;
   const loadNext = () => {
     if (index === sources.length) return;
-    const source = sources[index++];
+    current = sources[index++];
+    generation += 1;
     delete image.dataset.colorized;
-    if (source.cors) image.crossOrigin = "anonymous";
+    if (current.cors) image.crossOrigin = "anonymous";
     else image.removeAttribute("crossorigin");
-    image.src = source.url;
+    image.src = current.url;
   };
   image.addEventListener("error", loadNext);
-  image.addEventListener("load", () => {
-    const frame = image.closest(".filter");
-    if (!frame) return;
-    if (colorizeIconBackground(image)) {
-      frame.style.removeProperty("--icon-backdrop");
-    } else {
-      // CSS can display/blur the loaded icon without reading its pixels.
-      // This preserves artwork-based colors without a proxy or another API.
-      frame.style.setProperty("--icon-backdrop", `url("${image.currentSrc || image.src}")`);
+  image.addEventListener("load", async () => {
+    const loaded = current;
+    const loadedGeneration = generation;
+    if (loaded.id === "vemetric" && await isVemetricDefault(loaded.url)) {
+      if (generation !== loadedGeneration) return;
+      // Skip every remaining attempt for this provider, including no-CORS.
+      while (sources[index]?.id === "vemetric") index += 1;
+      loadNext();
+      return;
     }
+    if (generation === loadedGeneration) await colorizeIconBackground(image);
   });
   loadNext();
 }

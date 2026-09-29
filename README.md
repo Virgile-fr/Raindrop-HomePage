@@ -179,26 +179,38 @@ order based on the providers' documented features, not measured performance.
 | --- | --- | --- |
 | [Favicon.im](https://favicon.im/api) | Up to 256 px; explicit 404 on missing icon | Free for reasonable use; no key; CORS for card colors |
 | [Vemetric](https://vemetric.com/favicon-api) | 128 px | Free; no key; CORS for card colors |
-| Google | 128 px requested | Displayed without CORS; blurred artwork background; may return a generic icon |
+| Google | 128 px requested | Displayed without CORS; sampled-color gradient; may return a generic icon |
 | [Icon Horse](https://icon.horse/) | Best available icon | Opt-in; free tier limited to 1,000 icons/month; generic fallback |
 
-Only enabled providers are contacted, in order on image load errors. A successful
-generic placeholder cannot be distinguished from a real icon automatically.
-Icon Horse and Google are displayed without CORS. When pixels cannot be sampled,
-the card uses a blurred CSS background from the displayed icon. This is an
-artwork-based visual fallback, not the sampled-color gradient. No proxy or
-additional provider is contacted for colors. The same image URL is reused;
-HTTP caching remains controlled by the browser and the provider.
-Provider features/limits above were consulted on 2026-09-29. No service benchmarks
-were run. To clear these settings, remove `iconApiProvidersV1` from localStorage.
+Enabled providers are tried in order on image load errors. Vemetric additionally
+uses `response=json` to identify its built-in placeholder: `source: "default"`
+or `sourceUrl: "default.svg"` skips directly to the next provider. `source:
+"fallback"` means a real favicon candidate and is not rejected. Metadata is cached
+locally for 24 hours (up to 500 URLs), and requests are deduplicated within the tab.
+If metadata cannot be read, the image is preserved rather than discarding a
+possibly valid icon. Other providers' generic images are not detected.
+
+All providers use the same `computeDominantColor` and `applyFilterBackground`
+functions (12×12 sampling and the original gradient). There is no blurred-image
+background. When the original image cannot be read by canvas, a PNG copy of that
+same image is fetched through [wsrv.nl](https://wsrv.nl/) for pixel analysis.
+This adds a third-party dependency which receives the public favicon URL/domain,
+never the Raindrop credential. The displayed icon continues to come from the
+selected provider. If the relay fails, the neutral background remains.
+
+Sampled colors are saved locally for 30 days, limited to 500 image URLs; repeated
+sampling requests are deduplicated within a tab. The local color cache reduces
+relay requests, but is not an image cache or a guarantee about Icon Horse quotas.
+Remove `iconSampledColorsV1` and `vemetricMetadataV1` to clear those caches.
 
 CORS-enabled providers are retried once without CORS before moving to the next
-provider. This addresses blocked pixel access/redirects without claiming to fix
-all provider-side failures. Favicon.im's documented URL is unchanged; its failure
-was reported by the user and was not reproduced with tests.
+provider. Favicon.im's failure was reported by the user and was not reproduced
+with tests. Icon Horse remains opt-in: its public page does not clearly define
+whether 1,000 icons/month means requests or unique icons. Keep it disabled for
+a frequently reloaded homepage if quota usage is a concern.
 
-Icon Horse's public page does not clearly define whether its 1,000/month allowance
-counts requests or unique icons. Repeated network image requests may consume the
-allowance; browser caching is not a quota guarantee. The application has no durable
-local image cache and does not enforce the provider's quota. Keep Icon Horse
-disabled for a frequently reloaded homepage if quota usage is a concern.
+Sources consulted 2026-09-29: provider documentation and Vemetric's open-source
+`handleFallback` implementation. The user-supplied Vemetric URL returned metadata
+with `source: "default"`, `sourceUrl: "default.svg"`, `bytes: 629`. Detection uses
+metadata, not that size, because encodings/resizing can change the byte length.
+No tests or benchmarks were run for this change.
