@@ -46,7 +46,7 @@ function createCard(item, coverView) {
     image.className = "icon";
     image.width = 42;
     image.height = 42;
-    loadFavicon(image, url);
+    loadFavicon(image, url, title);
     frame.append(image);
   }
   const label = document.createElement("div");

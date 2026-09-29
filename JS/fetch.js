@@ -19,22 +19,22 @@ async function fetchJson(url) {
     });
     if (!response.ok) {
       const messages = {
-        401: "Token invalide. Veuillez saisir un nouveau token Raindrop.",
-        403: "Accès refusé. Vérifiez les permissions de votre token.",
-        429: "Trop de requêtes. Veuillez patienter avant de réessayer.",
+        401: "Invalid token. Please enter a new Raindrop token.",
+        403: "Access denied. Check your token permissions.",
+        429: "Too many requests. Please wait before trying again.",
       };
-      const error = new Error(messages[response.status] || `Erreur de requête (${response.status}).`);
+      const error = new Error(messages[response.status] || `Request failed (${response.status}).`);
       error.status = response.status;
       throw error;
     }
     const data = await response.json();
     if (data.result === false || !Array.isArray(data.items)) {
-      throw new Error("Réponse Raindrop invalide. Veuillez réessayer.");
+      throw new Error("Invalid Raindrop response. Please try again.");
     }
     return data;
   } catch (error) {
-    if (error.name === "AbortError") throw new Error("Le serveur met trop de temps à répondre. Veuillez réessayer.");
-    if (error instanceof TypeError) throw new Error("Erreur de réseau. Vérifiez votre connexion internet.");
+    if (error.name === "AbortError") throw new Error("The server is taking too long to respond. Please try again.");
+    if (error instanceof TypeError) throw new Error("Network error. Check your internet connection.");
     throw error;
   } finally {
     clearTimeout(timeout);
@@ -87,7 +87,7 @@ async function fetchAllFavoriteItems() {
       added += 1;
     }
     if (data.items.length < FAVORITES_PER_PAGE) break;
-    if (!added) throw new Error("La pagination Raindrop ne progresse plus. Veuillez réessayer.");
+    if (!added) throw new Error("Raindrop returned a repeated page. Please try again.");
   }
   return items;
 }
@@ -111,7 +111,7 @@ async function restoreFavoritesCache() {
 
 function refreshFavorites() {
   if (favoritesRequest) return favoritesRequest;
-  setStatus(favoriteItems === null ? "Chargement des favoris…" : "Actualisation…");
+  setStatus(favoriteItems === null ? "Loading favorites…" : "Refreshing…");
   grid.setAttribute("aria-busy", "true");
   favoritesRequest = (async () => {
     try {
@@ -122,14 +122,14 @@ function refreshFavorites() {
         storage.set(FAVORITES_CACHE_KEY, JSON.stringify({ owner: cacheOwner, savedAt: Date.now(), items }));
       }
       if (changed) renderFavorites();
-      setStatus(items.length ? "" : "Aucun favori. Marquez des liens comme favoris dans Raindrop.");
+      setStatus(items.length ? "" : "No favorites yet. Mark bookmarks as favorites in Raindrop.");
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
         storage.remove(FAVORITES_CACHE_KEY);
         favoriteItems = null;
         grid.replaceChildren();
       }
-      const suffix = favoriteItems !== null ? " Les favoris enregistrés restent affichés." : "";
+      const suffix = favoriteItems !== null ? " Saved favorites are still displayed." : "";
       setStatus(error.message + suffix, true);
     } finally {
       grid.setAttribute("aria-busy", "false");

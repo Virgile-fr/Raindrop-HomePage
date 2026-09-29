@@ -193,6 +193,13 @@ async function colorizeIconBackground(icon) {
   const filter = icon.closest(".filter");
   if (!filter) return false;
   const source = icon.currentSrc || icon.src;
+  if (source.startsWith("data:image/")) {
+    const color = computeDominantColor(icon);
+    if (!validIconColor(color)) return false;
+    applyFilterBackground(filter, color);
+    icon.dataset.colorized = "true";
+    return true;
+  }
   if (!source.startsWith("https://")) return false;
   const saved = iconColors[source];
   let color = dominantColorCache.get(source);
@@ -209,4 +216,110 @@ async function colorizeIconBackground(icon) {
   applyFilterBackground(filter, color);
   icon.dataset.colorized = "true";
   return true;
+}
+
+// Reference captured from the exact Google URL supplied by the user:
+// https://www.google.com/s2/favicons?sz=128&domain=tidal.qqdl.site
+// Its response was HTTP 404, image/png, 16x16, 726 bytes. Size alone is NOT used.
+const GOOGLE_PLACEHOLDER_REFERENCE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsSAAALEgHS3X78AAACiElEQVQ4EaVTzU8TURCf2tJuS7tQtlRb6UKBIkQwkRRSEzkQgyEc6lkOKgcOph78Y+CgjXjDs2i44FXY9AMTlQRUELZapVlouy3d7kKtb0Zr0MSLTvL2zb75eL838xtTvV6H/xELBptMJojeXLCXyobnyog4YhzXYvmCFi6qVSfaeRdXdrfaU1areV5KykmX06rcvzumjY/1ggkR3Jh+bNf1mr8v1D5bLuvR3qDgFbvbBJYIrE1mCIoCrKxsHuzK+Rzvsi29+6DEbTZz9unijEYI8ObBgXOzlcrx9OAlXyDYKUCzwwrDQx1wVDGg089Dt+gR3mxmhcUnaWeoxwMbm/vzDFzmDEKMMNhquRqduT1KwXiGt0vre6iSeAUHNDE0d26NBtAXY9BACQyjFusKuL2Ry+IPb/Y9ZglwuVscdHaknUChqLF/O4jn3V5dP4mhgRJgwSYm+gV0Oi3XrvYB30yvhGa7BS70eGFHPoTJyQHhMK+F0ZesRVVznvXw5Ixv7/C10moEo6OZXbWvlFAF9FVZDOqEABUMRIkMd8GnLwVWg9/RkJF9sA4oDfYQAuzzjqzwvnaRUFxn/X2ZlmGLXAE7AL52B4xHgqAUqrC1nSNuoJkQtLkdqReszz/9aRvq90NOKdOS1nch8TpL555WDp49f3uAMXhACRjD5j4ykuCtf5PP7Fm1b0DIsl/VHGezzP1KwOiZQobFF9YyjSRYQETRENSlVzI8iK9mWlzckpSSCQHVALmN9Az1euDho9Xo8vKGd2rqooA8yBcrwHgCqYR0kMkWci08t/R+W4ljDCanWTg9TJGwGNaNk3vYZ7VUdeKsYJGFNkfSzjXNrSX20s4/h6kB81/271ghG17l+rPTAAAAAElFTkSuQmCC";
+const GOOGLE_PLACEHOLDER_KEY = "googlePlaceholderV1";
+const storedGooglePlaceholders = storage.readJSON(GOOGLE_PLACEHOLDER_KEY, {});
+const googlePlaceholders = storedGooglePlaceholders && typeof storedGooglePlaceholders === "object" && !Array.isArray(storedGooglePlaceholders)
+  ? storedGooglePlaceholders : {};
+const googlePlaceholderRequests = new Map();
+let googleReferencePixels;
+
+function loadAnalysisImage(source) {
+  return new Promise(resolve => {
+    const image = new Image();
+    const timeout = setTimeout(() => finish(null), 5000);
+    const finish = result => {
+      clearTimeout(timeout);
+      image.onload = image.onerror = null;
+      resolve(result);
+    };
+    image.onload = () => finish(image);
+    image.onerror = () => finish(null);
+    image.src = source;
+  });
+}
+
+function iconPixels(image) {
+  if (!image || image.naturalWidth !== 16 || image.naturalHeight !== 16) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 16;
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+  try {
+    context.drawImage(image, 0, 0);
+    return context.getImageData(0, 0, 16, 16).data;
+  } catch { return null; }
+}
+
+function rememberGooglePlaceholder(source, isDefault) {
+  googlePlaceholders[source] = { isDefault, savedAt: Date.now() };
+  const entries = Object.entries(googlePlaceholders)
+    .filter(([, entry]) => entry && Date.now() - entry.savedAt < 86400000)
+    .sort((a, b) => b[1].savedAt - a[1].savedAt).slice(0, 500);
+  for (const key of Object.keys(googlePlaceholders)) delete googlePlaceholders[key];
+  Object.assign(googlePlaceholders, Object.fromEntries(entries));
+  storage.set(GOOGLE_PLACEHOLDER_KEY, JSON.stringify(googlePlaceholders));
+}
+
+function isGoogleDefault(source) {
+  const cached = googlePlaceholders[source];
+  if (cached && typeof cached.isDefault === "boolean" && Number.isFinite(cached.savedAt) &&
+      Date.now() >= cached.savedAt && Date.now() - cached.savedAt < 86400000) return Promise.resolve(cached.isDefault);
+  if (googlePlaceholderRequests.has(source)) return googlePlaceholderRequests.get(source);
+  const request = (async () => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      // Same relay already used for unreadable colors. Reuse its pixels for
+      // both detection and color sampling, never a second icon provider.
+      const response = await fetch(`https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png`, {
+        signal: controller.signal, credentials: "omit", referrerPolicy: "no-referrer",
+      });
+      if (!response.ok) {
+        const error = await response.text();
+        // Only an explicit upstream missing-resource error counts as missing.
+        // A relay outage, rate limit or CORS failure does not reject an icon.
+        const missing = /(?:requested URL|upstream|remote server|server returned)[^\n]{0,150}\b(?:404|410)\b/i.test(error);
+        if (missing) rememberGooglePlaceholder(source, true);
+        return missing;
+      }
+      const blob = await response.blob();
+      if (!blob.type.startsWith("image/")) return false;
+      const dataUrl = await new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(blob);
+      });
+      if (!dataUrl) return false;
+      const image = await loadAnalysisImage(dataUrl);
+      if (!image) return false;
+      const pixels = iconPixels(image);
+      if (!googleReferencePixels) googleReferencePixels = loadAnalysisImage(GOOGLE_PLACEHOLDER_REFERENCE).then(iconPixels);
+      const reference = await googleReferencePixels;
+      if (!reference) return false;
+      // Compare actual decoded pixels (including alpha), not bytes or dimensions alone.
+      const isDefault = Boolean(pixels && pixels.every((value, index) => value === reference[index]));
+      rememberGooglePlaceholder(source, isDefault);
+      if (!isDefault) {
+        const color = computeDominantColor(image);
+        if (validIconColor(color)) {
+          dominantColorCache.set(source, color);
+          rememberIconColor(source, color);
+        }
+      }
+      return isDefault;
+    } catch {
+      return false;
+    } finally {
+      clearTimeout(timeout);
+    }
+  })();
+  googlePlaceholderRequests.set(source, request);
+  return request;
 }
