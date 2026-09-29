@@ -26,8 +26,38 @@ a:focus-visible, button:focus-visible { outline: 3px solid #0b9fe8; outline-offs
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .status { font-size: 14px; }
 .status:has(#status-message:not(:empty)) { margin-bottom: 1rem; }
-footer { margin-top: 2rem; text-align: right; }
-#change-token { font-size: 12px; background: none; border: 0; text-decoration: underline; }
+footer { margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem; }
+footer button { font-size: 12px; background: none; border: 0; text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
 }
+
+#icons-dialog {
+  width: min(520px, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 1.5rem;
+  color: var(--text-color);
+  background: var(--body-background-color);
+  border: var(--card-border);
+  border-radius: 10px;
+  box-shadow: 0 16px 60px #0005;
+}
+#icons-dialog::backdrop { background: #0008; }
+#icons-dialog h2 { margin: 0 0 1rem; font-size: 1.25rem; }
+#icons-dialog p { font-size: 14px; line-height: 1.5; }
+#icons-provider-list { list-style: none; padding: 0; margin: 1rem 0; }
+#icons-provider-list li { display: flex; align-items: center; gap: .75rem; padding: .85rem 0; border-bottom: var(--card-border); }
+.provider-option { display: flex; align-items: center; gap: .75rem; flex: 1; cursor: pointer; min-width: 0; }
+.provider-option input { width: 18px; height: 18px; flex-shrink: 0; accent-color: #0b9fe8; }
+.provider-option strong, .provider-option small { display: block; }
+.provider-option small { margin-top: .3rem; line-height: 1.4; }
+.provider-move { display: flex; gap: .25rem; }
+#icons-dialog button { border: var(--card-border); border-radius: 6px; background: var(--card-backgroud); padding: .5rem .7rem; }
+#icons-dialog button:hover:not(:disabled) { background: var(--card-backgroud-hover); }
+#icons-dialog button:disabled { opacity: .4; cursor: default; }
+#icons-dialog .icons-note { font-size: 12px; }
+.icons-dialog-actions { display: flex; justify-content: flex-end; gap: .5rem; flex-wrap: wrap; }
+#icons-recommended { margin-right: auto; }
+#icons-feedback:empty { display: none; }

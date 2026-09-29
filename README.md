@@ -12,7 +12,7 @@ This is <b>not</b> a Raindrop clone, it’s a focused homepage dashboard.</p>
 - Pagination retrieves all favorites, including lists above 100 items
 - Local bookmark cache displays the last successful list while refreshing it
 - Switching views or favicon providers reuses loaded data (no new Raindrop request)
-- Covers load lazily; header icons are inline SVG with no third-party JavaScript
+- Covers load lazily; header controls use inline SVG with no third-party JavaScript
 - Keyboard-accessible controls, full bookmark titles, and retry/token recovery controls
 <br>
 
@@ -164,3 +164,26 @@ The cache is best effort: when storage or Web Crypto is unavailable, bookmarks
 still load from the API. Failed refreshes preserve the last complete list;
 401/403 errors clear cached bookmarks. Successful refreshes replace the list
 atomically, and unchanged data preserves existing cards.
+
+## Choose favicon services
+
+Click **icons api** next to **token** in the footer. Enable services, reorder them
+with the arrows, then save. Changes apply immediately and are remembered locally.
+The star in the header cycles the enabled services' priority. Existing
+Google/Vemetric preferences are preserved until changed.
+
+**Ordre conseillé** selects Favicon.im → Vemetric → Google. This is a suggested
+order based on the providers' documented features, not measured performance.
+
+| Service | Configuration | Notes |
+| --- | --- | --- |
+| [Favicon.im](https://favicon.im/api) | Up to 256 px; explicit 404 on missing icon | Free for reasonable use; no key; CORS for card colors |
+| [Vemetric](https://vemetric.com/favicon-api) | 128 px | Free; no key; CORS for card colors |
+| Google | 128 px requested | Existing provider; displayed without CORS; may return a generic icon |
+| [Icon Horse](https://icon.horse/) | Best available icon | Opt-in; free tier limited to 1,000 icons/month; generic fallback |
+
+Only enabled providers are contacted, in order on image load errors. A successful
+generic placeholder cannot be distinguished from a real icon automatically.
+Icon Horse is displayed without CORS; it does not supply the card's sampled color.
+Provider features/limits above were consulted on 2026-09-29. No service benchmarks
+were run. To clear these settings, remove `iconApiProvidersV1` from localStorage.
