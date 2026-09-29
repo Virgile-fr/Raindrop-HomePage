@@ -5,7 +5,7 @@
   --radius-images: 6px;
 }
 
-/* Custom properties typées, pour animer le gradient */
+/* Typed colors keep the icon lighting transition smooth. */
 @property --icon-g1 {
   syntax: "<color>";
   inherits: true;
@@ -22,17 +22,29 @@
   border-radius: var(--radius-cards);
   border: var(--card-border);
   box-sizing: content-box;
-  transition: background-color 0.2s, box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  transition: background-color 0.2s;
 }
 
-.card:hover {
+/* The link stays still while its surface floats above the grid. */
+#grid > a.card-floating { position: relative; z-index: 2; }
+.card.is-floating {
+  will-change: transform;
   background-color: var(--card-backgroud-hover);
-  box-shadow: rgba(0, 0, 0, 0.07) 0px 1px 2px,
-    rgba(0, 0, 0, 0.07) 0px 2px 4px,
-    rgba(0, 0, 0, 0.07) 0px 4px 8px,
-    rgba(0, 0, 0, 0.07) 0px 8px 16px,
-    rgba(0, 0, 0, 0.07) 0px 16px 32px,
-    rgba(0, 0, 0, 0.07) 0px 32px 64px;
+  box-shadow: var(--float-shadow-x, 0px) var(--float-shadow-y, 8px) 28px -9px
+    rgba(0, 0, 0, var(--float-shadow-alpha, 0));
+}
+
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--float-light, 0);
+  background: radial-gradient(ellipse at var(--float-light-x, 50%) var(--float-light-y, 40%),
+    rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.2) 38%, transparent 72%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
 .image {
@@ -78,21 +90,22 @@
   padding: 8px;
   box-shadow: 65px 39px 100px 100px rgba(255, 255, 255, 0), 0px 0px 0px 1px rgba(255, 255, 255, 0.4);
 
-  /* Valeurs de départ (optionnel, mais clair) */
+  /* Preserve the original resting appearance. */
   --icon-g1: rgba(255,255,255,0.6);
   --icon-g2: rgba(255,255,255,0.2);
 
-  /* Gradient basé sur variables animables */
+  /* A small foreground displacement adds depth without changing the icon. */
   background: linear-gradient(var(--icon-g1), var(--icon-g2));
 
-  /* On transitionne les variables, pas le background */
-  transition: --icon-g1 2s, --icon-g2, box-shadow 0.4s ease;
+  transform: translate(var(--float-icon-x, 0px), var(--float-icon-y, 0px));
+  transition: --icon-g1 0.35s, --icon-g2 0.35s, box-shadow 0.35s ease;
 }
 
-.card:hover .icon {
-  --icon-g1: rgba(255,255,255,1);
-  --icon-g2: rgba(255,255,255,.4);
-  box-shadow: -65px -80px 80px 100px rgba(255, 255, 255, 0.3), 0px 0px 0px 1px rgba(255, 255, 255, .7);
+.card.is-floating .icon {
+  --icon-g1: rgba(255,255,255,0.78);
+  --icon-g2: rgba(255,255,255,0.28);
+  box-shadow: 0px 5px 12px -6px rgba(0, 0, 0, 0.2),
+    0px 0px 0px 1px rgba(255, 255, 255, 0.6);
 }
 
 .filter {
@@ -110,3 +123,8 @@
 .cover-cards .image { overflow: hidden; }
 .cover-cards .image img { width: 100%; height: 100%; object-fit: cover; display: block; }
 #grid > a { min-width: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .card .icon { transform: none !important; }
+  .card::after { display: none; }
+}
