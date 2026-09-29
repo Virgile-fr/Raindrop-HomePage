@@ -2,9 +2,8 @@
   "name": "raindrop-homepage",
   "version": "1.0.0",
   "description": "Raindrop HomePage is a minimalist interface to display your Raindrop.io bookmarks marked as favorites. This application is not intended to replicate the interface of Raindrop.io.",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --test tests/*.test.cjs"
   },
   "repository": {
     "type": "git",
@@ -21,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/Virgile-fr/Raindrop-HomePage/issues"
   },
-  "homepage": "https://github.com/Virgile-fr/Raindrop-HomePage#readme"
+  "homepage": "https://github.com/Virgile-fr/Raindrop-HomePage#readme",
+  "engines": {
+    "node": ">=20"
+  }
 }

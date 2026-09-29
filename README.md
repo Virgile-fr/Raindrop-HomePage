@@ -9,7 +9,11 @@ This is <b>not</b> a Raindrop clone, it’s a focused homepage dashboard.</p>
 - Better favicon fetching: **Vemetric Favicon API** by default, **Google** as fallback
 - New algorithm to auto-pick an **icon background color** based on the favicon
 - Refined **icon style inside cards** for a more cohesive look
-- Removed the previous **50 favorites limit**
+- Pagination retrieves all favorites, including lists above 100 items
+- Local bookmark cache displays the last successful list while refreshing it
+- Switching views or favicon providers reuses loaded data (no new Raindrop request)
+- Covers load lazily; header icons are inline SVG with no third-party JavaScript
+- Keyboard-accessible controls, full bookmark titles, and retry/token recovery controls
 <br>
 
 
@@ -40,7 +44,7 @@ Public instance:
 
 ```text
 https://virgile-fr.github.io/Raindrop-HomePage/
-````
+```
 <br>
 
 
@@ -59,13 +63,13 @@ Append your token at the end of the URL:
 https://virgile-fr.github.io/Raindrop-HomePage/YOUR_TEST_TOKEN
 ```
 
-The app will read it and store it in `localStorage`.
+The app will read it, store it in `localStorage`, and replace the current address with the clean homepage URL. Legacy path tokens must use the UUID format. Prefer pasting at launch.
 
-> ⚠️ Do not share that URL: the token will be visible in the address bar, history, and logs.
+> ⚠️ Do not share that URL: the initial request can still expose the token to hosting logs and browser history/sync. Cleaning the address does not erase those records.
 
 <br>
 
-### 🅱️ Paste at lauch
+### 🅱️ Paste at launch
 
 If no token is found, the page prompts you to paste it. It’s then stored in `localStorage` for that browser.
 > ⚠️ If you clear your browser data, you’ll be asked again for the token.
@@ -107,7 +111,10 @@ Best workaround:
 ## 🔒 Token storage and security
 
 * The token is used **only in your browser** to call the Raindrop API
-* Stored locally in **`localStorage`**, never on a remote server
+* Stored locally in **`localStorage`**; sent as a Bearer credential to the Raindrop API
+* Bookmark URLs/titles/covers are cached locally for up to 24 hours, scoped to a token fingerprint; every page load still refreshes from Raindrop
+* The cache is not encrypted. Use a trusted browser profile; see [SECURITY.md](SECURITY.md) to clear local data
+* The favicon services receive bookmark hostnames; cover providers receive image requests without a Referer header
 * If you use the URL method, treat it like a password
 
 <br>
@@ -116,7 +123,8 @@ Best workaround:
 
 1. Clone the repo
 2. Deploy as static files (GitHub Pages, Netlify, Vercel, etc.)
-3. Optionally set a token in `token.js` if you prefer not to use URL or prompt
+3. Open the page and paste the token when prompted. Never embed credentials in published source.
+4. If hosting under a different path, adjust the `<base>` in `404.html` to that deployment path (used for legacy token URLs).
 
 <br>
 
@@ -131,3 +139,28 @@ Best workaround:
 
 Issues and PRs are welcome.
 If you have ideas (layout tweaks, favicon improvements, safer token handling), feel free to open an issue.
+
+## Development and checks
+
+No build step or runtime dependencies. Serve the repository as static files, for example:
+
+```sh
+python3 -m http.server 8000
+```
+
+Run regression tests with Node.js 20 or newer (no npm install required):
+
+```sh
+npm test
+```
+
+Tests cover pagination, sorting/storage, credential-scoped caching, HTTP errors,
+timeouts, request deduplication, favicon fallback, safe rendering, and view state.
+They use mocked API/DOM boundaries and do not replace a real browser smoke test.
+Before release, check both views, light/dark themes, narrow screens, keyboard
+controls, and Google/Vemetric images in a browser with a test account.
+
+The cache is best effort: when storage or Web Crypto is unavailable, bookmarks
+still load from the API. Failed refreshes preserve the last complete list;
+401/403 errors clear cached bookmarks. Successful refreshes replace the list
+atomically, and unchanged data preserves existing cards.

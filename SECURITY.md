@@ -1,117 +1,59 @@
-# Sécurité - Raindrop HomePage
+# Security — Raindrop HomePage
 
-## 🔒 Bonnes pratiques de sécurité
+## Credentials
 
-### Gestion du Token Raindrop
+Enter your Raindrop test token in the browser prompt or use **Configurer le token**.
+Never place a real token in `token.js`, a commit, or a shared URL. The app sends
+it only to `https://api.raindrop.io` as an Authorization Bearer header.
 
-#### ⚠️ IMPORTANT
-Votre token Raindrop est une information sensible qui donne accès à vos favoris. Traitez-le comme un mot de passe.
+Legacy UUID tokens in the URL path are accepted and removed from the current
+address using `history.replaceState`. This does not remove the initial request
+from server logs, previously saved bookmarks, browser sync, or other records.
+Pasting the token in the prompt is preferred.
 
-#### Méthodes de configuration (par ordre de sécurité)
+## Local data
 
-1. **Prompt au démarrage** (RECOMMANDÉ)
-   - Ne configurez pas de token dans `token.js`
-   - Laissez la valeur par défaut `XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX-XXXXXXX`
-   - Le token sera demandé au premier lancement
-   - Stocké localement dans le navigateur uniquement
+The token remains in `localStorage`. Bookmark URLs, titles, cover URLs and creation
+dates are also cached locally for up to 24 hours. The cache is associated with a
+SHA-256 fingerprint of the token to avoid showing another credential's cached
+list. This is account separation, **not encryption**. Usage counts and display
+preferences are retained under the existing storage keys.
 
-2. **Fichier local non-versionné**
-   - Créez un fichier `token.local.js` (déjà dans .gitignore)
-   - Ne commitez JAMAIS ce fichier
-   - Utile pour le développement local
+A successful refresh replaces the cache, changing tokens discards the previous
+cache, and 401/403 errors remove cached bookmarks. A network failure may leave
+the last successful list visible with an explicit status message.
 
-3. **URL avec token** (DÉCONSEILLÉ pour usage permanent)
-   - Utilisez uniquement pour la configuration initiale
-   - Format: `https://votre-url.com/VOTRE-TOKEN`
-   - ⚠️ Le token sera visible dans:
-     - L'historique du navigateur
-     - Les logs serveur
-     - Les marque-pages
-     - Les partages d'écran
-   - Ne partagez JAMAIS cette URL
+These values are accessible to scripts on the same origin and browser extensions
+with the relevant access. GitHub Pages projects under the same hostname share
+an origin. Use a trusted browser profile.
 
-### Protections implémentées
+To remove this application's local data, run the following in its browser console
+and close the tab (other applications' storage is preserved):
 
-#### 1. Protection XSS (Cross-Site Scripting)
-- Tous les contenus utilisateur sont échappés avant insertion dans le DOM
-- Fonction `escapeHtml()` utilisée pour tous les titres et URLs
-- Validation stricte des entrées
-
-#### 2. Content Security Policy (CSP)
-- Headers CSP configurés dans index.html et 404.html
-- Restrictions sur les sources de scripts, styles et images
-- Autorisation uniquement des domaines nécessaires:
-  - `api.raindrop.io` (API Raindrop)
-  - `www.google.com` (Favicons Google)
-  - `favicon.vemetric.com` (Favicons Vemetric)
-  - `kit.fontawesome.com` (Icônes)
-
-#### 3. Attributs de sécurité
-- `rel="noopener noreferrer"` sur tous les liens externes
-- Prévient les attaques de type "tabnabbing"
-- Protège contre le suivi cross-origin
-
-#### 4. Validation du token
-- Regex stricte pour valider le format UUID du token
-- Vérification avant stockage dans localStorage
-- Messages d'erreur clairs pour les tokens invalides
-
-### localStorage et données sensibles
-
-Le token est stocké dans `localStorage` pour éviter de le redemander à chaque visite.
-
-**Risques:**
-- Accessible via JavaScript (d'où l'importance de la protection XSS)
-- Persiste jusqu'à suppression manuelle ou nettoyage du navigateur
-- Partagé entre tous les onglets du même domaine
-
-**Protection:**
-- Ne visitez cette page que sur des appareils de confiance
-- Utilisez un navigateur à jour
-- Évitez les extensions de navigateur non fiables
-
-### Effacer votre token
-
-Pour supprimer votre token stocké localement:
-
-```javascript
-// Dans la console du navigateur (F12)
-localStorage.removeItem('token');
+```js
+for (const key of [
+  'token', 'raindropFavoritesCacheV1', 'favoriteUsageCounts',
+  'googleFaviconPriority', 'switch'
+]) localStorage.removeItem(key);
 ```
 
-Ou videz complètement le localStorage:
-```javascript
-localStorage.clear();
-```
+## Rendering and network policy
 
-### Signaler une vulnérabilité
+- Cards use DOM elements and `textContent`; bookmark titles are never parsed as HTML.
+- Bookmark and cover URLs must have an HTTP or HTTPS scheme. Executable schemes
+  such as `javascript:` are rejected.
+- Scripts are local and deferred. CSP `script-src 'self'` blocks inline handlers
+  and third-party scripts; Font Awesome's external JavaScript is no longer used.
+- Inline styles remain allowed for dynamically calculated favicon gradients.
+- New-tab links use `noopener noreferrer`; requests use a no-referrer policy.
+- Favicon services receive bookmark hostnames; cover hosts receive image requests.
+  Those third parties do not receive the Raindrop token.
+- Google favicons are displayed without CORS and are not read through canvas.
+  Vemetric images use anonymous CORS for background-color extraction. Each
+  fallback explicitly resets the CORS attribute for the new provider.
 
-Si vous découvrez une faille de sécurité:
-1. **NE PAS** créer une issue publique
-2. Contactez le mainteneur via email ou message privé
-3. Incluez:
-   - Description de la vulnérabilité
-   - Steps pour reproduire
-   - Impact potentiel
-   - Suggestions de correction si possible
+## Reporting
 
-### Checklist de sécurité pour les contributeurs
-
-Avant chaque commit, vérifiez:
-- [ ] Aucun token réel n'est présent dans le code
-- [ ] Les nouvelles entrées utilisateur sont échappées
-- [ ] Pas de `innerHTML` avec des données non échappées
-- [ ] Les nouvelles URLs externes ont `rel="noopener noreferrer"`
-- [ ] Le CSP est à jour si de nouveaux domaines sont utilisés
-- [ ] Pas de clés API, tokens, ou credentials dans le code
-- [ ] Les fichiers sensibles sont dans .gitignore
-
-### Ressources
-
-- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [Content Security Policy Guide](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
-- [XSS Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)
-
----
-
-**Dernière mise à jour:** 2026-01-06
+Do not post tokens or private bookmark data in public issues. Report security
+problems privately to the repository maintainer with reproduction steps and the
+expected impact.
