@@ -1,133 +1,140 @@
+"use strict";
+
 const USAGE_STORAGE_KEY = "favoriteUsageCounts";
 const FAVORITES_PER_PAGE = 50;
-const MAX_FAVORITE_PAGES = 2;
 const FAVORITE_QUERY = encodeURIComponent("❤️");
+const FAVORITES_CACHE_KEY = "raindropFavoritesCacheV1";
+const CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
+let favoriteItems = null;
+let favoritesRequest = null;
+let cacheOwner = null;
 
 async function fetchJson(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
   try {
     const response = await fetch(url, {
-      method: "GET",
       headers: { Authorization: "Bearer " + token },
+      signal: controller.signal,
     });
-
     if (!response.ok) {
-      if (response.status === 401) {
-        throw new Error("Token invalide. Veuillez vérifier votre token Raindrop.");
-      } else if (response.status === 403) {
-        throw new Error("Accès refusé. Vérifiez les permissions de votre token.");
-      } else if (response.status === 429) {
-        throw new Error("Trop de requêtes. Veuillez patienter quelques instants.");
-      }
-      throw new Error(`Erreur de requête: ${response.status} - ${response.statusText}`);
+      const messages = {
+        401: "Token invalide. Veuillez saisir un nouveau token Raindrop.",
+        403: "Accès refusé. Vérifiez les permissions de votre token.",
+        429: "Trop de requêtes. Veuillez patienter avant de réessayer.",
+      };
+      const error = new Error(messages[response.status] || `Erreur de requête (${response.status}).`);
+      error.status = response.status;
+      throw error;
     }
-
-    return response.json();
+    const data = await response.json();
+    if (data.result === false || !Array.isArray(data.items)) {
+      throw new Error("Réponse Raindrop invalide. Veuillez réessayer.");
+    }
+    return data;
   } catch (error) {
-    if (error instanceof TypeError) {
-      throw new Error("Erreur de réseau. Vérifiez votre connexion internet.");
-    }
+    if (error.name === "AbortError") throw new Error("Le serveur met trop de temps à répondre. Veuillez réessayer.");
+    if (error instanceof TypeError) throw new Error("Erreur de réseau. Vérifiez votre connexion internet.");
     throw error;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
-async function fetchcollections() {
-  const data = await fetchJson("https://api.raindrop.io/rest/v1/collections");
-  console.log(data);
-  return data;
+function readUsageCounts() {
+  const value = storage.readJSON(USAGE_STORAGE_KEY, {});
+  return value && typeof value === "object" && !Array.isArray(value) ? value : {};
 }
 
-async function fetchcollection(collectionID) {
-  const data = await fetchJson(
-    "https://api.raindrop.io/rest/v1/raindrops/" + collectionID
-  );
-  console.log(data);
-  return data;
-}
-
-function getUsageCount(link) {
-  const usageData = JSON.parse(localStorage.getItem(USAGE_STORAGE_KEY) || "{}");
-  return usageData[link] || 0;
+function usageCount(counts, link) {
+  const count = counts[link];
+  return Number.isSafeInteger(count) && count > 0 ? count : 0;
 }
 
 function recordUsage(link) {
-  const usageData = JSON.parse(localStorage.getItem(USAGE_STORAGE_KEY) || "{}");
-  usageData[link] = (usageData[link] || 0) + 1;
-  localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(usageData));
+  const counts = readUsageCounts();
+  counts[link] = usageCount(counts, link) + 1;
+  storage.set(USAGE_STORAGE_KEY, JSON.stringify(counts));
 }
 
 function sortByUsage(items) {
-  return [...items].sort((a, b) => {
-    const usageDifference = getUsageCount(b.link) - getUsageCount(a.link);
-
-    if (usageDifference !== 0) {
-      return usageDifference;
-    }
-
-    return new Date(b.created).getTime() - new Date(a.created).getTime();
-  });
-}
-
-function getTotalPages(meta) {
-  const totalItems = meta?.count ?? meta?.items?.length ?? 0;
-  const pageCount = Math.ceil(totalItems / FAVORITES_PER_PAGE);
-  return Math.min(Math.max(pageCount, 1), MAX_FAVORITE_PAGES);
-}
-
-async function fetchFavoritePage(page) {
-  return fetchJson(
-    `https://api.raindrop.io/rest/v1/raindrops/0?search=${FAVORITE_QUERY}&perpage=${FAVORITES_PER_PAGE}&page=${page}`
-  );
+  // Parse storage once per sort, rather than twice per comparison.
+  const counts = readUsageCounts();
+  return items.map(item => ({
+    item,
+    uses: usageCount(counts, item.link),
+    created: Date.parse(item.created) || 0,
+  })).sort((a, b) => b.uses - a.uses || b.created - a.created)
+    .map(entry => entry.item);
 }
 
 async function fetchAllFavoriteItems() {
-  const firstPage = await fetchFavoritePage(0);
-  const totalPages = getTotalPages(firstPage);
-
-  if (totalPages === 1) {
-    return firstPage.items ?? [];
+  const items = [];
+  const seen = new Set();
+  // A short page is the API's pagination boundary. No arbitrary favorites cap
+  // and no dependence on an optional/ambiguous count field.
+  for (let page = 0; ; page += 1) {
+    const data = await fetchJson(
+      `https://api.raindrop.io/rest/v1/raindrops/0?search=${FAVORITE_QUERY}&perpage=${FAVORITES_PER_PAGE}&page=${page}`
+    );
+    let added = 0;
+    for (const item of data.items) {
+      if (!item || typeof item.link !== "string") continue;
+      const id = item._id ?? item.link;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      items.push({ link: item.link, title: item.title, cover: item.cover, created: item.created });
+      added += 1;
+    }
+    if (data.items.length < FAVORITES_PER_PAGE) break;
+    if (!added) throw new Error("La pagination Raindrop ne progresse plus. Veuillez réessayer.");
   }
-
-  const additionalPages = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, index) => fetchFavoritePage(index + 1))
-  );
-
-  return [firstPage, ...additionalPages].flatMap((page) => page.items ?? []);
+  return items;
 }
 
-async function renderFavoriteCards(renderer) {
+async function restoreFavoritesCache() {
   try {
-    const favoriteItems = await fetchAllFavoriteItems();
-    const sortedItems = sortByUsage(favoriteItems);
-    const content = sortedItems.map(renderer).join("");
-
-    grid.insertAdjacentHTML("beforeend", content);
-    refreshIconFilterColors();
-  } catch (error) {
-    console.error("Failed to render favorites", error);
-
-    const errorMessage = document.createElement("div");
-    errorMessage.style.cssText = "padding: 40px; text-align: center; color: #ff4444; font-size: 14px; max-width: 600px; margin: 0 auto;";
-    errorMessage.innerHTML = `
-      <h2 style="margin-bottom: 16px;">⚠️ Erreur de chargement</h2>
-      <p style="margin-bottom: 12px;">${error.message || "Impossible de charger vos favoris."}</p>
-      <p style="font-size: 12px; opacity: 0.8;">Vérifiez votre token et votre connexion internet.</p>
-    `;
-    grid.appendChild(errorMessage);
-  }
+    // Bind cached bookmarks to this credential without persisting another copy
+    // of the token. Skip caching if Web Crypto is unavailable.
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+    cacheOwner = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+    const cached = storage.readJSON(FAVORITES_CACHE_KEY, null);
+    if (cached?.owner === cacheOwner && Number.isFinite(cached.savedAt) &&
+        Date.now() - cached.savedAt >= 0 && Date.now() - cached.savedAt < CACHE_MAX_AGE &&
+        Array.isArray(cached.items) && cached.items.every(item => item && typeof item.link === "string")) {
+      favoriteItems = cached.items;
+    } else {
+      storage.remove(FAVORITES_CACHE_KEY);
+    }
+  } catch { /* Network loading still works without a cache. */ }
 }
 
-function fetchCardsIcons() {
-  renderFavoriteCards((result) => renderIconCard(result.link, result.title));
+function refreshFavorites() {
+  if (favoritesRequest) return favoritesRequest;
+  setStatus(favoriteItems === null ? "Chargement des favoris…" : "Actualisation…");
+  grid.setAttribute("aria-busy", "true");
+  favoritesRequest = (async () => {
+    try {
+      const items = await fetchAllFavoriteItems();
+      const changed = JSON.stringify(items) !== JSON.stringify(favoriteItems);
+      favoriteItems = items;
+      if (cacheOwner) {
+        storage.set(FAVORITES_CACHE_KEY, JSON.stringify({ owner: cacheOwner, savedAt: Date.now(), items }));
+      }
+      if (changed) renderFavorites();
+      setStatus(items.length ? "" : "Aucun favori. Marquez des liens comme favoris dans Raindrop.");
+    } catch (error) {
+      if (error.status === 401 || error.status === 403) {
+        storage.remove(FAVORITES_CACHE_KEY);
+        favoriteItems = null;
+        grid.replaceChildren();
+      }
+      const suffix = favoriteItems !== null ? " Les favoris enregistrés restent affichés." : "";
+      setStatus(error.message + suffix, true);
+    } finally {
+      grid.setAttribute("aria-busy", "false");
+      favoritesRequest = null;
+    }
+  })();
+  return favoritesRequest;
 }
-
-function fetchCardsCovers() {
-  renderFavoriteCards((result) => renderCoverCard(result.link, result.title, result.cover));
-}
-
-// result.cover = preview in raindrop
-// result.link = url of the link
-// result.title = name of the link
-// ${vemetricfavicon(result.link)} = Vemetric Favicon API icon of the link
-// ${googlefavicon(result.link)} = google favicon of the link
-// ${favicon(result.link)} = favicon of the link
-// ${statvoofavicon(result.link)} = statvoofavicon favicon of the link

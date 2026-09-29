@@ -1,4 +1,4 @@
-* {
+:root {
   --icon-radius: 22px;
   --icon-size: 42px;
   --radius-cards: 8px;
@@ -22,8 +22,7 @@
   border-radius: var(--radius-cards);
   border: var(--card-border);
   box-sizing: content-box;
-  transition: background-color 0.2s, box-shadow 0.2s;
-  transition: box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1)
+  transition: background-color 0.2s, box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .card:hover {
@@ -47,8 +46,11 @@
 .title {
   padding-left: 6px;
   margin: 5px 0px;
-  display: flex;
-  align-items: center;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.6;
   font-size: 10pt;
   font-weight: 550;
   text-indent: 2px;
@@ -59,11 +61,11 @@
   border-bottom: var(--image-border-color);
 }
 .cover-cards .title {
-  aspect-ratio: 6/1;
+  min-height: 1.6em;
 }
 
 .icon-cards .title {
-  aspect-ratio: 6/1;
+  min-height: 1.6em;
 }
 .icon-cards .image {
   aspect-ratio: 6/5;
@@ -104,3 +106,7 @@
   border-bottom: var(--image-border-color);
   filter: saturate(1.1);
 }
+
+.cover-cards .image { overflow: hidden; }
+.cover-cards .image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#grid > a { min-width: 0; }

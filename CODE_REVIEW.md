@@ -1,3 +1,5 @@
+> Historical review: this document describes an earlier version. Consult the current source, README.md and SECURITY.md for implemented behavior.
+
 # 🔍 Code Review - Raindrop HomePage
 **Date:** 2026-01-06
 **Revieweur:** Claude Code

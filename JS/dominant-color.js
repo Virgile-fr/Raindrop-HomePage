@@ -1,3 +1,7 @@
+"use strict";
+
+const dominantColorCache = new Map();
+
 function clamp(value, min = 0, max = 255) {
   return Math.min(max, Math.max(min, Math.round(value)));
 }
@@ -108,7 +112,6 @@ function computeDominantColor(image) {
       b: b / count,
     };
   } catch (error) {
-    console.warn("Unable to compute dominant color", error);
     return null;
   }
 }
@@ -138,28 +141,18 @@ function applyFilterBackground(filter, color) {
 }
 
 function colorizeIconBackground(icon) {
-  if (icon.dataset.colorized) return;
+  if (icon.dataset.colorized || !icon.naturalWidth || icon.crossOrigin !== "anonymous") return;
 
   const filter = icon.closest(".filter");
   if (!filter) return;
 
-  const color = computeDominantColor(icon);
+  const source = icon.currentSrc || icon.src;
+  const color = dominantColorCache.has(source)
+    ? dominantColorCache.get(source)
+    : computeDominantColor(icon);
+  dominantColorCache.set(source, color);
   if (!color) return;
 
   applyFilterBackground(filter, color);
   icon.dataset.colorized = "true";
-}
-
-function refreshIconFilterColors() {
-  const icons = document.querySelectorAll("img.icon");
-
-  icons.forEach((icon) => {
-    const applyColor = () => colorizeIconBackground(icon);
-
-    if (icon.complete && icon.naturalWidth > 0) {
-      applyColor();
-    } else {
-      icon.addEventListener("load", applyColor, { once: true });
-    }
-  });
 }

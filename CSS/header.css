@@ -13,10 +13,9 @@ header h1{
   margin-top: 0px;
 }
 
-.favorite-priority-toggle {
-  cursor: pointer;
-}
-
-.favorite-priority-toggle:hover {
-  color: white;
-}
+.header-group { display: flex; align-items: center; }
+.raindrop-link { display: flex; margin: 0 10px; }
+.icon-button { display: inline-flex; padding: 6px; border: 0; background: none; color: #707070; }
+.favorite-priority-toggle.google-priority { color: #0b9fe8; }
+.cover-indicator { margin-left: 15px; margin-right: 10px; color: #707070; }
+@media (max-width: 410px) { header h1 { font-size: 1.65rem; } }

@@ -1,131 +1,50 @@
+"use strict";
+
 const GOOGLE_FAVICON_PRIORITY_KEY = "googleFaviconPriority";
-
-function extractDomain(address) {
-  try {
-    return new URL(address).hostname;
-  } catch (error) {
-    try {
-      return new URL(`https://${address}`).hostname;
-    } catch {
-      return null;
-    }
-  }
-}
-
-function extractHost(address) {
-  try {
-    return new URL(address).host;
-  } catch (error) {
-    try {
-      return new URL(`https://${address}`).host;
-    } catch {
-      return null;
-    }
-  }
-}
-
-function favicon(adress) {
-  let splitadress = adress.split("/");
-  splitadress = splitadress.slice(0, 3);
-  splitadress = splitadress.join("/");
-  return (newadress = splitadress + "/favicon.ico");
-}
-
-function googlefavicon(adress) {
-  let resolution = 256;
-  const domain = extractHost(adress);
-  if (!domain) return null;
-
-  return `https://www.google.com/s2/favicons?sz=${resolution}&domain=${domain}`;
-}
-
-function vemetricfavicon(adress) {
-  const domain = extractDomain(adress);
-  if (!domain) return null;
-
-  return `https://favicon.vemetric.com/${encodeURIComponent(domain)}`;
-}
-
-function duckduckgofavicon(adress) {
-  let splitadress = adress.split("/");
-  splitadress = splitadress.slice(2, 3);
-  splitadress = splitadress.join("/");
-  return (newadress =
-    "https://icons.duckduckgo.com/ip2/" + splitadress + ".ico");
-}
-
-function statvoofavicon(adress) {
-  let splitadress = adress.split("/");
-  splitadress = splitadress.slice(0, 3);
-  splitadress = splitadress.join("/");
-  return (newadress = "https://api.statvoo.com/favicon/?url=" + splitadress);
-}
-
-function isGoogleFaviconPriority() {
-  return localStorage.getItem(GOOGLE_FAVICON_PRIORITY_KEY) === "true";
-}
-
-function setGoogleFaviconPriority(isGoogleFirst) {
-  localStorage.setItem(GOOGLE_FAVICON_PRIORITY_KEY, isGoogleFirst);
-}
+let googleFaviconPriority = storage.get(GOOGLE_FAVICON_PRIORITY_KEY) === "true";
+const FALLBACK_ICON = "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 42 42"><text x="21" y="30" text-anchor="middle" font-size="30">★</text></svg>');
 
 function getFaviconPreference(address) {
-  const vemetricIcon = vemetricfavicon(address);
-  const googleIcon = googlefavicon(address);
-
-  if (isGoogleFaviconPriority()) {
-    return { primary: googleIcon, fallback: vemetricIcon };
-  }
-
-  return { primary: vemetricIcon, fallback: googleIcon };
+  const url = new URL(address);
+  const vemetric = `https://favicon.vemetric.com/${encodeURIComponent(url.hostname)}`;
+  const google = `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(url.host)}`;
+  return googleFaviconPriority ? [google, vemetric] : [vemetric, google];
 }
 
-function allowsCrossOriginLoading(url) {
-  if (!url) return false;
-
-  const blockedHosts = ["www.google.com"];
-  try {
-    const hostname = new URL(url).hostname;
-    return !blockedHosts.includes(hostname);
-  } catch {
-    return false;
-  }
+function loadFavicon(image, address) {
+  const sources = [...getFaviconPreference(address), FALLBACK_ICON];
+  let index = 0;
+  const loadNext = () => {
+    if (index === sources.length) return;
+    const source = sources[index++];
+    delete image.dataset.colorized;
+    // Google can be displayed without CORS, but cannot be read by canvas.
+    // Re-evaluate on EVERY fallback, including Vemetric -> Google.
+    if (source.startsWith("https://favicon.vemetric.com/")) image.crossOrigin = "anonymous";
+    else image.removeAttribute("crossorigin");
+    image.src = source;
+  };
+  image.addEventListener("error", loadNext);
+  image.addEventListener("load", () => {
+    if (image.crossOrigin === "anonymous") colorizeIconBackground(image);
+  });
+  loadNext();
 }
 
 function updateFaviconPriorityIndicator() {
-  const toggleIcon = document.querySelector(".favorite-priority-toggle");
-
-  if (!toggleIcon) {
-    return;
-  }
-
-  toggleIcon.classList.toggle("google-priority", isGoogleFaviconPriority());
-  toggleIcon.setAttribute(
-    "title",
-    isGoogleFaviconPriority()
-      ? "Icônes Google en priorité (cliquer pour inverser)"
-      : "Icônes Vemetric en priorité (cliquer pour inverser)"
-  );
+  const button = document.querySelector(".favorite-priority-toggle");
+  const label = googleFaviconPriority
+    ? "Icônes Google en priorité (cliquer pour inverser)"
+    : "Icônes Vemetric en priorité (cliquer pour inverser)";
+  button.classList.toggle("google-priority", googleFaviconPriority);
+  button.title = label;
+  button.setAttribute("aria-label", label);
+  button.setAttribute("aria-pressed", String(googleFaviconPriority));
 }
 
 function toggleFaviconPriority() {
-  const newPriority = !isGoogleFaviconPriority();
-  setGoogleFaviconPriority(newPriority);
+  googleFaviconPriority = !googleFaviconPriority;
+  storage.set(GOOGLE_FAVICON_PRIORITY_KEY, String(googleFaviconPriority));
   updateFaviconPriorityIndicator();
-
-  if (typeof toggle !== "undefined" && !toggle.checked) {
-    deleteGrid();
-    fetchCardsIcons();
-  }
+  if (!toggle.checked) renderFavorites();
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  const toggleIcon = document.querySelector(".favorite-priority-toggle");
-
-  if (!toggleIcon) {
-    return;
-  }
-
-  updateFaviconPriorityIndicator();
-  toggleIcon.addEventListener("click", toggleFaviconPriority);
-});

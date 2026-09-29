@@ -1,75 +1,79 @@
-let grid = document.getElementById("grid");
+"use strict";
 
-grid.addEventListener("click", handleCardClick);
+const grid = document.getElementById("grid");
+const statusMessage = document.getElementById("status-message");
+const retryButton = document.getElementById("retry");
 
-function escapeHtml(unsafe) {
-  if (!unsafe) return "";
-  return unsafe
-    .toString()
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+function safeWebUrl(value) {
+  try {
+    const url = new URL(value);
+    return ["https:", "http:"].includes(url.protocol) ? url.href : null;
+  } catch { return null; }
 }
 
-function smallerTitle(title) {
-  if (title.length > 14) {
-    return title.substring(0, 12) + "..";
-  } else return title;
+function setStatus(message, retry = false) {
+  statusMessage.textContent = message;
+  retryButton.hidden = !retry;
 }
 
-function renderIconCard(lien, titre) {
-  const { primary, fallback } = getFaviconPreference(lien);
-  const initialIcon = primary ?? fallback ?? "";
-  const fallbackIcon = fallback ?? "";
-  const crossOriginAttr = allowsCrossOriginLoading(initialIcon)
-    ? ' crossOrigin="anonymous"'
-    : "";
-
-  const escapedUrl = escapeHtml(lien);
-  const escapedTitle = escapeHtml(titre);
-  const escapedIcon = escapeHtml(initialIcon);
-  const escapedFallback = escapeHtml(fallbackIcon);
-
-  let content = `
-  <a href="${escapedUrl}" target="_blank" rel="noopener noreferrer">
-    <div class="card icon-cards">
-      <div class="filter">
-          <img class="icon" src="${escapedIcon}"${crossOriginAttr} alt="${escapedTitle}" loading="lazy" onerror="this.onerror=null; this.src='${escapedFallback}'">
-        </div>
-        <div class="title" title="${escapedTitle}">${escapeHtml(smallerTitle(titre))}</div>
-    </div>
-  </a>`;
-  return content;
+function createCard(item, coverView) {
+  const url = safeWebUrl(item.link);
+  if (!url) return null;
+  const title = typeof item.title === "string" && item.title.trim() ? item.title : new URL(url).hostname;
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.dataset.link = item.link;
+  anchor.target = "_blank";
+  anchor.rel = "noopener noreferrer";
+  anchor.setAttribute("aria-label", title);
+  const card = document.createElement("div");
+  card.className = `card ${coverView ? "cover-cards" : "icon-cards"}`;
+  const frame = document.createElement("div");
+  frame.className = coverView ? "image" : "filter";
+  const image = document.createElement("img");
+  image.alt = ""; // The enclosing link already has a complete accessible name.
+  image.loading = "lazy";
+  image.decoding = "async";
+  image.referrerPolicy = "no-referrer";
+  if (coverView) {
+    const cover = safeWebUrl(item.cover);
+    if (cover) {
+      image.src = cover;
+      image.addEventListener("error", () => image.remove(), { once: true });
+      frame.append(image);
+    }
+  } else {
+    image.className = "icon";
+    image.width = 42;
+    image.height = 42;
+    loadFavicon(image, url);
+    frame.append(image);
+  }
+  const label = document.createElement("div");
+  label.className = "title";
+  label.title = title;
+  label.textContent = title;
+  card.append(frame, label);
+  anchor.append(card);
+  return anchor;
 }
 
-function renderCoverCard(lien, titre, image) {
-  const escapedUrl = escapeHtml(lien);
-  const escapedTitle = escapeHtml(titre);
-  const escapedImage = escapeHtml(image);
-
-  let content = `
-  <a href="${escapedUrl}" target="_blank" rel="noopener noreferrer">
-    <div class="card cover-cards">
-      <div class="image" style="background-image:url(${escapedImage});" role="img" aria-label="${escapedTitle}">
-      </div>
-      <div class="title" title="${escapedTitle}">${escapeHtml(smallerTitle(titre))}</div>
-    </div>
-  </a>`;
-  return content;
+function renderFavorites() {
+  if (favoriteItems === null) return;
+  const fragment = document.createDocumentFragment();
+  for (const item of sortByUsage(favoriteItems)) {
+    const card = createCard(item, toggle.checked);
+    if (card) fragment.append(card);
+  }
+  grid.replaceChildren(fragment);
 }
 
 function handleCardClick(event) {
-  const anchor = event.target.closest("a");
-
-  if (!anchor || !grid.contains(anchor)) {
-    return;
-  }
-
-  const link = anchor.getAttribute("href");
-
-  if (link) {
-    recordUsage(link);
-  }
+  if (event.type === "auxclick" && event.button !== 1) return;
+  const anchor = event.target.closest("a[data-link]");
+  if (anchor && grid.contains(anchor)) recordUsage(anchor.dataset.link);
 }
+
+grid.addEventListener("click", handleCardClick);
+grid.addEventListener("auxclick", handleCardClick);
+retryButton.addEventListener("click", () => refreshFavorites());
