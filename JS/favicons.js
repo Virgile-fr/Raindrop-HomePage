@@ -148,9 +148,16 @@ function iconRequestUrl(source) {
   return url.href;
 }
 
+async function markIconReady(image) {
+  const source = image.src;
+  try { await image.decode(); } catch { return; }
+  if (image.src === source) image.dispatchEvent(new Event("previewready"));
+}
+
 function paintCachedIcon(image, result) {
   image.removeAttribute("crossorigin");
   image.src = result.src;
+  markIconReady(image);
   if (validIconColor(result.color)) {
     // Cards may still be inside their construction fragment.
     queueMicrotask(() => {
@@ -269,6 +276,7 @@ function resolveFavicon(image, address, title, providers, finish) {
         src = canvas.toDataURL("image/png");
       } catch { /* The resolved URL still avoids provider probing. */ }
     }
+    markIconReady(image);
     image.removeEventListener("error", onError);
     image.removeEventListener("load", onLoad);
     finish({ src, color, expires: Date.now() + (hadError ? 15 * 60000 : loaded.id === "local" ? 86400000 : 7 * 86400000) });
