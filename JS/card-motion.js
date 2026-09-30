@@ -7,6 +7,8 @@
   let active = null;
   let frame = 0;
   let previousTime = 0;
+  let touchTap = null;
+  let navigationPending = false;
   const clamp = value => Math.max(-1, Math.min(1, value));
 
   function clear(state) {
@@ -140,6 +142,32 @@
     card.classList.add("is-floating");
     position(event);
   }
+
+  // Brief same-tab tap feedback on phones, preserving native long-press menus
+  // and all mouse, keyboard, modifier-key and scrolling interactions.
+  grid.addEventListener("pointerdown", event => {
+    touchTap = event.pointerType === "touch" && event.isPrimary
+      ? { anchor: event.target.closest("#grid > a[data-link]"), x: event.clientX, y: event.clientY, time: performance.now(), id: event.pointerId }
+      : null;
+  }, { passive: true });
+  document.addEventListener("pointermove", event => {
+    if (touchTap && event.pointerId === touchTap.id && Math.hypot(event.clientX - touchTap.x, event.clientY - touchTap.y) > 10) touchTap = null;
+  }, { passive: true });
+  document.addEventListener("pointercancel", () => { touchTap = null; }, { passive: true });
+  document.addEventListener("scroll", () => { touchTap = null; }, { passive: true, capture: true });
+  grid.addEventListener("click", event => {
+    const tap = touchTap;
+    touchTap = null;
+    if (!tap?.anchor || event.defaultPrevented || !event.isTrusted || event.detail === 0 ||
+        event.ctrlKey || event.metaKey || event.shiftKey || event.altKey ||
+        performance.now() - tap.time > 500 || !tap.anchor.contains(event.target)) return;
+    if (reducedMotion.matches || tap.anchor.classList.contains("preview-pending") || tap.anchor.classList.contains("card-entering")) return;
+    event.preventDefault();
+    if (navigationPending) return;
+    navigationPending = true;
+    setTimeout(() => window.location.assign(tap.anchor.href), 140);
+  });
+  window.addEventListener("pageshow", () => { navigationPending = false; touchTap = null; });
 
   grid.addEventListener("pointerover", engage, { passive: true });
   grid.addEventListener("pointerdown", engage, { passive: true });

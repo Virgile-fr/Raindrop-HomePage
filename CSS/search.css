@@ -103,3 +103,46 @@ header > .header-group { flex-shrink: 0; }
 .search-engine-logo { border: 0; }
 .search-engine-logo svg { width: 20px; height: 20px; }
 .search-engine-key { font: inherit; font-size: 11px; color: var(--search-muted); border: 1px solid var(--search-line); border-radius: 5px; padding: 2px 6px; }
+
+.search-engine-picker { display: none; }
+@media (max-width: 760px), (pointer: coarse) {
+  .search-engine-picker {
+    display: flex;
+    gap: 7px;
+    margin-top: 10px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    padding: 2px 2px 7px;
+  }
+  .search-engine-picker button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-height: 44px;
+    flex: 0 0 auto;
+    padding: 0 13px;
+    border: 1px solid var(--search-line);
+    border-radius: 999px;
+    background: var(--search-surface);
+    font-size: 12px;
+    white-space: nowrap;
+    touch-action: manipulation;
+  }
+  .search-engine-picker button[aria-pressed="true"] {
+    border-color: #729fb7;
+    background: var(--search-highlight);
+    box-shadow: inset 0 0 0 1px #729fb740;
+  }
+  .search-engine-picker svg { width: 18px; height: 18px; }
+  .search-engine-picker .engine-emoji { font-size: 18px; }
+  #search-clear { width: 44px; height: 44px; margin-right: -8px; }
+  #search-engine-name { display: none; }
+  #search-shortcut, .search-engine-key { display: none; }
+  #search-input { font-size: 16px; }
+  .search-panel { max-height: min(400px, 45dvh); }
+  .search-result { min-height: 44px; }
+  .icon-button, .raindrop-link { min-width: 44px; min-height: 44px; justify-content: center; align-items: center; }
+  footer button { min-height: 44px; padding: 8px; }
+  #icons-dialog button { min-width: 44px; min-height: 44px; }
+}
