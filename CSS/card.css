@@ -31,8 +31,11 @@
 .card.is-floating {
   will-change: transform;
   background-color: var(--card-backgroud-hover);
-  box-shadow: var(--float-shadow-x, 0px) var(--float-shadow-y, 8px) 28px -9px
-    rgba(0, 0, 0, var(--float-shadow-alpha, 0));
+  box-shadow:
+    0 2px 4px -1px rgba(0, 0, 0, var(--float-shadow-alpha, 0)),
+    var(--float-shadow-x, 0px) var(--float-shadow-y, 8px) 32px -10px
+      rgba(0, 0, 0, var(--float-shadow-alpha, 0)),
+    inset 0 -1px 0 rgba(0, 0, 0, calc(var(--float-depth, 0) * 0.16));
 }
 
 .card::after {
@@ -42,8 +45,14 @@
   border-radius: inherit;
   pointer-events: none;
   opacity: var(--float-light, 0);
-  background: radial-gradient(ellipse at var(--float-light-x, 50%) var(--float-light-y, 40%),
-    rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.2) 38%, transparent 72%);
+  background-image:
+    radial-gradient(ellipse at var(--float-light-x, 50%) var(--float-light-y, 40%),
+      rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.12) 38%, transparent 72%),
+    linear-gradient(var(--float-sheen-angle, 118deg), transparent 35%,
+      rgba(255, 255, 255, 0.05) 43%, rgba(255, 255, 255, 0.65) 49%,
+      rgba(255, 255, 255, 0.12) 54%, transparent 64%);
+  background-size: 100% 100%, 220% 220%;
+  background-position: center, var(--float-sheen-x, 50%) var(--float-sheen-y, 50%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 
@@ -97,15 +106,17 @@
   /* A small foreground displacement adds depth without changing the icon. */
   background: linear-gradient(var(--icon-g1), var(--icon-g2));
 
-  transform: translate(var(--float-icon-x, 0px), var(--float-icon-y, 0px));
+  transform: translate3d(var(--float-icon-x, 0px), var(--float-icon-y, 0px), 0) scale(var(--float-icon-scale, 1));
   transition: --icon-g1 0.35s, --icon-g2 0.35s, box-shadow 0.35s ease;
 }
 
 .card.is-floating .icon {
   --icon-g1: rgba(255,255,255,0.78);
   --icon-g2: rgba(255,255,255,0.28);
-  box-shadow: 0px 5px 12px -6px rgba(0, 0, 0, 0.2),
-    0px 0px 0px 1px rgba(255, 255, 255, 0.6);
+  transition: --icon-g1 0.35s, --icon-g2 0.35s;
+  box-shadow: var(--float-icon-shadow-x, 0px) var(--float-icon-shadow-y, 3px) 14px -5px
+      rgba(0, 0, 0, calc(var(--float-depth, 0) * 0.25)),
+    0 0 0 1px rgba(255, 255, 255, calc(0.4 + var(--float-depth, 0) * 0.24));
 }
 
 .filter {
@@ -139,9 +150,12 @@
     padding: 1px;
     border-radius: inherit;
     pointer-events: none;
-    opacity: calc(var(--float-light, 0) * 3);
-    background: radial-gradient(ellipse at var(--float-light-x, 50%) var(--float-light-y, 40%),
-      #fff 0%, rgba(255, 255, 255, .85) 22%, rgba(255, 255, 255, .24) 55%, rgba(255, 255, 255, .06) 80%);
+    opacity: calc(var(--float-depth, 0) * 0.85);
+    background:
+      conic-gradient(from var(--float-rim-angle, 0deg),
+        #fff 0deg, rgba(255, 255, 255, .5) 35deg,
+        rgba(255, 255, 255, .06) 95deg, rgba(0, 0, 0, .22) 180deg,
+        rgba(255, 255, 255, .06) 265deg, rgba(255, 255, 255, .5) 325deg, #fff 360deg);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
