@@ -43,13 +43,21 @@
       const targetX = engaged ? state.targetX : 0;
       const targetY = engaged ? state.targetY : 0;
       const targetDepth = engaged ? (state.pressed ? 0.58 : 1) : 0;
-      spring(state, "x", targetX, engaged ? 23 : 18, dt);
-      spring(state, "y", targetY, engaged ? 23 : 18, dt);
-      spring(state, "depth", targetDepth, 22, dt);
-      // The light responds ahead of the heavier card surface.
-      const lightEase = 1 - Math.exp(-dt / 0.055);
-      state.lightX += (targetX - state.lightX) * lightEase;
-      state.lightY += (targetY - state.lightY) * lightEase;
+      if (engaged) {
+        spring(state, "x", targetX, 28, dt);
+        spring(state, "y", targetY, 28, dt);
+        spring(state, "depth", targetDepth, 28, dt);
+        const lightEase = 1 - Math.exp(-dt / 0.045);
+        state.lightX += (targetX - state.lightX) * lightEase;
+        state.lightY += (targetY - state.lightY) * lightEase;
+      } else {
+        // A finite exit avoids a spring tail keeping hover styles alive.
+        const progress = Math.min(1, (time - state.exit.time) / 220);
+        if (progress === 1) { clear(state); continue; }
+        const remaining = (1 - progress) ** 3;
+        for (const key of ["x", "y", "depth", "lightX", "lightY"]) state[key] = state.exit[key] * remaining;
+        state.xVelocity = state.yVelocity = state.depthVelocity = 0;
+      }
       const error = Math.abs(targetX - state.x) + Math.abs(targetY - state.y) +
         Math.abs(targetDepth - state.depth) + Math.abs(targetX - state.lightX) + Math.abs(targetY - state.lightY);
       const speed = Math.abs(state.xVelocity) + Math.abs(state.yVelocity) + Math.abs(state.depthVelocity);
@@ -90,11 +98,13 @@
 
   function release() {
     if (!active) return;
+    active.exit = { time: performance.now(), x: active.x, y: active.y, depth: active.depth, lightX: active.lightX, lightY: active.lightY };
     active = null;
     wake();
   }
 
   function position(event) {
+    if (!active && event.type === "pointermove" && event.pointerType === "mouse" && event.buttons === 0) engage(event);
     if (!active || event.pointerId !== active.pointerId) return;
     const rect = active.rect;
     const x = (event.clientX - rect.left) / rect.width;
@@ -109,7 +119,7 @@
     if (reducedMotion.matches || !event.isPrimary || (event.type === "pointerdown" && event.button !== 0)) return;
     if (event.type === "pointerover" && event.pointerType !== "mouse") return;
     const anchor = event.target.closest("#grid > a[data-link]");
-    if (!anchor || anchor.hidden) return;
+    if (!anchor || anchor.hidden || anchor.classList.contains("preview-pending") || anchor.classList.contains("card-entering")) return;
     if (active?.anchor === anchor) {
       if (event.type === "pointerdown") { active.pressed = true; wake(); }
       return;
@@ -119,6 +129,7 @@
     if (!card) return;
     active = [...moving].find(state => state.anchor === anchor) ||
       { anchor, card, x: 0, y: 0, depth: 0, lightX: 0, lightY: 0, targetX: 0, targetY: 0 };
+    active.exit = null;
     active.pointerId = event.pointerId;
     active.touch = event.pointerType === "touch";
     active.pressed = event.type === "pointerdown" && !active.touch;

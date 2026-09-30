@@ -100,20 +100,18 @@
   box-shadow: 65px 39px 100px 100px rgba(255, 255, 255, 0), 0px 0px 0px 1px rgba(255, 255, 255, 0.4);
 
   /* Preserve the original resting appearance. */
-  --icon-g1: rgba(255,255,255,0.6);
-  --icon-g2: rgba(255,255,255,0.2);
+  --icon-g1: rgba(255,255,255,calc(.6 + var(--float-depth, 0) * .18));
+  --icon-g2: rgba(255,255,255,calc(.2 + var(--float-depth, 0) * .08));
 
   /* A small foreground displacement adds depth without changing the icon. */
   background: linear-gradient(var(--icon-g1), var(--icon-g2));
 
   transform: translate3d(var(--float-icon-x, 0px), var(--float-icon-y, 0px), 0) scale(var(--float-icon-scale, 1));
-  transition: --icon-g1 0.35s, --icon-g2 0.35s, box-shadow 0.35s ease;
+  transition: none;
 }
 
 .card.is-floating .icon {
-  --icon-g1: rgba(255,255,255,0.78);
-  --icon-g2: rgba(255,255,255,0.28);
-  transition: --icon-g1 0.35s, --icon-g2 0.35s;
+
   box-shadow: var(--float-icon-shadow-x, 0px) var(--float-icon-shadow-y, 3px) 14px -5px
       rgba(0, 0, 0, calc(var(--float-depth, 0) * 0.25)),
     0 0 0 1px rgba(255, 255, 255, calc(0.4 + var(--float-depth, 0) * 0.24));
@@ -164,4 +162,23 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .card::before { display: none; }
+}
+
+/* Reserve geometry while provider checks and image decoding finish. */
+#grid > a.preview-pending { position: relative; border-radius: var(--radius-cards); }
+.preview-pending .card { opacity: 0; }
+#grid > a.preview-pending::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--card-border);
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.09) 48%, transparent 66%), var(--card-backgroud);
+  background-size: 240% 100%;
+  animation: preview-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes preview-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  #grid > a.preview-pending::after { animation: none; }
 }

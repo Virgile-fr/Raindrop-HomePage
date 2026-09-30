@@ -16,11 +16,68 @@ function setStatus(message, retry = false) {
   retryButton.hidden = !retry;
 }
 
+const previewStates = new WeakMap();
+const entranceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+let previewGeneration = 0;
+let previewQueue = Promise.resolve();
+
+async function revealPreviews(anchors, generation) {
+  await Promise.all(anchors.map(async anchor => {
+    const state = previewStates.get(anchor);
+    let timeout;
+    const deadline = new Promise(resolve => { timeout = setTimeout(() => resolve(false), 8000); });
+    const ready = await Promise.race([state.ready.then(() => true), deadline]);
+    clearTimeout(timeout);
+    if (!ready && anchor.isConnected && generation === previewGeneration) await state.fallback();
+  }));
+  if (generation !== previewGeneration) return;
+  const visible = anchors.filter(anchor => anchor.isConnected && !anchor.hidden);
+  const step = Math.min(42, 1000 / Math.max(1, visible.length));
+  anchors.forEach(anchor => {
+    anchor.classList.remove("preview-pending");
+    anchor.removeAttribute("aria-busy");
+  });
+  const entrances = [];
+  visible.forEach((anchor, index) => {
+    if (entranceMotion.matches || !anchor.animate) return;
+    anchor.classList.add("card-entering");
+    const animation = anchor.animate([
+      { opacity: 0, transform: "perspective(900px) translate3d(0, -18px, 0) rotateX(9deg) scale(.965)" },
+      { opacity: 1, transform: "perspective(900px) translate3d(0, 0, 0) rotateX(0deg) scale(1)" },
+    ], { duration: 420, delay: index * step, easing: "cubic-bezier(.2,.75,.25,1)", fill: "backwards" });
+    const finish = () => anchor.classList.remove("card-entering");
+    animation.onfinish = finish;
+    animation.oncancel = finish;
+    const stop = () => animation.cancel();
+    anchor.addEventListener("focus", stop, { once: true });
+    const reduce = () => { if (entranceMotion.matches) animation.cancel(); };
+    entranceMotion.addEventListener("change", reduce);
+    entrances.push(animation.finished.catch(() => {}));
+    animation.finished.catch(() => {}).finally(() => {
+      anchor.removeEventListener("focus", stop);
+      entranceMotion.removeEventListener("change", reduce);
+    });
+  });
+  await Promise.all(entrances);
+}
+
+const previewObserver = typeof IntersectionObserver === "function" ? new IntersectionObserver(entries => {
+  const anchors = entries.filter(entry => entry.isIntersecting).map(entry => entry.target)
+    .sort((a, b) => [...grid.children].indexOf(a) - [...grid.children].indexOf(b));
+  if (!anchors.length) return;
+  anchors.forEach(anchor => previewObserver.unobserve(anchor));
+  const generation = previewGeneration;
+  // Start loading concurrently; only the reveal order is sequenced.
+  previewQueue = previewQueue.then(() => revealPreviews(anchors, generation));
+}, { rootMargin: "80px" }) : null;
+
 function createCard(item, coverView) {
   const url = safeWebUrl(item.link);
   if (!url) return null;
   const title = typeof item.title === "string" && item.title.trim() ? item.title : new URL(url).hostname;
   const anchor = document.createElement("a");
+  anchor.className = "preview-pending";
+  anchor.setAttribute("aria-busy", "true");
   anchor.href = url;
   anchor.dataset.link = item.link;
   anchor.target = "_blank";
@@ -35,13 +92,33 @@ function createCard(item, coverView) {
   image.loading = "lazy";
   image.decoding = "async";
   image.referrerPolicy = "no-referrer";
+  let resolveReady;
+  const ready = new Promise(resolve => { resolveReady = resolve; });
+  image.addEventListener("previewready", () => resolveReady(), { once: true });
+  const fallback = async () => {
+    const replacement = new Image(42, 42);
+    replacement.className = "icon";
+    replacement.alt = "";
+    replacement.src = createInitialIcon(url, title);
+    try { await replacement.decode(); } catch { /* Keep the title usable. */ }
+    card.classList.replace("cover-cards", "icon-cards");
+    frame.className = "filter";
+    frame.replaceChildren(replacement);
+    await colorizeIconBackground(replacement);
+    resolveReady();
+  };
+  previewStates.set(anchor, { ready, fallback });
   if (coverView) {
     const cover = safeWebUrl(item.cover);
     if (cover) {
       image.src = cover;
-      image.addEventListener("error", () => image.remove(), { once: true });
+      image.addEventListener("load", async () => {
+        try { await image.decode(); } catch { return fallback(); }
+        resolveReady();
+      }, { once: true });
+      image.addEventListener("error", fallback, { once: true });
       frame.append(image);
-    }
+    } else queueMicrotask(fallback);
   } else {
     image.className = "icon";
     image.width = 42;
@@ -65,7 +142,14 @@ function renderFavorites() {
     const card = createCard(item, toggle.checked);
     if (card) fragment.append(card);
   }
+  previewObserver?.disconnect();
+  previewGeneration += 1;
+  previewQueue = Promise.resolve();
   grid.replaceChildren(fragment);
+  for (const anchor of grid.children) {
+    if (previewObserver) previewObserver.observe(anchor);
+    else revealPreviews([anchor], previewGeneration);
+  }
 }
 
 function handleCardClick(event) {
