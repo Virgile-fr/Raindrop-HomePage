@@ -19,20 +19,25 @@ function setStatus(message, retry = false) {
 const previewStates = new WeakMap();
 const entranceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 let previewGeneration = 0;
-let previewQueue = Promise.resolve();
+
 
 async function revealPreviews(anchors, generation) {
+  // A slow provider must not hold already decoded neighbors behind a batch gate.
+  await Promise.all(anchors.map((anchor, index) => revealPreview(anchor, generation, Math.min(index * 35, 350))));
+}
+
+async function revealPreview(anchor, generation, entranceDelay) {
+  const anchors = [anchor];
   await Promise.all(anchors.map(async anchor => {
     const state = previewStates.get(anchor);
     let timeout;
-    const deadline = new Promise(resolve => { timeout = setTimeout(() => resolve(false), 8000); });
+    const deadline = new Promise(resolve => { timeout = setTimeout(() => resolve(false), 2500); });
     const ready = await Promise.race([state.ready.then(() => true), deadline]);
     clearTimeout(timeout);
     if (!ready && anchor.isConnected && generation === previewGeneration) await state.fallback();
   }));
   if (generation !== previewGeneration) return;
   const visible = anchors.filter(anchor => anchor.isConnected && !anchor.hidden);
-  const step = Math.min(42, 1000 / Math.max(1, visible.length));
   anchors.forEach(anchor => {
     anchor.classList.remove("preview-pending");
     anchor.removeAttribute("aria-busy");
@@ -44,7 +49,7 @@ async function revealPreviews(anchors, generation) {
     const animation = anchor.animate([
       { opacity: 0, transform: "perspective(900px) translate3d(0, -18px, 0) rotateX(9deg) scale(.965)" },
       { opacity: 1, transform: "perspective(900px) translate3d(0, 0, 0) rotateX(0deg) scale(1)" },
-    ], { duration: 420, delay: index * step, easing: "cubic-bezier(.2,.75,.25,1)", fill: "backwards" });
+    ], { duration: 420, delay: entranceDelay, easing: "cubic-bezier(.2,.75,.25,1)", fill: "backwards" });
     const finish = () => anchor.classList.remove("card-entering");
     animation.onfinish = finish;
     animation.oncancel = finish;
@@ -67,8 +72,7 @@ const previewObserver = typeof IntersectionObserver === "function" ? new Interse
   if (!anchors.length) return;
   anchors.forEach(anchor => previewObserver.unobserve(anchor));
   const generation = previewGeneration;
-  // Start loading concurrently; only the reveal order is sequenced.
-  previewQueue = previewQueue.then(() => revealPreviews(anchors, generation));
+  revealPreviews(anchors, generation);
 }, { rootMargin: "80px" }) : null;
 
 function createCard(item, coverView) {
@@ -105,6 +109,7 @@ function createCard(item, coverView) {
     frame.className = "filter";
     frame.replaceChildren(replacement);
     await colorizeIconBackground(replacement);
+    rememberPreviewFallback(image, replacement);
     resolveReady();
   };
   previewStates.set(anchor, { ready, fallback });
@@ -144,7 +149,6 @@ function renderFavorites() {
   }
   previewObserver?.disconnect();
   previewGeneration += 1;
-  previewQueue = Promise.resolve();
   grid.replaceChildren(fragment);
   for (const anchor of grid.children) {
     if (previewObserver) previewObserver.observe(anchor);

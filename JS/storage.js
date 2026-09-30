@@ -9,7 +9,7 @@ const storage = {
   },
   set(key, value) {
     if (resettingCache && key !== "iconCacheEpoch") return;
-    try { localStorage.setItem(key, value); } catch { /* Best effort. */ }
+    try { localStorage.setItem(key, value); return true; } catch { return false; }
   },
   remove(key) {
     try { localStorage.removeItem(key); } catch { /* Best effort. */ }
