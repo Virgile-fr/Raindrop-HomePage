@@ -122,23 +122,36 @@ const ICON_RESULT_KEY = "iconResultsV1";
 const cachedIconResults = storage.readJSON(ICON_RESULT_KEY, {});
 const iconResults = new Map(Object.entries(cachedIconResults && typeof cachedIconResults === "object" ? cachedIconResults : {}));
 const pendingIconResults = new Map();
+const imageCacheKeys = new WeakMap();
 let iconSaveTimer;
 
-function persistIconResults() {
+function flushIconResults() {
   clearTimeout(iconSaveTimer);
-  iconSaveTimer = setTimeout(() => {
-    // Bound both entry count and encoded image storage; retain newest results.
-    let bytes = 0;
-    const entries = [...iconResults].reverse().filter(([, value]) => {
-      if (!value || value.expires <= Date.now()) return false;
-      const size = JSON.stringify(value).length * 2;
-      if (bytes + size > 2000000) return false;
-      bytes += size;
-      return true;
-    }).slice(0, 500);
-    storage.set(ICON_RESULT_KEY, JSON.stringify(Object.fromEntries(entries.reverse())));
-  }, 150);
+  iconSaveTimer = null;
+  if (resettingCache) return;
+  let bytes = 0;
+  const entries = [...iconResults].reverse().filter(([key, value]) => {
+    if (!value || value.expires <= Date.now()) return false;
+    const size = (key.length + JSON.stringify(value).length) * 2;
+    if (bytes + size > 2000000) return false;
+    bytes += size;
+    return true;
+  }).slice(0, 500).reverse();
+  // Other app data may already occupy the origin's localStorage quota.
+  // Keep a smaller recent cache instead of silently losing every new result.
+  while (entries.length && !storage.set(ICON_RESULT_KEY, JSON.stringify(Object.fromEntries(entries)))) {
+    entries.splice(0, Math.max(1, Math.ceil(entries.length / 4)));
+  }
 }
+
+function persistIconResults() {
+  // Throttle instead of debounce: continuous downloads cannot starve persistence.
+  if (!iconSaveTimer) iconSaveTimer = setTimeout(flushIconResults, 150);
+}
+window.addEventListener("pagehide", () => { if (iconSaveTimer) flushIconResults(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && iconSaveTimer) flushIconResults();
+});
 
 function iconRequestUrl(source) {
   const epoch = storage.get("iconCacheEpoch");
@@ -156,6 +169,7 @@ async function markIconReady(image) {
 
 function paintCachedIcon(image, result) {
   image.removeAttribute("crossorigin");
+  image.loading = "eager";
   image.src = result.src;
   markIconReady(image);
   if (validIconColor(result.color)) {
@@ -177,8 +191,23 @@ const iconVisibility = typeof IntersectionObserver === "function" ? new Intersec
   }
 }, { rootMargin: "300px" }) : null;
 
+function rememberPreviewFallback(image, replacement) {
+  const key = imageCacheKeys.get(image);
+  if (!key) return; // Covers have their own loading lifecycle.
+  const existing = iconResults.get(key);
+  if (existing?.expires > Date.now()) return;
+  iconResults.set(key, {
+    src: replacement.src,
+    color: computeDominantColor(replacement),
+    expires: Date.now() + 5 * 60000,
+  });
+  while (iconResults.size > 500) iconResults.delete(iconResults.keys().next().value);
+  persistIconResults();
+}
+
 function loadFavicon(image, address, title) {
   const key = JSON.stringify([new URL(address).hostname, selectedIconProviders, title]);
+  imageCacheKeys.set(image, key);
   const providers = [...selectedIconProviders];
   const start = (ignoreCache = false) => {
     const saved = iconResults.get(key);
@@ -208,8 +237,7 @@ function loadFavicon(image, address, title) {
       finish(result);
     });
   };
-  const saved = iconResults.get(key);
-  if (saved?.expires > Date.now() || !iconVisibility) start();
+  if (!iconVisibility) start();
   else {
     waitingIcons.set(image, start);
     iconVisibility.observe(image);

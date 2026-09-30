@@ -290,3 +290,10 @@ The footer **reset cache** action clears application icon, placeholder, color an
 Touch layouts expose scrollable search mode buttons, including Favorites and Google Images. Selecting a mode preserves the query. Results support native touch scrolling; pointer-hover selection is limited to a mouse. Search captions use touch instructions, and common controls have larger touch targets.
 
 A short touch tap on a ready card allows 140 ms of visual feedback before opening the bookmark in the same tab, making browser Back available. Long presses, scroll gestures, keyboard/mouse clicks and modified clicks retain native navigation. Reduced-motion users navigate immediately. No new-tab popup is delayed, avoiding asynchronous popup blocking.
+
+
+### Preview loading behavior
+
+Ready cards appear independently: a slow icon no longer holds a whole viewport or subsequent reveal batches. Cached results are loaded eagerly once their image approaches the viewport, before decoding. A 2.5-second display deadline shows initials for slow previews; these temporary icon fallbacks are cached for five minutes, and a completed provider request replaces that cache entry with its final result. Covers use the same display deadline but are not stored in the favicon cache.
+
+Icon result writes are throttled rather than postponed after every completion, and pending writes flush when the page becomes hidden or is left. If origin storage is full, the cache retries with fewer recent entries. Explicit cache reset still prevents late writes from restoring cleared data.
