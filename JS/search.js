@@ -25,6 +25,31 @@
   const shortcut = document.getElementById("search-shortcut");
   const empty = document.getElementById("search-empty");
   const announcement = document.getElementById("search-announcement");
+  const touchUI = matchMedia("(hover: none), (pointer: coarse)");
+  const picker = document.createElement("div");
+  picker.className = "search-engine-picker";
+  picker.setAttribute("role", "group");
+  picker.setAttribute("aria-label", "Search mode");
+  const modeButtons = new Map();
+  for (const key of [null, ...Object.keys(engines)]) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.innerHTML = key ? engines[key].icon : magnifier;
+    const label = document.createElement("span");
+    label.textContent = key === "i" ? "Images" : key ? engines[key].name : "Favorites";
+    button.append(label);
+    button.setAttribute("aria-label", key ? `Search on ${engines[key].name}` : "Search favorites");
+    button.addEventListener("click", () => {
+      setMode(key);
+      input.focus({ preventScroll: true });
+      update();
+      button.scrollIntoView({ block: "nearest", inline: "nearest" });
+    });
+    modeButtons.set(key, button);
+    picker.append(button);
+  }
+  root.querySelector(".search-pill").after(picker);
+  let selectingResult = false;
   let mode = null;
   let indexedCards = [];
   let matches = [];
@@ -46,6 +71,7 @@
 
   function setMode(key) {
     mode = key;
+    modeButtons.forEach((button, value) => button.setAttribute("aria-pressed", String(value === key)));
     const engine = engines[key];
     // Only fixed, locally defined SVG markup is inserted here.
     icon.innerHTML = engine ? engine.icon : magnifier;
@@ -124,9 +150,13 @@
         arrow.textContent = "↗";
         arrow.setAttribute("aria-hidden", "true");
         row.append(initial, copy, arrow);
-        row.addEventListener("pointerdown", event => event.preventDefault());
+        row.addEventListener("pointerdown", event => {
+          if (event.pointerType === "mouse") event.preventDefault();
+          else selectingResult = true;
+        });
         row.addEventListener("click", event => openMatch(index, event.ctrlKey || event.metaKey || event.shiftKey));
-        row.addEventListener("pointermove", () => {
+        row.addEventListener("pointermove", event => {
+          if (event.pointerType !== "mouse") return;
           if (active !== index) { active = index; paintActive(); }
         });
         renderedRows.push(row);
@@ -168,9 +198,13 @@
         hint.setAttribute("aria-hidden", "true");
         row.append(logo, copy, hint);
         const action = newTab => navigate(engine.url(encodeURIComponent(query())), newTab);
-        row.addEventListener("pointerdown", event => event.preventDefault());
+        row.addEventListener("pointerdown", event => {
+          if (event.pointerType === "mouse") event.preventDefault();
+          else selectingResult = true;
+        });
         row.addEventListener("click", event => action(event.ctrlKey || event.metaKey || event.shiftKey));
-        row.addEventListener("pointermove", () => {
+        row.addEventListener("pointermove", event => {
+          if (event.pointerType !== "mouse") return;
           if (active !== index) { active = index; paintActive(); }
         });
         renderedRows.push(row);
@@ -180,18 +214,24 @@
     }
     results.replaceChildren(fragment);
     results.hidden = renderedRows.length === 0;
-    tips.hidden = Boolean(mode || text);
+    tips.hidden = Boolean(mode || text || touchUI.matches);
     if (mode) {
       caption.textContent = text ? `Press Enter to search on ${engines[mode].name}` : `Search on ${engines[mode].name}`;
     } else if (text) {
       caption.textContent = matches.length ? `${matches.length} favorite${matches.length > 1 ? "s" : ""} · ↑ ↓ to select · Enter to open` : "No favorites · Press Enter to search Google";
       if (indexedCards.length === 0 && grid.getAttribute("aria-busy") === "true") caption.textContent = "Loading favorites…";
     } else caption.textContent = "Your favorites, or a shortcut followed by a space";
+    if (touchUI.matches) {
+      caption.textContent = mode ? `Search on ${engines[mode].name}` : text
+        ? matches.length ? `${matches.length} favorite${matches.length === 1 ? "" : "s"} · Tap a result to open`
+          : "No favorites · Search with an engine below"
+        : "Choose Favorites or a search engine";
+    }
     if (focused()) {
       panel.hidden = false;
       input.setAttribute("aria-expanded", String(renderedRows.length > 0));
     } else closePanel();
-    announce(mode ? `${engines[mode].name}. Press Enter to search.` : text ? caption.textContent : "Searching favorites");
+    announce(mode ? `${engines[mode].name}. ${touchUI.matches ? "Use your keyboard’s Search key or tap a result." : "Press Enter to search."}` : text ? caption.textContent : "Searching favorites");
   }
 
   function processInput() {
@@ -252,8 +292,14 @@
   });
   clear.addEventListener("click", () => { reset(); input.focus({ preventScroll: true }); });
   root.addEventListener("focusout", () => queueMicrotask(() => {
-    if (!focused()) { closePanel(); shortcut.hidden = Boolean(input.value || mode); }
+    if (!focused() && !selectingResult) { closePanel(); shortcut.hidden = Boolean(input.value || mode); }
   }));
+  const finishSelection = () => setTimeout(() => {
+    selectingResult = false;
+    if (!focused()) closePanel();
+  }, 0);
+  document.addEventListener("pointerup", finishSelection, { passive: true });
+  document.addEventListener("pointercancel", finishSelection, { passive: true });
   document.addEventListener("pointerdown", event => {
     if (!root.contains(event.target)) closePanel();
   });

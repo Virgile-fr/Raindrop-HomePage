@@ -283,3 +283,10 @@ was retrieved to inspect the missing-icon response requested by the user.
 Resolved icon choices, sampled colors and generated initials are cached locally. Readable provider images are saved as PNG data; other images retain their resolved URL and use the browser HTTP cache. Results expire after seven days for successful icons, one day for missing icons, or fifteen minutes when a provider request failed. Cache storage is bounded to 500 results and approximately 2 MB of encoded result data, with batched writes. Uncached icons are resolved near the viewport, and identical pending requests share their result.
 
 The footer **reset cache** action clears application icon, placeholder, color and favorites caches, then reloads with a new icon URL revision to bypass previous browser icon responses. Tokens, provider preferences and usage counts are preserved. **Ctrl+Shift+R / Cmd+Shift+R** invoke this action when the browser delivers the shortcut to the page. Browser-reserved shortcuts or refreshes from browser chrome cannot reliably be detected by JavaScript; the footer action is the reliable explicit reset. Upstream provider/CDN caches remain controlled by their services.
+
+
+### Mobile interactions
+
+Touch layouts expose scrollable search mode buttons, including Favorites and Google Images. Selecting a mode preserves the query. Results support native touch scrolling; pointer-hover selection is limited to a mouse. Search captions use touch instructions, and common controls have larger touch targets.
+
+A short touch tap on a ready card allows 140 ms of visual feedback before opening the bookmark in the same tab, making browser Back available. Long presses, scroll gestures, keyboard/mouse clicks and modified clicks retain native navigation. Reduced-motion users navigate immediately. No new-tab popup is delayed, avoiding asynchronous popup blocking.
