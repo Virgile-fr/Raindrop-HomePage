@@ -32,7 +32,7 @@ footer button { font-size: 12px; background: none; border: 0; text-decoration: u
   *, *::before, *::after { transition: none !important; }
 }
 
-#icons-dialog {
+:is(#icons-dialog, #engines-dialog) {
   width: min(520px, calc(100% - 2rem));
   max-height: calc(100dvh - 2rem);
   box-sizing: border-box;
@@ -44,9 +44,9 @@ footer button { font-size: 12px; background: none; border: 0; text-decoration: u
   border-radius: 10px;
   box-shadow: 0 16px 60px #0005;
 }
-#icons-dialog::backdrop { background: #0008; }
-#icons-dialog h2 { margin: 0 0 1rem; font-size: 1.25rem; }
-#icons-dialog p { font-size: 14px; line-height: 1.5; }
+:is(#icons-dialog, #engines-dialog)::backdrop { background: #0008; }
+:is(#icons-dialog, #engines-dialog) h2 { margin: 0 0 1rem; font-size: 1.25rem; }
+:is(#icons-dialog, #engines-dialog) p { font-size: 14px; line-height: 1.5; }
 #icons-provider-list { list-style: none; padding: 0; margin: 1rem 0; }
 #icons-provider-list li { display: flex; align-items: center; gap: .75rem; padding: .85rem 0; border-bottom: var(--card-border); }
 .provider-option { display: flex; align-items: center; gap: .75rem; flex: 1; cursor: pointer; min-width: 0; }
@@ -54,10 +54,29 @@ footer button { font-size: 12px; background: none; border: 0; text-decoration: u
 .provider-option strong, .provider-option small { display: block; }
 .provider-option small { margin-top: .3rem; line-height: 1.4; }
 .provider-move { display: flex; gap: .25rem; }
-#icons-dialog button { border: var(--card-border); border-radius: 6px; background: var(--card-backgroud); padding: .5rem .7rem; }
-#icons-dialog button:hover:not(:disabled) { background: var(--card-backgroud-hover); }
-#icons-dialog button:disabled { opacity: .4; cursor: default; }
-#icons-dialog .icons-note { font-size: 12px; }
+:is(#icons-dialog, #engines-dialog) button { border: var(--card-border); border-radius: 6px; background: var(--card-backgroud); padding: .5rem .7rem; }
+:is(#icons-dialog, #engines-dialog) button:hover:not(:disabled) { background: var(--card-backgroud-hover); }
+:is(#icons-dialog, #engines-dialog) button:disabled { opacity: .4; cursor: default; }
+:is(#icons-dialog, #engines-dialog) .icons-note { font-size: 12px; }
 .icons-dialog-actions { display: flex; justify-content: flex-end; gap: .5rem; flex-wrap: wrap; }
 #icons-recommended { margin-right: auto; }
 #icons-feedback:empty { display: none; }
+
+#engines-dialog { width: min(700px, calc(100% - 2rem)); }
+#engine-settings-list { list-style: none; padding: 0; }
+#engine-settings-list li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: var(--card-border); }
+.engine-row-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+#engine-editor { margin-block: 20px; padding-block: 16px; border-block: var(--card-border); }
+#engine-editor label { display: grid; gap: 6px; margin-block: 12px; font-size: 14px; }
+#engine-editor input { box-sizing: border-box; width: 100%; padding: 10px; border: var(--card-border); border-radius: 7px; color: var(--text-color); background: var(--card-backgroud); font: inherit; font-size: 16px; }
+#engine-editor small { display: block; overflow-wrap: anywhere; }
+#engine-editor-error:empty { display: none; }
+#engine-catalog { display: flex; flex-wrap: wrap; gap: 8px; padding-block: 12px; }
+#engines-dialog summary { cursor: pointer; padding-block: 10px; }
+.search-provider-icon { width: 20px; height: 20px; flex-shrink: 0; object-fit: contain; border-radius: 4px; }
+@media (max-width: 600px) {
+  #engine-settings-list li { flex-wrap: wrap; }
+  #engine-settings-list .provider-option { flex-basis: 100%; }
+  .engine-row-actions { margin-left: auto; }
+  #engines-dialog button { min-height: 44px; min-width: 44px; }
+}

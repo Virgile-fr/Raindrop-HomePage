@@ -3,16 +3,7 @@
 (() => {
   const svg = content => `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true">${content}</svg>`;
   const magnifier = svg('<circle cx="10.8" cy="10.8" r="6.3" stroke="currentColor" stroke-width="1.7"/><path d="m15.5 15.5 4.3 4.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>');
-  const google = svg('<path fill="#4285F4" d="M21.6 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.4a4.6 4.6 0 0 1-2 3v2.5h3.2c1.9-1.7 3-4.3 3-7.4Z"/><path fill="#34A853" d="M12 22c2.7 0 5-.9 6.6-2.4l-3.2-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.1H3.1v2.6A10 10 0 0 0 12 22Z"/><path fill="#FBBC05" d="M6.4 14a6 6 0 0 1 0-4V7.4H3.1a10 10 0 0 0 0 9.2L6.4 14Z"/><path fill="#EA4335" d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.9A9.6 9.6 0 0 0 12 2a10 10 0 0 0-8.9 5.4L6.4 10A6 6 0 0 1 12 5.9Z"/>');
-  const engines = {
-    g: { name: "Google", icon: google, url: q => `https://www.google.com/search?q=${q}` },
-    y: { name: "YouTube", icon: svg('<rect x="2" y="5" width="20" height="14" rx="4.5" fill="#FF0033"/><path d="m10 9 5 3-5 3Z" fill="white"/>'), url: q => `https://www.youtube.com/results?search_query=${q}` },
-    i: { name: "Google Images", icon: svg('<rect x="3" y="4" width="18" height="16" rx="3" stroke="#4285F4" stroke-width="2"/><circle cx="8" cy="9" r="2" fill="#FBBC05"/><path d="m4 17 5-5 4 4 3-4 4 5" stroke="#34A853" stroke-width="2" stroke-linejoin="round"/>'), url: q => `https://www.google.com/search?tbm=isch&q=${q}` },
-    b: { name: "Brave", icon: svg('<path d="m12 2 8 3v7c0 5-8 10-8 10S4 17 4 12V5Z" fill="#F76632"/><path d="M9 7h4a2.5 2.5 0 0 1 0 5H9Zm0 5h4.5a2.5 2.5 0 0 1 0 5H9Z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/>'), url: q => `https://search.brave.com/search?q=${q}` },
-    h: { name: "Hugging Face", icon: '<span class="engine-emoji" aria-hidden="true">🤗</span>', url: q => `https://huggingface.co/search/full-text?q=${q}` },
-    x: { name: "X", icon: svg('<path d="M4 3h4.8L20 21h-4.8ZM20 3 4 21" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>'), url: q => `https://x.com/search?q=${q}` },
-    s: { name: "Spotify", icon: svg('<circle cx="12" cy="12" r="10" fill="#1ED760"/><path d="M6.5 9c4-1.2 7.9-.8 11.1 1M7.2 12c3.4-1 6.8-.6 9.6.9M8 15c2.8-.8 5.4-.5 7.7.7" stroke="#142719" stroke-width="1.7" stroke-linecap="round"/>'), url: q => `https://open.spotify.com/search/${q}` },
-  };
+  let engines = getSearchEngines();
   const root = document.getElementById("homepage-search");
   const input = document.getElementById("search-input");
   const icon = document.getElementById("search-icon");
@@ -31,23 +22,38 @@
   picker.setAttribute("role", "group");
   picker.setAttribute("aria-label", "Search mode");
   const modeButtons = new Map();
-  for (const key of [null, ...Object.keys(engines)]) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.innerHTML = key ? engines[key].icon : magnifier;
-    const label = document.createElement("span");
-    label.textContent = key === "i" ? "Images" : key ? engines[key].name : "Favorites";
-    button.append(label);
-    button.setAttribute("aria-label", key ? `Search on ${engines[key].name}` : "Search favorites");
-    button.addEventListener("click", () => {
-      setMode(key);
-      input.focus({ preventScroll: true });
-      update();
-      button.scrollIntoView({ block: "nearest", inline: "nearest" });
-    });
-    modeButtons.set(key, button);
-    picker.append(button);
+  function rebuildEngineControls() {
+    picker.replaceChildren();
+    modeButtons.clear();
+    tips.replaceChildren();
+    for (const key of [null, ...Object.keys(engines)]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      if (key) button.append(createSearchEngineIcon(engines[key]));
+      else button.innerHTML = magnifier;
+      const label = document.createElement("span");
+      label.textContent = key ? engines[key].name : "Favorites";
+      button.append(label);
+      button.setAttribute("aria-label", key ? `Search on ${engines[key].name}` : "Search favorites");
+      button.addEventListener("click", () => {
+        setMode(key);
+        input.focus({ preventScroll: true });
+        update();
+        button.scrollIntoView({ block: "nearest", inline: "nearest" });
+      });
+      modeButtons.set(key, button);
+      picker.append(button);
+    }
+    for (const engine of Object.values(engines)) {
+      if (!engine.shortcut) continue;
+      const item = document.createElement("li");
+      const key = document.createElement("kbd");
+      key.textContent = engine.shortcut;
+      item.append(key, document.createTextNode(` ${engine.name}`));
+      tips.append(item);
+    }
   }
+  rebuildEngineControls();
   root.querySelector(".search-pill").after(picker);
   let selectingResult = false;
   let mode = null;
@@ -74,7 +80,9 @@
     modeButtons.forEach((button, value) => button.setAttribute("aria-pressed", String(value === key)));
     const engine = engines[key];
     // Only fixed, locally defined SVG markup is inserted here.
-    icon.innerHTML = engine ? engine.icon : magnifier;
+    icon.replaceChildren();
+    if (engine) icon.append(createSearchEngineIcon(engine));
+    else icon.innerHTML = magnifier;
     badge.textContent = engine?.name || "";
     badge.hidden = !engine;
     root.classList.toggle("has-engine", Boolean(engine));
@@ -164,7 +172,7 @@
         fragment.append(row);
       });
     }
-    if (text) {
+    if (text && Object.keys(engines).length) {
       const separator = document.createElement("div");
       separator.className = "search-engine-section";
       separator.textContent = "Search on";
@@ -182,7 +190,7 @@
         row.setAttribute("aria-label", `Search for ${text} on ${engine.name}`);
         const logo = document.createElement("span");
         logo.className = "search-result-initial search-engine-logo";
-        logo.innerHTML = engine.icon; // Fixed local icons, never query markup.
+        logo.append(createSearchEngineIcon(engine));
         const copy = document.createElement("span");
         copy.className = "search-result-copy";
         const title = document.createElement("span");
@@ -194,7 +202,8 @@
         copy.append(title, term);
         const hint = document.createElement("kbd");
         hint.className = "search-engine-key";
-        hint.textContent = key;
+        hint.textContent = engine.shortcut;
+        hint.hidden = !engine.shortcut;
         hint.setAttribute("aria-hidden", "true");
         row.append(logo, copy, hint);
         const action = newTab => navigate(engine.url(encodeURIComponent(query())), newTab);
@@ -218,13 +227,13 @@
     if (mode) {
       caption.textContent = text ? `Press Enter to search on ${engines[mode].name}` : `Search on ${engines[mode].name}`;
     } else if (text) {
-      caption.textContent = matches.length ? `${matches.length} favorite${matches.length > 1 ? "s" : ""} · ↑ ↓ to select · Enter to open` : "No favorites · Press Enter to search Google";
+      caption.textContent = matches.length ? `${matches.length} favorite${matches.length > 1 ? "s" : ""} · ↑ ↓ to select · Enter to open` : Object.keys(engines).length ? `No favorites · Press Enter to search ${Object.values(engines)[0].name}` : "No matching favorites · Enable an engine in search engines settings";
       if (indexedCards.length === 0 && grid.getAttribute("aria-busy") === "true") caption.textContent = "Loading favorites…";
     } else caption.textContent = "Your favorites, or a shortcut followed by a space";
     if (touchUI.matches) {
       caption.textContent = mode ? `Search on ${engines[mode].name}` : text
         ? matches.length ? `${matches.length} favorite${matches.length === 1 ? "" : "s"} · Tap a result to open`
-          : "No favorites · Search with an engine below"
+          : Object.keys(engines).length ? "No favorites · Search with an engine below" : "No matching favorites · Enable a search engine in settings"
         : "Choose Favorites or a search engine";
     }
     if (focused()) {
@@ -237,9 +246,10 @@
   function processInput() {
     if (composing) return;
     if (!mode) {
-      const prefix = input.value.match(/^([gyibhxs]) +(.*)$/i);
-      if (prefix) {
-        setMode(prefix[1].toLowerCase());
+      const prefix = input.value.match(/^([a-z]) +(.*)$/i);
+      const engineId = prefix && Object.keys(engines).find(key => engines[key].shortcut === prefix[1].toLowerCase());
+      if (engineId) {
+        setMode(engineId);
         input.value = prefix[2];
       }
     }
@@ -318,6 +328,14 @@
     input.value += event.key;
     processInput();
   });
+  const refreshEngines = () => {
+    engines = getSearchEngines();
+    rebuildEngineControls();
+    setMode(Object.hasOwn(engines, mode) ? mode : null);
+    update();
+  };
+  document.addEventListener("searchengineschange", refreshEngines);
+  document.addEventListener("iconproviderschange", refreshEngines);
   new MutationObserver(reindex).observe(grid, { childList: true });
   setMode(null);
   reindex();
