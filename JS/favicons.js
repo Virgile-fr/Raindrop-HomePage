@@ -205,7 +205,7 @@ function rememberPreviewFallback(image, replacement) {
   persistIconResults();
 }
 
-function loadFavicon(image, address, title) {
+function loadFavicon(image, address, title, immediate = false) {
   const key = JSON.stringify([new URL(address).hostname, selectedIconProviders, title]);
   imageCacheKeys.set(image, key);
   const providers = [...selectedIconProviders];
@@ -237,7 +237,7 @@ function loadFavicon(image, address, title) {
       finish(result);
     });
   };
-  if (!iconVisibility) start();
+  if (immediate || !iconVisibility) start();
   else {
     waitingIcons.set(image, start);
     iconVisibility.observe(image);
@@ -330,6 +330,7 @@ function saveIconProviders(providers) {
   storage.set(ICON_PROVIDERS_KEY, JSON.stringify(selectedIconProviders));
   storage.set(GOOGLE_FAVICON_PRIORITY_KEY, String(selectedIconProviders[0] === "google"));
   updateFaviconPriorityIndicator();
+  document.dispatchEvent(new Event("iconproviderschange"));
   if (!toggle.checked) renderFavorites();
 }
 

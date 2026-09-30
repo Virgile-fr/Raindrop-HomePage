@@ -297,3 +297,12 @@ A short touch tap on a ready card allows 140 ms of visual feedback before openin
 Ready cards appear independently: a slow icon no longer holds a whole viewport or subsequent reveal batches. Cached results are loaded eagerly once their image approaches the viewport, before decoding. A 2.5-second display deadline shows initials for slow previews; these temporary icon fallbacks are cached for five minutes, and a completed provider request replaces that cache entry with its final result. Covers use the same display deadline but are not stored in the favicon cache.
 
 Icon result writes are throttled rather than postponed after every completion, and pending writes flush when the page becomes hidden or is left. If origin storage is full, the cache retries with fewer recent entries. Explicit cache reset still prevents late writes from restoring cleared data.
+
+
+### Search engine settings
+
+Use **search engines** in the footer to enable, disable, reorder, edit or remove providers. Seven existing engines are enabled initially; the 25-source catalog also includes DuckDuckGo, Bing, Wikipedia, Reddit, GitHub, Stack Overflow, MDN, npm, PyPI, arXiv, Google Scholar, Maps, Translate, Wikimedia Commons, Unsplash, Pexels, Behance and Dribbble. Removed catalog entries can be added again. Restore defaults replaces the draft; Cancel discards it.
+
+Custom engines use a name, an HTTP(S) URL containing `%s` for encoded search terms, and an optional unique one-letter shortcut. Up to 60 engines can be stored. Changes apply after Save to desktop results, keyboard prefixes and mobile buttons. With no matching favorite, Enter uses the first enabled engine. Disabling every engine leaves favorites-only search.
+
+Engine icons use the configured favicon APIs, shared pending requests and persistent icon cache. Only the provider origin is used for icon lookup; search terms are never sent to favicon APIs. Search templates send terms to the chosen engine only when a search is launched. Search settings survive icon-cache resets.
