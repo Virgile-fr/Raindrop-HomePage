@@ -21,7 +21,7 @@
 
 .card {
   background-color: var(--card-background);
-  border-radius: var(--radius-cards);
+  border-radius: var(--effect-radius, var(--radius-cards));
   border: var(--card-border);
   box-sizing: content-box;
   position: relative;
@@ -34,9 +34,9 @@
   will-change: transform;
   background-color: var(--card-background-hover);
   box-shadow:
-    0 2px 4px -1px rgba(0, 0, 0, var(--float-shadow-alpha, 0)),
-    var(--float-shadow-x, 0px) var(--float-shadow-y, 8px) var(--float-shadow-blur, 32px) -10px
-      rgba(0, 0, 0, var(--float-shadow-alpha, 0)),
+    0 2px 4px -1px rgba(0, 0, 0, calc(var(--float-shadow-alpha, 0) * var(--effect-shadow, 1))),
+    var(--float-shadow-x, 0px) var(--float-shadow-y, 8px) calc(var(--float-shadow-blur, 32px) * var(--effect-softness, 1)) -10px
+      rgba(0, 0, 0, calc(var(--float-shadow-alpha, 0) * var(--effect-shadow, 1))),
     inset 0 -1px 0 rgba(0, 0, 0, calc(var(--float-depth, 0) * 0.16));
 }
 
@@ -65,7 +65,7 @@
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
-  border-radius: var(--radius-images) var(--radius-images) 0px 0px;
+  border-radius: max(0px, calc(var(--effect-radius, 8px) - 2px)) max(0px, calc(var(--effect-radius, 8px) - 2px)) 0px 0px;
 }
 
 .title {
@@ -103,7 +103,7 @@
   box-sizing: content-box;
   height: var(--icon-size);
   width: var(--icon-size);
-  border-radius: var(--icon-radius);
+  border-radius: var(--effect-glassRadius, var(--icon-radius));
   padding: var(--icon-inset);
   box-shadow: 65px 39px 100px 100px rgba(255, 255, 255, 0), 0px 0px 0px 1px rgba(255, 255, 255, 0.4);
 
@@ -120,8 +120,8 @@
 
 .card.is-floating .icon {
 
-  box-shadow: var(--float-icon-shadow-x, 0px) var(--float-icon-shadow-y, 3px) var(--float-icon-shadow-blur, 14px) -5px
-      rgba(0, 0, 0, calc(var(--float-depth, 0) * 0.25)),
+  box-shadow: var(--float-icon-shadow-x, 0px) var(--float-icon-shadow-y, 3px) calc(var(--float-icon-shadow-blur, 14px) * var(--effect-softness, 1)) -5px
+      rgba(0, 0, 0, calc(var(--float-depth, 0) * 0.25 * var(--effect-shadow, 1))),
     0 0 0 1px rgba(255, 255, 255, calc(0.4 + var(--float-depth, 0) * 0.24)),
     inset 0 1px 0 rgba(255, 255, 255, calc(var(--float-depth, 0) * .45)),
     inset 0 -1px 0 rgba(0, 0, 0, calc(var(--float-depth, 0) * .08));
@@ -132,7 +132,7 @@
   display: grid;
   place-items: center;
   aspect-ratio: 4/3;
-  border-radius: var(--radius-images) var(--radius-images) 0px 0px;
+  border-radius: max(0px, calc(var(--effect-radius, 8px) - 2px)) max(0px, calc(var(--effect-radius, 8px) - 2px)) 0px 0px;
   overflow: hidden;
   box-sizing: border-box;
   border-bottom: var(--image-border-color);
@@ -158,7 +158,7 @@
     padding: 1px;
     border-radius: inherit;
     pointer-events: none;
-    opacity: calc(var(--float-depth, 0) * 0.85);
+    opacity: calc(var(--float-depth, 0) * 0.85 * var(--effect-rim, 1));
     background:
       conic-gradient(from var(--float-rim-angle, 0deg),
         #fff 0deg, rgba(180, 235, 255, .8) 35deg,
@@ -175,7 +175,7 @@
 }
 
 /* Reserve geometry while provider checks and image decoding finish. */
-#grid > a.preview-pending { position: relative; border-radius: var(--radius-cards); }
+#grid > a.preview-pending { position: relative; border-radius: var(--effect-radius, var(--radius-cards)); }
 .preview-pending .card { opacity: 0; }
 #grid > a.preview-pending::after {
   content: "";
@@ -253,7 +253,7 @@
   z-index: 1;
   border-radius: inherit;
   pointer-events: none;
-  opacity: calc(var(--float-holo-alpha, 0) * var(--effect-foil, .3) * var(--material-foil, 1));
+  opacity: calc(max(var(--float-holo-alpha, 0), var(--effect-idleFoil, 0)) * var(--effect-foil, .3) * var(--material-foil, 1));
   /* Saturated spectrum plus a travelling dark/light band. A direct color
      layer avoids the double soft-light blend that erased the previous foil. */
   background-image: var(--material-spectrum), var(--material-band);
@@ -272,7 +272,7 @@
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  opacity: calc(var(--float-holo-alpha, 0) * var(--effect-foil, .3) * var(--material-foil, 1));
+  opacity: calc(max(var(--float-holo-alpha, 0), var(--effect-idleFoil, 0)) * var(--effect-foil, .3) * var(--material-foil, 1));
   background: linear-gradient(var(--float-sheen-angle, 118deg),
     rgba(154,231,255,.8), transparent 32%, rgba(255,194,239,.5) 65%, rgba(255,235,174,.65));
   box-shadow: inset 1px 1px 0 rgba(220,247,255,.8), inset -1px -1px 0 rgba(255,202,235,.6);
@@ -291,7 +291,7 @@
   z-index: 1;
   border-radius: inherit;
   pointer-events: none;
-  opacity: calc(var(--float-grain-alpha, 0) * var(--effect-texture, .5));
+  opacity: calc(max(var(--float-grain-alpha, 0), var(--effect-idleFoil, 0)) * var(--effect-texture, .5));
   background-image: var(--effect-pattern, none);
   background-size: var(--pattern-size, 100% 100%);
   background-position: var(--float-grain-x, 0px) var(--float-grain-y, 0px);
@@ -340,3 +340,19 @@
 [data-card-pattern="dots"] { --effect-pattern: radial-gradient(circle, #fff 0 .65px, transparent 1px); --pattern-size: 6px 6px; }
 [data-card-pattern="grain"] { --effect-pattern: url("../assets/foil-grain.svg"); --pattern-size: 96px 96px; }
 [data-card-pattern="rings"] { --effect-pattern: repeating-radial-gradient(ellipse at 30% 40%, #ffffffa0 0 .6px, #0003 .6px 1px, transparent 1px 6px); }
+
+/* Inactive appearance is static: no animation loop is needed at rest. */
+.card:not(.is-floating) {
+  box-shadow: 0 5px 16px -5px rgba(0, 0, 0, calc(var(--effect-idleShadow, 0) * .35));
+}
+.card .filter, .card .image {
+  filter: saturate(calc(var(--base-saturation, 1) * var(--effect-saturation, 1)));
+}
+.card:not(.is-floating) .filter, .card:not(.is-floating) .image {
+  filter: saturate(calc(var(--base-saturation, 1) * var(--effect-saturation, 1) * var(--effect-idleSaturation, 1))) brightness(var(--effect-idleBrightness, 1));
+}
+.card .icon > img, .card .icon > .initial-glyph {
+  border-radius: min(var(--icon-art-radius), max(0px, calc(var(--effect-glassRadius, 22px) - 10px)));
+}
+
+.card .filter { --base-saturation: 1.1; }

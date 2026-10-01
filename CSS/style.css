@@ -26,8 +26,38 @@ a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visibl
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .status { font-size: 14px; }
 .status:has(#status-message:not(:empty)) { margin-bottom: 1rem; }
-footer { flex-wrap: wrap; margin-top: 2rem; display: flex; justify-content: flex-end; gap: 1rem; }
-footer button { font-size: 12px; background: none; border: 0; text-decoration: underline; }
+footer {
+  position: relative;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  gap: .55rem;
+}
+footer::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor 25%, currentColor 75%, transparent);
+  opacity: .12;
+}
+footer button {
+  font-size: 12px;
+  font-weight: 500;
+  padding: .65rem 1rem;
+  min-height: 40px;
+  border-radius: 999px;
+  color: var(--text-color);
+  background: var(--card-background);
+  border: var(--card-border);
+  text-decoration: none;
+  transition: background-color .15s, transform .15s;
+}
+@media (hover: hover) { footer button:hover { background: var(--card-background-hover); transform: translateY(-1px); } }
+footer button:active { transform: translateY(0); }
+@media (pointer: coarse) { footer button { min-height: 44px; } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
 }
@@ -100,3 +130,12 @@ footer button { font-size: 12px; background: none; border: 0; text-decoration: u
 #effects-feedback:empty { display: none; }
 #effects-dialog select:focus-visible { outline: 3px solid #0b9fe8; outline-offset: 3px; }
 @media (max-width: 580px) { .effects-layout { grid-template-columns: 1fr; gap: 1rem; } #effects-preview { max-width: 155px; } .effects-demo { padding-top: 10px; } #effects-form input { min-height: 28px; } #effects-dialog button { min-height: 44px; } }
+
+#effects-form fieldset { margin: 0 0 18px; padding: 14px 0 0; border: 0; border-top: var(--card-border); min-width: 0; }
+#effects-form legend { padding: 0 8px 0 0; font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; opacity: .7; }
+.effects-demo { position: sticky; top: 0; align-self: start; }
+.effects-preview-modes { display: flex; justify-content: center; gap: 6px; margin-top: 22px; }
+#effects-dialog .effects-preview-modes button { border-radius: 999px; font-size: 12px; }
+#effects-dialog .effects-preview-modes [aria-pressed="true"] { background: #219bc325; border-color: #219bc3; }
+#effects-preview[data-rest="true"] { --float-depth: 0; --float-light: 0; --float-holo-alpha: 0; --float-grain-alpha: 0; }
+@media (max-width: 580px) { .effects-demo { position: static; } }
