@@ -15,7 +15,7 @@
   function clear(state) {
     state.anchor.classList.remove("card-floating");
     state.card.classList.remove("is-floating");
-    for (const name of ["transform", "--float-light-x", "--float-light-y", "--float-light", "--float-shadow-x", "--float-shadow-y", "--float-shadow-alpha", "--float-icon-x", "--float-icon-y", "--float-depth", "--float-sheen-angle", "--float-sheen-x", "--float-sheen-y", "--float-rim-angle", "--float-icon-scale", "--float-icon-shadow-x", "--float-icon-shadow-y", "--float-shadow-blur", "--float-icon-rotate", "--float-icon-shadow-blur", "--float-holo-x", "--float-holo-y", "--float-holo-alpha", "--float-icon-tilt-x", "--float-icon-tilt-y"]) {
+    for (const name of ["transform", "--float-light-x", "--float-light-y", "--float-light", "--float-shadow-x", "--float-shadow-y", "--float-shadow-alpha", "--float-icon-x", "--float-icon-y", "--float-depth", "--float-sheen-angle", "--float-sheen-x", "--float-sheen-y", "--float-rim-angle", "--float-icon-scale", "--float-icon-shadow-x", "--float-icon-shadow-y", "--float-shadow-blur", "--float-icon-rotate", "--float-icon-shadow-blur", "--float-holo-x", "--float-holo-y", "--float-holo-alpha", "--float-icon-tilt-x", "--float-icon-tilt-y", "--float-grain-alpha", "--float-grain-x", "--float-grain-y"]) {
       state.card.style.removeProperty(name);
     }
     moving.delete(state);
@@ -79,10 +79,13 @@
       const strength = state.touch ? 0.8 : 1;
       card.style.transform = `perspective(900px) translate3d(${x * depth * 0.7}px, ${-8 * depth}px, 0) rotateX(${-y * 9 * strength}deg) rotateY(${x * 11 * strength}deg) scale(${1 + depth * 0.016})`;
       card.style.setProperty("--float-depth", depth);
+      card.style.setProperty("--float-grain-alpha", depth * (0.48 + edge * 0.22) * strength);
+      card.style.setProperty("--float-grain-x", `${lightX * 8}px`);
+      card.style.setProperty("--float-grain-y", `${lightY * 8}px`);
       // Foil travels against the glare, like a second reflective material.
-      card.style.setProperty("--float-holo-x", `${50 - lightX * 34}%`);
-      card.style.setProperty("--float-holo-y", `${50 - lightY * 30}%`);
-      card.style.setProperty("--float-holo-alpha", depth * (0.30 + edge * 0.22) * strength);
+      card.style.setProperty("--float-holo-x", `${50 - lightX * 65}%`);
+      card.style.setProperty("--float-holo-y", `${50 - lightY * 55}%`);
+      card.style.setProperty("--float-holo-alpha", depth * (0.62 + edge * 0.20) * strength);
       card.style.setProperty("--float-icon-tilt-x", `${-iconY * iconDepth * 7 * strength}deg`);
       card.style.setProperty("--float-icon-tilt-y", `${iconX * iconDepth * 9 * strength}deg`);
       card.style.setProperty("--float-light-x", `${50 + lightX * 42}%`);

@@ -254,20 +254,20 @@
   border-radius: inherit;
   pointer-events: none;
   opacity: var(--float-holo-alpha, 0);
+  /* Saturated spectrum plus a travelling dark/light band. A direct color
+     layer avoids the double soft-light blend that erased the previous foil. */
   background-image:
-    repeating-linear-gradient(116deg,
-      #a0edff 0%, #bdacff 13%, #ffb7dc 26%, #ffe8a5 39%, #acffd6 52%, #a0edff 65%),
-    repeating-linear-gradient(32deg,
-      rgba(255,255,255,.38) 0px, rgba(255,255,255,.04) 1px,
-      rgba(0,0,0,.10) 2px, transparent 4px),
-    radial-gradient(ellipse at var(--float-light-x, 50%) var(--float-light-y, 40%),
-      #fff 0%, #aaa 35%, #303030 80%);
-  background-size: 280% 280%, 100% 100%, 100% 100%;
-  background-position: var(--float-holo-x, 50%) var(--float-holo-y, 50%), center, center;
-  background-blend-mode: soft-light, soft-light, normal;
-  mix-blend-mode: soft-light;
-  -webkit-mask-image: radial-gradient(ellipse 100% 100% at var(--float-light-x, 50%) var(--float-light-y, 40%), #000 8%, rgba(0,0,0,.6) 48%, transparent 95%);
-  mask-image: radial-gradient(ellipse 100% 100% at var(--float-light-x, 50%) var(--float-light-y, 40%), #000 8%, rgba(0,0,0,.6) 48%, transparent 95%);
+    repeating-linear-gradient(112deg, #ff63ca 0%, #985cff 12%, #35dfff 24%,
+      #61ffc5 36%, #fff391 48%, #ff9961 60%, #ff63ca 72%),
+    repeating-linear-gradient(112deg, #17132a 0%, #343450 18%, #fff 32%,
+      #b7b7c8 39%, #191529 55%, #17132a 72%);
+  background-size: 240% 240%, 210% 210%;
+  background-position: var(--float-holo-x, 50%) var(--float-holo-y, 50%),
+    var(--float-sheen-x, 50%) var(--float-sheen-y, 50%);
+  background-blend-mode: multiply;
+  mix-blend-mode: normal;
+  -webkit-mask-image: linear-gradient(112deg, rgba(0,0,0,.18), #000 38%, #000 60%, rgba(0,0,0,.22));
+  mask-image: linear-gradient(112deg, rgba(0,0,0,.18), #000 38%, #000 60%, rgba(0,0,0,.22));
 }
 /* The glass rim refracts the same spectrum; artwork stays above the foil. */
 .card .icon::before {
@@ -284,4 +284,28 @@
 .card .icon > img, .card .icon > .initial-glyph { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) {
   .card .filter::before, .card .image::before, .card .icon::before { display: none; }
+}
+
+/* Separate foil grain: bright flecks catch the moving light, with engraved
+   diagonal lines underneath. Kept below the icon and outside the title. */
+.card .filter::after, .card .image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--float-grain-alpha, 0);
+  background-image: url("../assets/foil-grain.svg"),
+    repeating-linear-gradient(36deg, rgba(255,255,255,.55) 0 .5px,
+      rgba(0,0,0,.32) .5px 1px, transparent 1px 5px);
+  background-size: 96px 96px, 100% 100%;
+  background-position: var(--float-grain-x, 0px) var(--float-grain-y, 0px), center;
+  background-blend-mode: screen;
+  mix-blend-mode: screen;
+  -webkit-mask-image: radial-gradient(ellipse 85% 100% at var(--float-light-x, 50%) var(--float-light-y, 40%), #000 5%, rgba(0,0,0,.7) 42%, transparent 85%);
+  mask-image: radial-gradient(ellipse 85% 100% at var(--float-light-x, 50%) var(--float-light-y, 40%), #000 5%, rgba(0,0,0,.7) 42%, transparent 85%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card .filter::after, .card .image::after { display: none; }
 }
