@@ -32,7 +32,7 @@ footer button { font-size: 12px; background: none; border: 0; text-decoration: u
   *, *::before, *::after { transition: none !important; }
 }
 
-:is(#icons-dialog, #engines-dialog) {
+:is(#icons-dialog, #engines-dialog, #effects-dialog) {
   width: min(520px, calc(100% - 2rem));
   max-height: calc(100dvh - 2rem);
   box-sizing: border-box;
@@ -44,9 +44,9 @@ footer button { font-size: 12px; background: none; border: 0; text-decoration: u
   border-radius: 10px;
   box-shadow: 0 16px 60px #0005;
 }
-:is(#icons-dialog, #engines-dialog)::backdrop { background: #0008; }
-:is(#icons-dialog, #engines-dialog) h2 { margin: 0 0 1rem; font-size: 1.25rem; }
-:is(#icons-dialog, #engines-dialog) p { font-size: 14px; line-height: 1.5; }
+:is(#icons-dialog, #engines-dialog, #effects-dialog)::backdrop { background: #0008; }
+:is(#icons-dialog, #engines-dialog, #effects-dialog) h2 { margin: 0 0 1rem; font-size: 1.25rem; }
+:is(#icons-dialog, #engines-dialog, #effects-dialog) p { font-size: 14px; line-height: 1.5; }
 #icons-provider-list { list-style: none; padding: 0; margin: 1rem 0; }
 #icons-provider-list li { display: flex; align-items: center; gap: .75rem; padding: .85rem 0; border-bottom: var(--card-border); }
 .provider-option { display: flex; align-items: center; gap: .75rem; flex: 1; cursor: pointer; min-width: 0; }
@@ -54,10 +54,10 @@ footer button { font-size: 12px; background: none; border: 0; text-decoration: u
 .provider-option strong, .provider-option small { display: block; }
 .provider-option small { margin-top: .3rem; line-height: 1.4; }
 .provider-move { display: flex; gap: .25rem; }
-:is(#icons-dialog, #engines-dialog) button { border: var(--card-border); border-radius: 6px; background: var(--card-background); padding: .5rem .7rem; }
-:is(#icons-dialog, #engines-dialog) button:hover:not(:disabled) { background: var(--card-background-hover); }
-:is(#icons-dialog, #engines-dialog) button:disabled { opacity: .4; cursor: default; }
-:is(#icons-dialog, #engines-dialog) .icons-note { font-size: 12px; }
+:is(#icons-dialog, #engines-dialog, #effects-dialog) button { border: var(--card-border); border-radius: 6px; background: var(--card-background); padding: .5rem .7rem; }
+:is(#icons-dialog, #engines-dialog, #effects-dialog) button:hover:not(:disabled) { background: var(--card-background-hover); }
+:is(#icons-dialog, #engines-dialog, #effects-dialog) button:disabled { opacity: .4; cursor: default; }
+:is(#icons-dialog, #engines-dialog, #effects-dialog) .icons-note { font-size: 12px; }
 .icons-dialog-actions { display: flex; justify-content: flex-end; gap: .5rem; flex-wrap: wrap; }
 #icons-recommended { margin-right: auto; }
 #icons-feedback:empty { display: none; }
@@ -84,3 +84,19 @@ footer button { font-size: 12px; background: none; border: 0; text-decoration: u
 .search-provider-icon { display: inline-grid; place-items: center; overflow: hidden; }
 .search-provider-icon > img, .search-provider-icon > .initial-glyph { display: block; width: 20px; height: 20px; object-fit: contain; }
 .search-provider-icon > .initial-glyph { display: inline-grid; font-size: 9px; }
+
+#effects-dialog { width: min(760px, calc(100% - 2rem)); }
+.effects-layout { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(220px, 1.2fr); gap: 2rem; }
+.effects-demo { padding: 28px 12px 0; }
+#effects-preview { max-width: 230px; margin: auto; touch-action: none; --float-depth: 1; --float-light: .28; --float-holo-alpha: .72; --float-grain-alpha: .58; }
+#effects-preview .filter { background: linear-gradient(135deg, #327b91, #5f5b92); }
+#effects-preview .initial-glyph { background: #23596e; }
+#effects-form label { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 0 0 18px; font-size: 13px; }
+#effects-form select, #effects-form input { grid-column: 1 / -1; width: 100%; min-width: 0; box-sizing: border-box; }
+#effects-form select { padding: 9px; border: var(--card-border); border-radius: 8px; background: var(--body-background-color); color: var(--text-color); font: inherit; }
+#effects-form input { accent-color: #219bc3; cursor: pointer; }
+#effects-form output { font-variant-numeric: tabular-nums; opacity: .75; }
+#effects-reset { margin-right: auto; }
+#effects-feedback:empty { display: none; }
+#effects-dialog select:focus-visible { outline: 3px solid #0b9fe8; outline-offset: 3px; }
+@media (max-width: 580px) { .effects-layout { grid-template-columns: 1fr; gap: 1rem; } #effects-preview { max-width: 155px; } .effects-demo { padding-top: 10px; } #effects-form input { min-height: 28px; } #effects-dialog button { min-height: 44px; } }

@@ -76,18 +76,19 @@
       unsettled ||= error > 0.001 || speed > 0.01;
       const { x, y, depth, card, lightX, lightY, iconX, iconY, iconDepth } = state;
       const edge = Math.min(1, Math.hypot(x, y) / Math.SQRT2);
-      const strength = state.touch ? 0.8 : 1;
-      card.style.transform = `perspective(900px) translate3d(${x * depth * 0.7}px, ${-8 * depth}px, 0) rotateX(${-y * 9 * strength}deg) rotateY(${x * 11 * strength}deg) scale(${1 + depth * 0.016})`;
+      const strength = (state.touch ? 0.8 : 1) * cardEffects.depth / 100;
+      const glassStrength = (state.touch ? 0.8 : 1) * cardEffects.glass / 100;
+      card.style.transform = `perspective(900px) translate3d(${x * depth * 0.7 * cardEffects.depth / 100}px, ${-8 * depth * cardEffects.depth / 100}px, 0) rotateX(${-y * 9 * strength}deg) rotateY(${x * 11 * strength}deg) scale(${1 + depth * 0.016 * cardEffects.depth / 100})`;
       card.style.setProperty("--float-depth", depth);
-      card.style.setProperty("--float-grain-alpha", depth * (0.48 + edge * 0.22) * strength);
+      card.style.setProperty("--float-grain-alpha", depth * (0.48 + edge * 0.22) * (state.touch ? 0.8 : 1));
       card.style.setProperty("--float-grain-x", `${lightX * 8}px`);
       card.style.setProperty("--float-grain-y", `${lightY * 8}px`);
       // Foil travels against the glare, like a second reflective material.
       card.style.setProperty("--float-holo-x", `${50 - lightX * 65}%`);
       card.style.setProperty("--float-holo-y", `${50 - lightY * 55}%`);
-      card.style.setProperty("--float-holo-alpha", depth * (0.62 + edge * 0.20) * strength * 0.30);
-      card.style.setProperty("--float-icon-tilt-x", `${-iconY * iconDepth * 7 * strength}deg`);
-      card.style.setProperty("--float-icon-tilt-y", `${iconX * iconDepth * 9 * strength}deg`);
+      card.style.setProperty("--float-holo-alpha", depth * (0.62 + edge * 0.20) * (state.touch ? 0.8 : 1));
+      card.style.setProperty("--float-icon-tilt-x", `${-iconY * iconDepth * 7 * glassStrength}deg`);
+      card.style.setProperty("--float-icon-tilt-y", `${iconX * iconDepth * 9 * glassStrength}deg`);
       card.style.setProperty("--float-light-x", `${50 + lightX * 42}%`);
       card.style.setProperty("--float-light-y", `${42 + lightY * 40}%`);
       card.style.setProperty("--float-light", depth * (0.23 + edge * 0.08));
@@ -99,11 +100,11 @@
       card.style.setProperty("--float-shadow-y", `${4 + depth * 20 - lightY * depth * 7}px`);
       card.style.setProperty("--float-shadow-alpha", depth * (0.19 + edge * 0.035));
       card.style.setProperty("--float-shadow-blur", `${12 + depth * 24 + edge * depth * 6}px`);
-      card.style.setProperty("--float-icon-x", `${iconX * 5.5 * strength}px`);
-      card.style.setProperty("--float-icon-y", `${iconY * 5 * strength - iconDepth * 3}px`);
-      card.style.setProperty("--float-icon-rotate", `${iconX * iconDepth * 1.4 * strength}deg`);
+      card.style.setProperty("--float-icon-x", `${iconX * 5.5 * glassStrength}px`);
+      card.style.setProperty("--float-icon-y", `${iconY * 5 * glassStrength - iconDepth * 3 * glassStrength}px`);
+      card.style.setProperty("--float-icon-rotate", `${iconX * iconDepth * 1.4 * glassStrength}deg`);
       card.style.setProperty("--float-icon-shadow-blur", `${8 + iconDepth * 12}px`);
-      card.style.setProperty("--float-icon-scale", 1 + iconDepth * 0.11 * strength);
+      card.style.setProperty("--float-icon-scale", 1 + iconDepth * 0.11 * glassStrength);
       card.style.setProperty("--float-icon-shadow-x", `${-lightX * iconDepth * 5}px`);
       card.style.setProperty("--float-icon-shadow-y", `${2 + iconDepth * 9 - lightY * iconDepth * 3}px`);
     }
@@ -222,4 +223,5 @@
     for (const state of moving) clear(state);
   }
   reducedMotion.addEventListener("change", reset);
+  document.addEventListener("cardeffectschange", reset);
 })();

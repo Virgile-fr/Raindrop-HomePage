@@ -81,3 +81,9 @@ Deploy the same files to GitHub Pages or another static host. If the deployment 
 The existing Node test suite is historical and contains assumptions that no longer match the application interfaces. It has not been run or updated during the current static review, at the owner's request. Its presence is not evidence that these changes pass automated checks. See [CODE_REVIEW.md](CODE_REVIEW.md) for the review scope and remaining uncertainties.
 
 This project is not affiliated with or endorsed by Raindrop.io.
+
+## Card effects
+
+Open **card effects** in the footer. Combine Glass, Holographic, Holo beams, Cosmos, Radiant, Rainbow, Gold or Etched silver with no pattern, Fine stripes, Crosshatch, Dots, Sparkle grain or Engraved rings. These are original interpretations inspired by [Simon Goellner's demonstration](https://poke-holo.simey.me/), not copies of each Pokémon card treatment.
+
+Adjust iridescence, pattern intensity, light reflection, 3D depth and glass lift/scale. The preview responds to pointer movement or touch; sliders and selects also work with the keyboard. Save applies the draft to all cards and stores it locally; Cancel or Escape discards it. Restore defaults updates the draft only. Default iridescence is 30% and pattern intensity 50%. Reduced-motion preferences override animated effects. Icon-cache reset preserves these settings.
