@@ -85,7 +85,7 @@
       // Foil travels against the glare, like a second reflective material.
       card.style.setProperty("--float-holo-x", `${50 - lightX * 65}%`);
       card.style.setProperty("--float-holo-y", `${50 - lightY * 55}%`);
-      card.style.setProperty("--float-holo-alpha", depth * (0.62 + edge * 0.20) * strength);
+      card.style.setProperty("--float-holo-alpha", depth * (0.62 + edge * 0.20) * strength * 0.30);
       card.style.setProperty("--float-icon-tilt-x", `${-iconY * iconDepth * 7 * strength}deg`);
       card.style.setProperty("--float-icon-tilt-y", `${iconX * iconDepth * 9 * strength}deg`);
       card.style.setProperty("--float-light-x", `${50 + lightX * 42}%`);

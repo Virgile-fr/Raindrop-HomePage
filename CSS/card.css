@@ -297,8 +297,8 @@
   pointer-events: none;
   opacity: var(--float-grain-alpha, 0);
   background-image: url("../assets/foil-grain.svg"),
-    repeating-linear-gradient(36deg, rgba(255,255,255,.55) 0 .5px,
-      rgba(0,0,0,.32) .5px 1px, transparent 1px 5px);
+    repeating-linear-gradient(36deg, rgba(255,255,255,.275) 0 .5px,
+      rgba(0,0,0,.16) .5px 1px, transparent 1px 5px);
   background-size: 96px 96px, 100% 100%;
   background-position: var(--float-grain-x, 0px) var(--float-grain-y, 0px), center;
   background-blend-mode: screen;
