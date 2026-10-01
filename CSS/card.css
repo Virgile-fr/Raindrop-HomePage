@@ -35,7 +35,7 @@
   background-color: var(--card-background-hover);
   box-shadow:
     0 2px 4px -1px rgba(0, 0, 0, var(--float-shadow-alpha, 0)),
-    var(--float-shadow-x, 0px) var(--float-shadow-y, 8px) 32px -10px
+    var(--float-shadow-x, 0px) var(--float-shadow-y, 8px) var(--float-shadow-blur, 32px) -10px
       rgba(0, 0, 0, var(--float-shadow-alpha, 0)),
     inset 0 -1px 0 rgba(0, 0, 0, calc(var(--float-depth, 0) * 0.16));
 }
@@ -47,13 +47,15 @@
   border-radius: inherit;
   pointer-events: none;
   opacity: var(--float-light, 0);
+  /* Broad softbox reflection with a gentle directional shoulder. */
   background-image:
-    radial-gradient(ellipse at var(--float-light-x, 50%) var(--float-light-y, 40%),
-      rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.12) 38%, transparent 72%),
-    linear-gradient(var(--float-sheen-angle, 118deg), transparent 35%,
-      rgba(255, 255, 255, 0.05) 43%, rgba(255, 255, 255, 0.65) 49%,
-      rgba(255, 255, 255, 0.12) 54%, transparent 64%);
-  background-size: 100% 100%, 220% 220%;
+    radial-gradient(ellipse 100% 85% at var(--float-light-x, 50%) var(--float-light-y, 40%),
+      rgba(255, 255, 255, .64) 0%, rgba(255, 255, 255, .38) 22%,
+      rgba(255, 255, 255, .14) 48%, rgba(255, 255, 255, .035) 68%, transparent 90%),
+    linear-gradient(var(--float-sheen-angle, 118deg), transparent 15%,
+      rgba(255, 255, 255, .04) 30%, rgba(255, 255, 255, .24) 47%,
+      rgba(255, 255, 255, .12) 59%, rgba(255, 255, 255, .025) 74%, transparent 88%);
+  background-size: 100% 100%, 180% 180%;
   background-position: center, var(--float-sheen-x, 50%) var(--float-sheen-y, 50%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
@@ -95,6 +97,7 @@
 }
 
 .card .icon {
+  position: relative;
   display: inline-grid;
   place-items: center;
   box-sizing: content-box;
@@ -111,15 +114,17 @@
   /* A small foreground displacement adds depth without changing the icon. */
   background: linear-gradient(var(--icon-g1), var(--icon-g2));
 
-  transform: translate3d(var(--float-icon-x, 0px), var(--float-icon-y, 0px), 0) scale(var(--float-icon-scale, 1));
+  transform: translate3d(var(--float-icon-x, 0px), var(--float-icon-y, 0px), 0) rotate(var(--float-icon-rotate, 0deg)) scale(var(--float-icon-scale, 1));
   transition: none;
 }
 
 .card.is-floating .icon {
 
-  box-shadow: var(--float-icon-shadow-x, 0px) var(--float-icon-shadow-y, 3px) 14px -5px
+  box-shadow: var(--float-icon-shadow-x, 0px) var(--float-icon-shadow-y, 3px) var(--float-icon-shadow-blur, 14px) -5px
       rgba(0, 0, 0, calc(var(--float-depth, 0) * 0.25)),
-    0 0 0 1px rgba(255, 255, 255, calc(0.4 + var(--float-depth, 0) * 0.24));
+    0 0 0 1px rgba(255, 255, 255, calc(0.4 + var(--float-depth, 0) * 0.24)),
+    inset 0 1px 0 rgba(255, 255, 255, calc(var(--float-depth, 0) * .45)),
+    inset 0 -1px 0 rgba(0, 0, 0, calc(var(--float-depth, 0) * .08));
 }
 
 .filter {
@@ -215,3 +220,24 @@
   overflow: hidden;
 }
 .cover-cards .image.preview-initials { display: grid; place-items: center; }
+
+/* A fine surface texture catches the light on the glass only. No asset fetch,
+   blur filter or idle animation; opacity follows the same finite hover exit. */
+.card .icon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: calc(var(--float-depth, 0) * .18);
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,.4) .45px, transparent .8px),
+    radial-gradient(ellipse at var(--float-light-x, 50%) var(--float-light-y, 40%),
+      rgba(255,255,255,.8), rgba(255,255,255,.18) 45%, transparent 80%);
+  background-size: 3px 3px, 100% 100%;
+  -webkit-mask-image: radial-gradient(ellipse at var(--float-light-x, 50%) var(--float-light-y, 40%), #000, transparent 78%);
+  mask-image: radial-gradient(ellipse at var(--float-light-x, 50%) var(--float-light-y, 40%), #000, transparent 78%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card .icon::after { display: none; }
+}
