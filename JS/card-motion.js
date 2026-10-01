@@ -15,7 +15,7 @@
   function clear(state) {
     state.anchor.classList.remove("card-floating");
     state.card.classList.remove("is-floating");
-    for (const name of ["transform", "--float-light-x", "--float-light-y", "--float-light", "--float-shadow-x", "--float-shadow-y", "--float-shadow-alpha", "--float-icon-x", "--float-icon-y", "--float-depth", "--float-sheen-angle", "--float-sheen-x", "--float-sheen-y", "--float-rim-angle", "--float-icon-scale", "--float-icon-shadow-x", "--float-icon-shadow-y"]) {
+    for (const name of ["transform", "--float-light-x", "--float-light-y", "--float-light", "--float-shadow-x", "--float-shadow-y", "--float-shadow-alpha", "--float-icon-x", "--float-icon-y", "--float-depth", "--float-sheen-angle", "--float-sheen-x", "--float-sheen-y", "--float-rim-angle", "--float-icon-scale", "--float-icon-shadow-x", "--float-icon-shadow-y", "--float-shadow-blur", "--float-icon-rotate", "--float-icon-shadow-blur"]) {
       state.card.style.removeProperty(name);
     }
     moving.delete(state);
@@ -50,6 +50,10 @@
         spring(state, "x", targetX, 28, dt);
         spring(state, "y", targetY, 28, dt);
         spring(state, "depth", targetDepth, 28, dt);
+        // The raised glass follows a slightly softer spring than the card.
+        spring(state, "iconX", targetX, 22, dt);
+        spring(state, "iconY", targetY, 22, dt);
+        spring(state, "iconDepth", targetDepth, 24, dt);
         const lightEase = 1 - Math.exp(-dt / 0.045);
         state.lightX += (targetX - state.lightX) * lightEase;
         state.lightY += (targetY - state.lightY) * lightEase;
@@ -58,37 +62,41 @@
         const progress = Math.min(1, (time - state.exit.time) / 220);
         if (progress === 1) { clear(state); continue; }
         const remaining = (1 - progress) ** 3;
-        for (const key of ["x", "y", "depth", "lightX", "lightY"]) state[key] = state.exit[key] * remaining;
+        for (const key of ["x", "y", "depth", "lightX", "lightY", "iconX", "iconY", "iconDepth"]) state[key] = state.exit[key] * remaining;
         state.xVelocity = state.yVelocity = state.depthVelocity = 0;
+        state.iconXVelocity = state.iconYVelocity = state.iconDepthVelocity = 0;
       }
       const error = Math.abs(targetX - state.x) + Math.abs(targetY - state.y) +
-        Math.abs(targetDepth - state.depth) + Math.abs(targetX - state.lightX) + Math.abs(targetY - state.lightY);
-      const speed = Math.abs(state.xVelocity) + Math.abs(state.yVelocity) + Math.abs(state.depthVelocity);
+        Math.abs(targetDepth - state.depth) + Math.abs(targetX - state.iconX) + Math.abs(targetY - state.iconY) + Math.abs(targetDepth - state.iconDepth) + Math.abs(targetX - state.lightX) + Math.abs(targetY - state.lightY);
+      const speed = Math.abs(state.xVelocity) + Math.abs(state.yVelocity) + Math.abs(state.depthVelocity) + Math.abs(state.iconXVelocity) + Math.abs(state.iconYVelocity) + Math.abs(state.iconDepthVelocity);
       if (!engaged && error < 0.001 && speed < 0.01) {
         clear(state);
         continue;
       }
       unsettled ||= error > 0.001 || speed > 0.01;
-      const { x, y, depth, card, lightX, lightY } = state;
+      const { x, y, depth, card, lightX, lightY, iconX, iconY, iconDepth } = state;
       const edge = Math.min(1, Math.hypot(x, y) / Math.SQRT2);
       const strength = state.touch ? 0.8 : 1;
-      card.style.transform = `perspective(900px) translate3d(${x * depth * 0.7}px, ${-5.5 * depth}px, 0) rotateX(${-y * 7 * strength}deg) rotateY(${x * 8 * strength}deg) scale(${1 + depth * 0.016})`;
+      card.style.transform = `perspective(900px) translate3d(${x * depth * 0.7}px, ${-6.5 * depth}px, 0) rotateX(${-y * 7 * strength}deg) rotateY(${x * 8 * strength}deg) scale(${1 + depth * 0.016})`;
       card.style.setProperty("--float-depth", depth);
       card.style.setProperty("--float-light-x", `${50 + lightX * 42}%`);
       card.style.setProperty("--float-light-y", `${42 + lightY * 40}%`);
-      card.style.setProperty("--float-light", depth * (0.18 + edge * 0.09));
+      card.style.setProperty("--float-light", depth * (0.23 + edge * 0.08));
       card.style.setProperty("--float-sheen-angle", `${118 + lightX * 18 - lightY * 12}deg`);
       card.style.setProperty("--float-sheen-x", `${50 + lightX * 32}%`);
       card.style.setProperty("--float-sheen-y", `${50 + lightY * 28}%`);
       card.style.setProperty("--float-rim-angle", `${Math.atan2(lightX, -lightY - 0.45) * 180 / Math.PI}deg`);
-      card.style.setProperty("--float-shadow-x", `${-x * 10}px`);
-      card.style.setProperty("--float-shadow-y", `${6 + depth * 16 - y * 5}px`);
-      card.style.setProperty("--float-shadow-alpha", depth * 0.21);
-      card.style.setProperty("--float-icon-x", `${x * 4}px`);
-      card.style.setProperty("--float-icon-y", `${y * 4 - depth * 2}px`);
-      card.style.setProperty("--float-icon-scale", 1 + depth * 0.035);
-      card.style.setProperty("--float-icon-shadow-x", `${-x * 3}px`);
-      card.style.setProperty("--float-icon-shadow-y", `${3 + depth * 5 - y * 2}px`);
+      card.style.setProperty("--float-shadow-x", `${-lightX * depth * 13}px`);
+      card.style.setProperty("--float-shadow-y", `${4 + depth * 20 - lightY * depth * 7}px`);
+      card.style.setProperty("--float-shadow-alpha", depth * (0.19 + edge * 0.035));
+      card.style.setProperty("--float-shadow-blur", `${12 + depth * 24 + edge * depth * 6}px`);
+      card.style.setProperty("--float-icon-x", `${iconX * 5.5 * strength}px`);
+      card.style.setProperty("--float-icon-y", `${iconY * 5 * strength - iconDepth * 3}px`);
+      card.style.setProperty("--float-icon-rotate", `${iconX * iconDepth * 1.4 * strength}deg`);
+      card.style.setProperty("--float-icon-shadow-blur", `${8 + iconDepth * 12}px`);
+      card.style.setProperty("--float-icon-scale", 1 + iconDepth * 0.085 * strength);
+      card.style.setProperty("--float-icon-shadow-x", `${-lightX * iconDepth * 5}px`);
+      card.style.setProperty("--float-icon-shadow-y", `${2 + iconDepth * 9 - lightY * iconDepth * 3}px`);
     }
     // No animation loop when settled; only moving cards receive style writes.
     frame = unsettled ? requestAnimationFrame(animate) : 0;
@@ -101,7 +109,7 @@
 
   function release() {
     if (!active) return;
-    active.exit = { time: performance.now(), x: active.x, y: active.y, depth: active.depth, lightX: active.lightX, lightY: active.lightY };
+    active.exit = { time: performance.now(), x: active.x, y: active.y, depth: active.depth, lightX: active.lightX, lightY: active.lightY, iconX: active.iconX, iconY: active.iconY, iconDepth: active.iconDepth };
     active = null;
     wake();
   }
@@ -131,7 +139,7 @@
     const card = anchor.querySelector(".card");
     if (!card) return;
     active = [...moving].find(state => state.anchor === anchor) ||
-      { anchor, card, x: 0, y: 0, depth: 0, lightX: 0, lightY: 0, targetX: 0, targetY: 0 };
+      { anchor, card, x: 0, y: 0, depth: 0, lightX: 0, lightY: 0, iconX: 0, iconY: 0, iconDepth: 0, targetX: 0, targetY: 0 };
     active.exit = null;
     active.pointerId = event.pointerId;
     active.touch = event.pointerType === "touch";
