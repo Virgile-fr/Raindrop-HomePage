@@ -37,3 +37,6 @@
 }
 
 #switch:focus-visible + label { outline: 3px solid #0b9fe8; outline-offset: 4px; }
+
+/* Enlarge only the hit area; keep the original switch track and thumb. */
+#switch + label::before { content: ""; position: absolute; inset: -12px -7px; }

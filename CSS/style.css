@@ -21,8 +21,8 @@ body {
 }
 
 button { font: inherit; color: inherit; cursor: pointer; }
-button[hidden] { display: none; }
-a:focus-visible, button:focus-visible { outline: 3px solid #0b9fe8; outline-offset: 4px; }
+[hidden] { display: none !important; }
+a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible { outline: 3px solid #0b9fe8; outline-offset: 4px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .status { font-size: 14px; }
 .status:has(#status-message:not(:empty)) { margin-bottom: 1rem; }
@@ -54,8 +54,8 @@ footer button { font-size: 12px; background: none; border: 0; text-decoration: u
 .provider-option strong, .provider-option small { display: block; }
 .provider-option small { margin-top: .3rem; line-height: 1.4; }
 .provider-move { display: flex; gap: .25rem; }
-:is(#icons-dialog, #engines-dialog) button { border: var(--card-border); border-radius: 6px; background: var(--card-backgroud); padding: .5rem .7rem; }
-:is(#icons-dialog, #engines-dialog) button:hover:not(:disabled) { background: var(--card-backgroud-hover); }
+:is(#icons-dialog, #engines-dialog) button { border: var(--card-border); border-radius: 6px; background: var(--card-background); padding: .5rem .7rem; }
+:is(#icons-dialog, #engines-dialog) button:hover:not(:disabled) { background: var(--card-background-hover); }
 :is(#icons-dialog, #engines-dialog) button:disabled { opacity: .4; cursor: default; }
 :is(#icons-dialog, #engines-dialog) .icons-note { font-size: 12px; }
 .icons-dialog-actions { display: flex; justify-content: flex-end; gap: .5rem; flex-wrap: wrap; }
@@ -68,7 +68,7 @@ footer button { font-size: 12px; background: none; border: 0; text-decoration: u
 .engine-row-actions { display: flex; gap: 4px; flex-wrap: wrap; }
 #engine-editor { margin-block: 20px; padding-block: 16px; border-block: var(--card-border); }
 #engine-editor label { display: grid; gap: 6px; margin-block: 12px; font-size: 14px; }
-#engine-editor input { box-sizing: border-box; width: 100%; padding: 10px; border: var(--card-border); border-radius: 7px; color: var(--text-color); background: var(--card-backgroud); font: inherit; font-size: 16px; }
+#engine-editor input { box-sizing: border-box; width: 100%; padding: 10px; border: var(--card-border); border-radius: 7px; color: var(--text-color); background: var(--card-background); font: inherit; font-size: 16px; }
 #engine-editor small { display: block; overflow-wrap: anywhere; }
 #engine-editor-error:empty { display: none; }
 #engine-catalog { display: flex; flex-wrap: wrap; gap: 8px; padding-block: 12px; }
@@ -80,3 +80,7 @@ footer button { font-size: 12px; background: none; border: 0; text-decoration: u
   .engine-row-actions { margin-left: auto; }
   #engines-dialog button { min-height: 44px; min-width: 44px; }
 }
+
+.search-provider-icon { display: inline-grid; place-items: center; overflow: hidden; }
+.search-provider-icon > img, .search-provider-icon > .initial-glyph { display: block; width: 20px; height: 20px; object-fit: contain; }
+.search-provider-icon > .initial-glyph { display: inline-grid; font-size: 9px; }

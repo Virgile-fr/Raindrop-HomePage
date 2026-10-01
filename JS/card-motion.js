@@ -9,6 +9,7 @@
   let previousTime = 0;
   let touchTap = null;
   let navigationPending = false;
+  let navigationTimer = 0;
   const clamp = value => Math.max(-1, Math.min(1, value));
 
   function clear(state) {
@@ -123,7 +124,7 @@
     const anchor = event.target.closest("#grid > a[data-link]");
     if (!anchor || anchor.hidden || anchor.classList.contains("preview-pending") || anchor.classList.contains("card-entering")) return;
     if (active?.anchor === anchor) {
-      if (event.type === "pointerdown") { active.pressed = true; wake(); }
+      if (event.type === "pointerdown") { active.pressed = !active.touch; wake(); }
       return;
     }
     release();
@@ -161,13 +162,20 @@
     if (!tap?.anchor || event.defaultPrevented || !event.isTrusted || event.detail === 0 ||
         event.ctrlKey || event.metaKey || event.shiftKey || event.altKey ||
         performance.now() - tap.time > 500 || !tap.anchor.contains(event.target)) return;
-    if (reducedMotion.matches || tap.anchor.classList.contains("preview-pending") || tap.anchor.classList.contains("card-entering")) return;
     event.preventDefault();
     if (navigationPending) return;
     navigationPending = true;
-    setTimeout(() => window.location.assign(tap.anchor.href), 140);
+    const immediate = reducedMotion.matches || tap.anchor.classList.contains("preview-pending") || tap.anchor.classList.contains("card-entering");
+    const navigate = () => {
+      navigationPending = false;
+      if (tap.anchor.isConnected) window.location.assign(tap.anchor.href);
+    };
+    if (immediate) navigate();
+    else navigationTimer = setTimeout(navigate, 140);
   });
   window.addEventListener("pageshow", () => { navigationPending = false; touchTap = null; });
+  window.addEventListener("pagehide", () => { clearTimeout(navigationTimer); navigationPending = false; touchTap = null; reset(); });
+  document.addEventListener("contextmenu", () => { touchTap = null; });
 
   grid.addEventListener("pointerover", engage, { passive: true });
   grid.addEventListener("pointerdown", engage, { passive: true });

@@ -24,7 +24,7 @@ const storage = {
 function resetPageCache() {
   if (resettingCache) return;
   resettingCache = true;
-  for (const key of ["iconResultsV1", "iconSampledColorsV1", "vemetricMetadataV1", "googlePlaceholderV1", "raindropFavoritesCacheV1"]) storage.remove(key);
+  for (const key of ["iconResultsV1", "iconResultsV2", "iconSampledColorsV1", "vemetricMetadataV1", "googlePlaceholderV1", "raindropFavoritesCacheV1"]) storage.remove(key);
   storage.set("iconCacheEpoch", String(Date.now()));
   location.reload();
 }

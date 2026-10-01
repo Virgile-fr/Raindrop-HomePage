@@ -18,7 +18,7 @@
 }
 
 .card {
-  background-color: var(--card-backgroud);
+  background-color: var(--card-background);
   border-radius: var(--radius-cards);
   border: var(--card-border);
   box-sizing: content-box;
@@ -30,7 +30,7 @@
 #grid > a.card-floating { position: relative; z-index: 2; }
 .card.is-floating {
   will-change: transform;
-  background-color: var(--card-backgroud-hover);
+  background-color: var(--card-background-hover);
   box-shadow:
     0 2px 4px -1px rgba(0, 0, 0, var(--float-shadow-alpha, 0)),
     var(--float-shadow-x, 0px) var(--float-shadow-y, 8px) 32px -10px
@@ -93,6 +93,9 @@
 }
 
 .card .icon {
+  display: inline-grid;
+  place-items: center;
+  box-sizing: content-box;
   height: var(--icon-size);
   width: var(--icon-size);
   border-radius: var(--icon-radius);
@@ -130,7 +133,7 @@
 }
 
 .cover-cards .image { overflow: hidden; }
-.cover-cards .image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover-cards .image > img { width: 100%; height: 100%; object-fit: cover; display: block; }
 #grid > a { min-width: 0; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -174,7 +177,7 @@
   border: var(--card-border);
   border-radius: inherit;
   pointer-events: none;
-  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.09) 48%, transparent 66%), var(--card-backgroud);
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.09) 48%, transparent 66%), var(--card-background);
   background-size: 240% 100%;
   animation: preview-shimmer 1.5s ease-in-out infinite;
 }
@@ -182,3 +185,16 @@
 @media (prefers-reduced-motion: reduce) {
   #grid > a.preview-pending::after { animation: none; }
 }
+
+.card .icon > img, .card .initial-glyph { width: var(--icon-size); height: var(--icon-size); }
+.card .icon > img { display: block; object-fit: contain; }
+.initial-glyph {
+  display: inline-grid;
+  place-items: center;
+  box-sizing: border-box;
+  border-radius: 5px;
+  color: #fff;
+  font: 600 18px/1 system-ui, sans-serif;
+  overflow: hidden;
+}
+.cover-cards .image.preview-initials { display: grid; place-items: center; }
