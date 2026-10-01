@@ -31,7 +31,7 @@ async function revealPreview(anchor, generation, entranceDelay) {
   await Promise.all(anchors.map(async anchor => {
     const state = previewStates.get(anchor);
     let timeout;
-    const deadline = new Promise(resolve => { timeout = setTimeout(() => resolve(false), 2500); });
+    const deadline = new Promise(resolve => { timeout = setTimeout(() => resolve(false), state.fallbackDelay); });
     const ready = await Promise.race([state.ready.then(() => true), deadline]);
     clearTimeout(timeout);
     if (!ready && anchor.isConnected && generation === previewGeneration) await state.fallback();
@@ -98,21 +98,44 @@ function createCard(item, coverView) {
   image.referrerPolicy = "no-referrer";
   let resolveReady;
   const ready = new Promise(resolve => { resolveReady = resolve; });
-  image.addEventListener("previewready", () => resolveReady(), { once: true });
-  const fallback = async () => {
+  let finalIconReady = false;
+  let initialPreview = null;
+  let fallbackPromise = null;
+  image.addEventListener("previewready", async () => {
+    finalIconReady = true;
+    if (initialPreview) {
+      initialPreview.remove();
+      // Restore the final gradient only when a temporary preview replaced it.
+      delete image.dataset.colorized;
+      await colorizeIconBackground(image);
+    }
+    image.style.removeProperty("display");
+    resolveReady();
+  }, { once: true });
+  const showFallback = async () => {
     const replacement = new Image(42, 42);
     replacement.className = "icon";
     replacement.alt = "";
     replacement.src = createInitialIcon(url, title);
     try { await replacement.decode(); } catch { /* Keep the title usable. */ }
-    card.classList.replace("cover-cards", "icon-cards");
-    frame.className = "filter";
-    frame.replaceChildren(replacement);
+    if (finalIconReady) return;
+    if (coverView) {
+      card.classList.replace("cover-cards", "icon-cards");
+      frame.className = "filter";
+      frame.replaceChildren(replacement);
+    } else {
+      // Keep the real image connected so provider validation and color analysis
+      // can finish, then swap only once the final image has decoded.
+      initialPreview = replacement;
+      image.style.display = "none";
+      frame.append(replacement);
+    }
     await colorizeIconBackground(replacement);
     rememberPreviewFallback(image, replacement);
     resolveReady();
   };
-  previewStates.set(anchor, { ready, fallback });
+  const fallback = () => fallbackPromise ||= showFallback();
+  previewStates.set(anchor, { ready, fallback, fallbackDelay: coverView ? 2500 : 100 });
   if (coverView) {
     const cover = safeWebUrl(item.cover);
     if (cover) {
