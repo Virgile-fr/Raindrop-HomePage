@@ -1,6 +1,8 @@
 :root {
   --icon-radius: 22px;
-  --icon-size: 42px;
+  --icon-size: 38px;
+  --icon-inset: 10px;
+  --icon-art-radius: 12px;
   --radius-cards: 8px;
   --radius-images: 6px;
 }
@@ -99,7 +101,7 @@
   height: var(--icon-size);
   width: var(--icon-size);
   border-radius: var(--icon-radius);
-  padding: 8px;
+  padding: var(--icon-inset);
   box-shadow: 65px 39px 100px 100px rgba(255, 255, 255, 0), 0px 0px 0px 1px rgba(255, 255, 255, 0.4);
 
   /* Preserve the original resting appearance. */
@@ -186,8 +188,23 @@
   #grid > a.preview-pending::after { animation: none; }
 }
 
-.card .icon > img, .card .initial-glyph { width: var(--icon-size); height: var(--icon-size); }
-.card .icon > img { display: block; object-fit: contain; }
+/* One inset for both decoded favicons and instant text fallbacks. Keep the
+   58px glass surface stable; round the artwork independently of its shell. */
+.card .icon > img, .card .icon > .initial-glyph {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  max-width: 100%;
+  max-height: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  border-radius: var(--icon-art-radius);
+}
+.card .icon > img {
+  display: block;
+  object-fit: contain;
+  object-position: center;
+}
 .initial-glyph {
   display: inline-grid;
   place-items: center;
