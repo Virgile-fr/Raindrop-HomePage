@@ -23,35 +23,30 @@ const ICON_PROVIDERS = {
   },
   iconhorse: {
     name: "Icon Horse",
-    description: "1,000 icons/month · reloads may count toward the quota",
+    description: "Optional provider · requests may count toward your quota",
     cors: false,
     url: domain => `https://icon.horse/icon/${domain}`,
   },
 };
 const RECOMMENDED_ICON_PROVIDERS = ["vemetric", "google"];
-function createInitialIcon(address, title = "") {
+function initialIconData(address, title = "") {
   const domain = new URL(address).hostname.replace(/^www\./, "");
   const words = (String(title).trim() || domain.split(".")[0]).match(/[\p{L}\p{N}]+/gu) || ["?"];
   const letters = (words.length > 1 ? Array.from(words[0])[0] + Array.from(words[1])[0] : Array.from(words[0]).slice(0, 2).join(""))
     .toLocaleUpperCase("en");
   let hash = 0;
   for (const character of domain) hash = ((hash * 31) + character.codePointAt(0)) >>> 0;
-  const background = `hsl(${hash % 360}, 55%, 38%)`;
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = 128;
-  const context = canvas.getContext("2d");
-  if (context) {
-    context.fillStyle = background;
-    context.fillRect(0, 0, 128, 128);
-    context.fillStyle = "#ffffff";
-    context.font = "600 54px system-ui, sans-serif";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText(letters, 64, 67, 110);
-    return canvas.toDataURL("image/png");
-  }
-  // Letters are restricted to Unicode letters/numbers, so they are safe XML.
-  return "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" fill="${background}"/><text x="64" y="84" text-anchor="middle" font-family="sans-serif" font-size="54" font-weight="600" fill="white">${letters}</text></svg>`);
+  return { letters, background: `hsl(${hash % 360}, 55%, 38%)`, color: hslToRgb(hash % 360, 0.55, 0.38) };
+}
+
+function createInitialIcon(address, title = "") {
+  const data = initialIconData(address, title);
+  const initials = document.createElement("span");
+  initials.className = "initial-glyph";
+  initials.setAttribute("aria-hidden", "true");
+  initials.textContent = data.letters;
+  initials.style.backgroundColor = data.background;
+  return initials;
 }
 
 function readIconProviders() {
@@ -66,11 +61,6 @@ function readIconProviders() {
 }
 
 let selectedIconProviders = readIconProviders();
-
-function getFaviconPreference(address) {
-  const domain = encodeURIComponent(new URL(address).hostname);
-  return selectedIconProviders.map(id => ICON_PROVIDERS[id].url(domain));
-}
 
 const VEMETRIC_METADATA_KEY = "vemetricMetadataV1";
 const VEMETRIC_METADATA_MAX_AGE = 24 * 60 * 60 * 1000;
@@ -115,14 +105,23 @@ function isVemetricDefault(source) {
     }
   })();
   pendingVemetricMetadata.set(source, request);
+  request.then(() => pendingVemetricMetadata.delete(source), () => pendingVemetricMetadata.delete(source));
   return request;
 }
 
-const ICON_RESULT_KEY = "iconResultsV1";
-const cachedIconResults = storage.readJSON(ICON_RESULT_KEY, {});
-const iconResults = new Map(Object.entries(cachedIconResults && typeof cachedIconResults === "object" ? cachedIconResults : {}));
+// Version 2 stores real image results or a small missing-icon marker, never
+// rendered initials. Keys are domain + provider order, independent of titles.
+const ICON_RESULT_KEY = "iconResultsV2";
+storage.remove("iconResultsV1");
+const savedIconResults = storage.readJSON(ICON_RESULT_KEY, {});
+function validIconResult(result) {
+  return result && Number.isFinite(result.expires) && result.expires > Date.now() &&
+    result.expires <= Date.now() + 7 * 86400000 && (result.kind === "initials" ||
+      (result.kind === "image" && typeof result.src === "string" && /^(https:\/\/|data:image\/png;base64,)/.test(result.src)));
+}
+const iconResults = new Map(Object.entries(savedIconResults && typeof savedIconResults === "object" && !Array.isArray(savedIconResults) ? savedIconResults : {})
+  .filter(([, result]) => validIconResult(result)).slice(-500));
 const pendingIconResults = new Map();
-const imageCacheKeys = new WeakMap();
 let iconSaveTimer;
 
 function flushIconResults() {
@@ -131,27 +130,22 @@ function flushIconResults() {
   if (resettingCache) return;
   let bytes = 0;
   const entries = [...iconResults].reverse().filter(([key, value]) => {
-    if (!value || value.expires <= Date.now()) return false;
+    if (!validIconResult(value)) return false;
     const size = (key.length + JSON.stringify(value).length) * 2;
     if (bytes + size > 2000000) return false;
     bytes += size;
     return true;
   }).slice(0, 500).reverse();
-  // Other app data may already occupy the origin's localStorage quota.
-  // Keep a smaller recent cache instead of silently losing every new result.
   while (entries.length && !storage.set(ICON_RESULT_KEY, JSON.stringify(Object.fromEntries(entries)))) {
     entries.splice(0, Math.max(1, Math.ceil(entries.length / 4)));
   }
+  if (!entries.length) storage.remove(ICON_RESULT_KEY);
 }
-
 function persistIconResults() {
-  // Throttle instead of debounce: continuous downloads cannot starve persistence.
   if (!iconSaveTimer) iconSaveTimer = setTimeout(flushIconResults, 150);
 }
 window.addEventListener("pagehide", () => { if (iconSaveTimer) flushIconResults(); });
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden && iconSaveTimer) flushIconResults();
-});
+document.addEventListener("visibilitychange", () => { if (document.hidden && iconSaveTimer) flushIconResults(); });
 
 function iconRequestUrl(source) {
   const epoch = storage.get("iconCacheEpoch");
@@ -161,156 +155,137 @@ function iconRequestUrl(source) {
   return url.href;
 }
 
-async function markIconReady(image) {
-  const source = image.src;
-  try { await image.decode(); } catch { return; }
-  if (image.src === source) image.dispatchEvent(new Event("previewready"));
-}
-
-function paintCachedIcon(image, result) {
-  image.removeAttribute("crossorigin");
-  image.loading = "eager";
-  image.src = result.src;
-  markIconReady(image);
-  if (validIconColor(result.color)) {
-    // Cards may still be inside their construction fragment.
-    queueMicrotask(() => {
-      const filter = image.closest(".filter");
-      if (filter) applyFilterBackground(filter, result.color);
-    });
-  }
-}
-
-const waitingIcons = new WeakMap();
-const iconVisibility = typeof IntersectionObserver === "function" ? new IntersectionObserver(entries => {
+// A shared visibility observer also releases targets removed by filtering,
+// re-rendering or dialog edits, so detached icons do not accumulate.
+const nearbyTasks = new Map();
+const nearbyObserver = typeof IntersectionObserver === "function" ? new IntersectionObserver(entries => {
   for (const entry of entries) if (entry.isIntersecting) {
-    iconVisibility.unobserve(entry.target);
-    const start = waitingIcons.get(entry.target);
-    waitingIcons.delete(entry.target);
-    start?.();
+    nearbyObserver.unobserve(entry.target);
+    const task = nearbyTasks.get(entry.target);
+    nearbyTasks.delete(entry.target);
+    if (entry.target.isConnected) task?.();
   }
 }, { rootMargin: "300px" }) : null;
+function whenNearViewport(element, task) {
+  if (!nearbyObserver) { queueMicrotask(task); return; }
+  nearbyTasks.set(element, task);
+  nearbyObserver.observe(element);
+}
+new MutationObserver(() => {
+  for (const element of nearbyTasks.keys()) if (!element.isConnected) {
+    nearbyObserver?.unobserve(element);
+    nearbyTasks.delete(element);
+  }
+}).observe(document.body, { childList: true, subtree: true });
 
-function rememberPreviewFallback(image, replacement) {
-  const key = imageCacheKeys.get(image);
-  if (!key) return; // Covers have their own loading lifecycle.
-  const existing = iconResults.get(key);
-  if (existing?.expires > Date.now()) return;
-  iconResults.set(key, {
-    src: replacement.src,
-    color: computeDominantColor(replacement),
-    expires: Date.now() + 5 * 60000,
+function readIconImage(source, cors = false, timeoutMs = 5000) {
+  return new Promise(resolve => {
+    const image = new Image();
+    image.decoding = "async";
+    image.referrerPolicy = "no-referrer";
+    if (cors) image.crossOrigin = "anonymous";
+    let settled = false;
+    const finish = result => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      image.onload = image.onerror = null;
+      if (!result) image.removeAttribute("src");
+      resolve(result);
+    };
+    const timeout = setTimeout(() => finish(null), timeoutMs);
+    image.onerror = () => finish(null);
+    image.onload = async () => {
+      try { await image.decode(); finish(image); } catch { finish(null); }
+    };
+    image.src = source;
   });
-  while (iconResults.size > 500) iconResults.delete(iconResults.keys().next().value);
-  persistIconResults();
 }
 
-function loadFavicon(image, address, title, immediate = false) {
-  const key = JSON.stringify([new URL(address).hostname, selectedIconProviders, title]);
-  imageCacheKeys.set(image, key);
-  const providers = [...selectedIconProviders];
-  const start = (ignoreCache = false) => {
-    const saved = iconResults.get(key);
-    if (!ignoreCache && saved && saved.expires > Date.now() && typeof saved.src === "string" &&
-        /^(data:image\/|https:\/\/)/.test(saved.src)) {
-      image.onerror = () => {
-        image.onerror = null;
-        iconResults.delete(key);
-        persistIconResults();
-        start(true);
-      };
-      paintCachedIcon(image, saved);
-      return;
-    }
-    if (pendingIconResults.has(key)) {
-      pendingIconResults.get(key).then(result => paintCachedIcon(image, result));
-      return;
-    }
-    let finish;
-    pendingIconResults.set(key, new Promise(resolve => { finish = resolve; }));
-    resolveFavicon(image, address, title, providers, result => {
-      iconResults.delete(key);
-      iconResults.set(key, result);
-      while (iconResults.size > 500) iconResults.delete(iconResults.keys().next().value);
-      persistIconResults();
-      pendingIconResults.delete(key);
-      finish(result);
-    });
-  };
-  if (immediate || !iconVisibility) start();
-  else {
-    waitingIcons.set(image, start);
-    iconVisibility.observe(image);
+const iconRequestQueue = [];
+let activeIconRequests = 0;
+function scheduleIconRequest(task) {
+  return new Promise(resolve => {
+    iconRequestQueue.push({ task, resolve });
+    drainIconRequests();
+  });
+}
+function drainIconRequests() {
+  while (activeIconRequests < 6 && iconRequestQueue.length) {
+    const { task, resolve } = iconRequestQueue.shift();
+    activeIconRequests += 1;
+    Promise.resolve().then(task).catch(() => ({ kind: "initials", expires: Date.now() + 15 * 60000 }))
+      .then(resolve).finally(() => { activeIconRequests -= 1; drainIconRequests(); });
   }
 }
 
-function resolveFavicon(image, address, title, providers, finish) {
+async function resolveFavicon(address, providers) {
   const domain = encodeURIComponent(new URL(address).hostname);
-  const urls = providers.map(id => iconRequestUrl(ICON_PROVIDERS[id].url(domain)));
-  const sources = [];
-  providers.forEach((id, index) => {
-    const url = urls[index];
-    if (ICON_PROVIDERS[id].cors) sources.push({ id, url, cors: true });
-    sources.push({ id, url, cors: false });
-  });
-  sources.push({ id: "local", url: null, cors: false });
-  let index = 0;
-  let current;
-  let generation = 0;
-  let timeout;
   let hadError = false;
-  image.loading = "eager";
-  const loadNext = () => {
-    clearTimeout(timeout);
-    if (index === sources.length) return;
-    current = sources[index++];
-    generation += 1;
-    delete image.dataset.colorized;
-    if (current.cors) image.crossOrigin = "anonymous";
-    else image.removeAttribute("crossorigin");
-    image.src = current.url || createInitialIcon(address, title);
-    if (current.id !== "local") timeout = setTimeout(() => { hadError = true; loadNext(); }, 5000);
-  };
-  const onError = () => { hadError = true; loadNext(); };
-  image.addEventListener("error", onError);
-  const onLoad = async () => {
-    clearTimeout(timeout);
-    const loaded = current;
-    const loadedGeneration = generation;
-    if (loaded.id === "vemetric" && await isVemetricDefault(loaded.url)) {
-      if (generation !== loadedGeneration) return;
-      // Skip every remaining attempt for this provider, including no-CORS.
-      while (sources[index]?.id === "vemetric") index += 1;
-      loadNext();
-      return;
-    }
-    if (loaded.id === "google" && await isGoogleDefault(loaded.url)) {
-      if (generation !== loadedGeneration) return;
-      while (sources[index]?.id === "google") index += 1;
-      loadNext();
-      return;
-    }
-    if (generation !== loadedGeneration) return;
-    await colorizeIconBackground(image);
-    if (generation !== loadedGeneration) return;
-    const source = image.currentSrc || image.src;
-    const color = computeDominantColor(image) || dominantColorCache.get(source) || iconColors[source]?.color;
+  for (const id of providers) {
+    const provider = ICON_PROVIDERS[id];
+    const source = iconRequestUrl(provider.url(domain));
+    // Avoid downloading Vemetric's known placeholder in either CORS mode.
+    if (id === "vemetric" && await isVemetricDefault(source)) continue;
+    let image = await readIconImage(source, provider.cors);
+    if (!image && provider.cors) image = await readIconImage(source, false);
+    if (!image) { hadError = true; continue; }
+    if (id === "google" && await isGoogleDefault(source)) continue;
+    const color = await resolveIconColor(image, source);
     let src = source;
-    if (loaded.cors) {
+    if (image.crossOrigin === "anonymous") {
       try {
         const canvas = document.createElement("canvas");
         canvas.width = canvas.height = 128;
         canvas.getContext("2d").drawImage(image, 0, 0, 128, 128);
         src = canvas.toDataURL("image/png");
-      } catch { /* The resolved URL still avoids provider probing. */ }
+      } catch { /* Keep the provider URL if readable pixel storage is unavailable. */ }
     }
-    markIconReady(image);
-    image.removeEventListener("error", onError);
-    image.removeEventListener("load", onLoad);
-    finish({ src, color, expires: Date.now() + (hadError ? 15 * 60000 : loaded.id === "local" ? 86400000 : 7 * 86400000) });
-  };
-  image.addEventListener("load", onLoad);
-  loadNext();
+    return { kind: "image", src, color, expires: Date.now() + 7 * 86400000 };
+  }
+  return { kind: "initials", expires: Date.now() + (hadError ? 15 * 60000 : 86400000) };
+}
+
+function resolvedFavicon(address, providers) {
+  const key = JSON.stringify([new URL(address).hostname, providers]);
+  const saved = iconResults.get(key);
+  if (validIconResult(saved)) return Promise.resolve(saved);
+  if (pendingIconResults.has(key)) return pendingIconResults.get(key);
+  const request = scheduleIconRequest(() => resolveFavicon(address, providers)).then(result => {
+    iconResults.delete(key);
+    iconResults.set(key, result);
+    while (iconResults.size > 500) iconResults.delete(iconResults.keys().next().value);
+    persistIconResults();
+    return result;
+  });
+  pendingIconResults.set(key, request);
+  request.then(() => pendingIconResults.delete(key), () => pendingIconResults.delete(key));
+  return request;
+}
+
+function loadFavicon(host, address, title) {
+  const providers = [...selectedIconProviders];
+  const initial = createInitialIcon(address, title);
+  host.replaceChildren(initial);
+  const filter = host.closest(".filter");
+  if (filter) applyFilterBackground(filter, initialIconData(address, title).color);
+  whenNearViewport(host, async () => {
+    let result = await resolvedFavicon(address, providers);
+    if (!host.isConnected || result.kind !== "image") return;
+    let image = await readIconImage(result.src);
+    if (!image) {
+      // A once-valid cached image may disappear. Retry the provider chain once.
+      iconResults.delete(JSON.stringify([new URL(address).hostname, providers]));
+      persistIconResults();
+      result = await resolvedFavicon(address, providers);
+      if (result.kind !== "image") return;
+      image = await readIconImage(result.src);
+    }
+    if (!image || !host.isConnected) return;
+    image.alt = "";
+    host.replaceChildren(image);
+    if (filter && validIconColor(result.color)) applyFilterBackground(filter, result.color);
+  });
 }
 
 function updateFaviconPriorityIndicator() {
@@ -326,12 +301,18 @@ function updateFaviconPriorityIndicator() {
 }
 
 function saveIconProviders(providers) {
+  if (!storage.set(ICON_PROVIDERS_KEY, JSON.stringify(providers))) {
+    const message = "Icon settings could not be saved. Browser storage may be blocked or full.";
+    document.getElementById("icons-feedback").textContent = message;
+    setStatus(message);
+    return false;
+  }
   selectedIconProviders = [...providers];
-  storage.set(ICON_PROVIDERS_KEY, JSON.stringify(selectedIconProviders));
   storage.set(GOOGLE_FAVICON_PRIORITY_KEY, String(selectedIconProviders[0] === "google"));
   updateFaviconPriorityIndicator();
   document.dispatchEvent(new Event("iconproviderschange"));
   if (!toggle.checked) renderFavorites();
+  return true;
 }
 
 function toggleFaviconPriority() {
@@ -417,7 +398,6 @@ document.addEventListener("DOMContentLoaded", () => {
   saveButton.addEventListener("click", () => {
     const enabled = draftOrder.filter(id => draftEnabled.has(id));
     if (!enabled.length) return;
-    saveIconProviders(enabled);
-    dialog.close();
+    if (saveIconProviders(enabled)) dialog.close();
   });
 });

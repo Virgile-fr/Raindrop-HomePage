@@ -19,9 +19,9 @@
   <link href="./CSS/colors.css" rel="stylesheet">
   <script src="./JS/storage.js" defer></script>
   <script src="./token.js" defer></script>
+  <script src="./JS/dominant-color.js" defer></script>
   <script src="./JS/favicons.js" defer></script>
   <script src="./JS/inserthtml.js" defer></script>
-  <script src="./JS/dominant-color.js" defer></script>
   <script src="./JS/fetch.js" defer></script>
   <script src="./JS/toggle.js" defer></script>
   <script src="./JS/search-engines.js" defer></script>
@@ -40,7 +40,7 @@
       <div class="search-pill">
         <span id="search-icon" aria-hidden="true"></span>
         <span id="search-engine-name" hidden></span>
-        <input id="search-input" type="text" role="combobox" aria-autocomplete="list" aria-controls="search-results" aria-expanded="false" aria-label="Search favorites" aria-describedby="search-help" placeholder="Search…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+        <input id="search-input" type="text" role="combobox" aria-autocomplete="list" aria-controls="search-panel" aria-expanded="false" aria-label="Search favorites" aria-describedby="search-help" placeholder="Search…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
         <kbd id="search-shortcut" aria-hidden="true">⌘ / Ctrl K</kbd>
         <button id="search-clear" type="button" aria-label="Clear search and return to favorites" hidden><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
       </div>
@@ -65,7 +65,7 @@
   </header>
   <main>
     <div class="status" role="status" aria-live="polite"><span id="status-message"></span> <button id="retry" type="button" hidden>Retry</button></div>
-    <div id="grid" aria-label="Favorites"></div>
+    <div id="grid" role="region" aria-label="Favorites"></div>
     <p id="search-empty" hidden>No favorites match your search.</p>
     <noscript>Enable JavaScript to display your Raindrop favorites.</noscript>
   </main>
@@ -79,7 +79,7 @@
     <h2 id="icons-dialog-title">Icons API</h2>
     <p id="icons-dialog-description">Enable providers and arrange them by priority. If an icon is missing, the next provider takes over.</p>
     <ul id="icons-provider-list"></ul>
-    <p class="icons-note">Recommended: Vemetric, then Google. Icon Horse is best for occasional use; browser caching does not guarantee quota savings. Missing icons use white initials on a colored background. Providers receive the favorite’s domain. When needed, wsrv.nl receives the icon URL for color analysis and Google placeholder detection.</p>
+    <p class="icons-note">Recommended: Vemetric, then Google. Icon Horse is best for occasional use; browser caching does not guarantee quota savings. Missing icons use white initials on a colored background. Providers receive bookmark and search-engine domains. When needed, wsrv.nl receives the icon URL for color analysis and Google placeholder detection.</p>
     <p id="icons-feedback" role="status"></p>
     <div class="icons-dialog-actions">
       <button id="icons-recommended" type="button">Recommended order</button>

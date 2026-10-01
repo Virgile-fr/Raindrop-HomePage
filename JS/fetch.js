@@ -8,13 +8,25 @@ const CACHE_MAX_AGE = 24 * 60 * 60 * 1000;
 let favoriteItems = null;
 let favoritesRequest = null;
 let cacheOwner = null;
+let favoritesGeneration = 0;
+let favoritesAbort = null;
 
-async function fetchJson(url) {
+function cancelFavoritesRefresh() {
+  favoritesGeneration += 1;
+  favoritesAbort?.abort();
+  favoritesAbort = null;
+  favoritesRequest = null;
+}
+
+async function fetchJson(url, credential = token, signal) {
   const controller = new AbortController();
+  const abort = () => controller.abort();
+  if (signal?.aborted) abort();
+  else signal?.addEventListener("abort", abort, { once: true });
   const timeout = setTimeout(() => controller.abort(), 15000);
   try {
     const response = await fetch(url, {
-      headers: { Authorization: "Bearer " + token },
+      headers: { Authorization: "Bearer " + credential },
       signal: controller.signal,
     });
     if (!response.ok) {
@@ -27,8 +39,9 @@ async function fetchJson(url) {
       error.status = response.status;
       throw error;
     }
-    const data = await response.json();
-    if (data.result === false || !Array.isArray(data.items)) {
+    let data;
+    try { data = await response.json(); } catch { throw new Error("Invalid Raindrop response. Please try again."); }
+    if (!data || data.result === false || !Array.isArray(data.items)) {
       throw new Error("Invalid Raindrop response. Please try again.");
     }
     return data;
@@ -38,6 +51,7 @@ async function fetchJson(url) {
     throw error;
   } finally {
     clearTimeout(timeout);
+    signal?.removeEventListener("abort", abort);
   }
 }
 
@@ -68,14 +82,14 @@ function sortByUsage(items) {
     .map(entry => entry.item);
 }
 
-async function fetchAllFavoriteItems() {
+async function fetchAllFavoriteItems(credential = token, signal) {
   const items = [];
   const seen = new Set();
   // A short page is the API's pagination boundary. No arbitrary favorites cap
   // and no dependence on an optional/ambiguous count field.
   for (let page = 0; ; page += 1) {
     const data = await fetchJson(
-      `https://api.raindrop.io/rest/v1/raindrops/0?search=${FAVORITE_QUERY}&perpage=${FAVORITES_PER_PAGE}&page=${page}`
+      `https://api.raindrop.io/rest/v1/raindrops/0?search=${FAVORITE_QUERY}&perpage=${FAVORITES_PER_PAGE}&page=${page}`, credential, signal
     );
     let added = 0;
     for (const item of data.items) {
@@ -93,10 +107,13 @@ async function fetchAllFavoriteItems() {
 }
 
 async function restoreFavoritesCache() {
+  const credential = token;
+  const generation = favoritesGeneration;
   try {
     // Bind cached bookmarks to this credential without persisting another copy
     // of the token. Skip caching if Web Crypto is unavailable.
-    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token));
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(credential));
+    if (token !== credential || generation !== favoritesGeneration) return;
     cacheOwner = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
     const cached = storage.readJSON(FAVORITES_CACHE_KEY, null);
     if (cached?.owner === cacheOwner && Number.isFinite(cached.savedAt) &&
@@ -111,11 +128,16 @@ async function restoreFavoritesCache() {
 
 function refreshFavorites() {
   if (favoritesRequest) return favoritesRequest;
+  const generation = favoritesGeneration;
+  const credential = token;
+  const controller = new AbortController();
+  favoritesAbort = controller;
   setStatus(favoriteItems === null ? "Loading favorites…" : "Refreshing…");
   grid.setAttribute("aria-busy", "true");
   favoritesRequest = (async () => {
     try {
-      const items = await fetchAllFavoriteItems();
+      const items = await fetchAllFavoriteItems(credential, controller.signal);
+      if (generation !== favoritesGeneration) return;
       const changed = JSON.stringify(items) !== JSON.stringify(favoriteItems);
       favoriteItems = items;
       if (cacheOwner) {
@@ -124,6 +146,7 @@ function refreshFavorites() {
       if (changed) renderFavorites();
       setStatus(items.length ? "" : "No favorites yet. Mark bookmarks as favorites in Raindrop.");
     } catch (error) {
+      if (generation !== favoritesGeneration) return;
       if (error.status === 401 || error.status === 403) {
         storage.remove(FAVORITES_CACHE_KEY);
         favoriteItems = null;
@@ -132,8 +155,11 @@ function refreshFavorites() {
       const suffix = favoriteItems !== null ? " Saved favorites are still displayed." : "";
       setStatus(error.message + suffix, true);
     } finally {
-      grid.setAttribute("aria-busy", "false");
-      favoritesRequest = null;
+      if (generation === favoritesGeneration) {
+        grid.setAttribute("aria-busy", "false");
+        favoritesRequest = null;
+        favoritesAbort = null;
+      }
     }
   })();
   return favoritesRequest;

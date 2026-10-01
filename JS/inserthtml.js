@@ -27,48 +27,40 @@ async function revealPreviews(anchors, generation) {
 }
 
 async function revealPreview(anchor, generation, entranceDelay) {
-  const anchors = [anchor];
-  await Promise.all(anchors.map(async anchor => {
-    const state = previewStates.get(anchor);
-    let timeout;
-    const deadline = new Promise(resolve => { timeout = setTimeout(() => resolve(false), state.fallbackDelay); });
-    const ready = await Promise.race([state.ready.then(() => true), deadline]);
-    clearTimeout(timeout);
-    if (!ready && anchor.isConnected && generation === previewGeneration) await state.fallback();
-  }));
-  if (generation !== previewGeneration) return;
-  const visible = anchors.filter(anchor => anchor.isConnected && !anchor.hidden);
-  anchors.forEach(anchor => {
-    anchor.classList.remove("preview-pending");
-    anchor.removeAttribute("aria-busy");
+  const state = previewStates.get(anchor);
+  let timer;
+  const ready = await Promise.race([
+    state.ready.then(() => true),
+    new Promise(resolve => { timer = setTimeout(() => resolve(false), state.fallbackDelay); }),
+  ]);
+  clearTimeout(timer);
+  if (!anchor.isConnected || generation !== previewGeneration) return;
+  if (!ready) state.fallback();
+  anchor.classList.remove("preview-pending");
+  anchor.removeAttribute("aria-busy");
+  if (anchor.hidden || document.activeElement === anchor || entranceMotion.matches || !anchor.animate) return;
+  anchor.classList.add("card-entering");
+  const animation = anchor.animate([
+    { opacity: 0, transform: "perspective(900px) translate3d(0, -18px, 0) rotateX(9deg) scale(.965)" },
+    { opacity: 1, transform: "perspective(900px) translate3d(0, 0, 0) rotateX(0deg) scale(1)" },
+  ], { duration: 420, delay: entranceDelay, easing: "cubic-bezier(.2,.75,.25,1)", fill: "backwards" });
+  state.animation = animation;
+  const stop = () => animation.cancel();
+  const reduce = () => { if (entranceMotion.matches) stop(); };
+  anchor.addEventListener("focus", stop, { once: true });
+  entranceMotion.addEventListener("change", reduce);
+  animation.finished.catch(() => {}).finally(() => {
+    anchor.classList.remove("card-entering");
+    anchor.removeEventListener("focus", stop);
+    entranceMotion.removeEventListener("change", reduce);
+    state.animation = null;
   });
-  const entrances = [];
-  visible.forEach((anchor, index) => {
-    if (entranceMotion.matches || !anchor.animate) return;
-    anchor.classList.add("card-entering");
-    const animation = anchor.animate([
-      { opacity: 0, transform: "perspective(900px) translate3d(0, -18px, 0) rotateX(9deg) scale(.965)" },
-      { opacity: 1, transform: "perspective(900px) translate3d(0, 0, 0) rotateX(0deg) scale(1)" },
-    ], { duration: 420, delay: entranceDelay, easing: "cubic-bezier(.2,.75,.25,1)", fill: "backwards" });
-    const finish = () => anchor.classList.remove("card-entering");
-    animation.onfinish = finish;
-    animation.oncancel = finish;
-    const stop = () => animation.cancel();
-    anchor.addEventListener("focus", stop, { once: true });
-    const reduce = () => { if (entranceMotion.matches) animation.cancel(); };
-    entranceMotion.addEventListener("change", reduce);
-    entrances.push(animation.finished.catch(() => {}));
-    animation.finished.catch(() => {}).finally(() => {
-      anchor.removeEventListener("focus", stop);
-      entranceMotion.removeEventListener("change", reduce);
-    });
-  });
-  await Promise.all(entrances);
 }
 
 const previewObserver = typeof IntersectionObserver === "function" ? new IntersectionObserver(entries => {
+  const order = new Map([...grid.children].map((anchor, index) => [anchor, index]));
   const anchors = entries.filter(entry => entry.isIntersecting).map(entry => entry.target)
-    .sort((a, b) => [...grid.children].indexOf(a) - [...grid.children].indexOf(b));
+    .sort((a, b) => order.get(a) - order.get(b));
   if (!anchors.length) return;
   anchors.forEach(anchor => previewObserver.unobserve(anchor));
   const generation = previewGeneration;
@@ -91,68 +83,41 @@ function createCard(item, coverView) {
   card.className = `card ${coverView ? "cover-cards" : "icon-cards"}`;
   const frame = document.createElement("div");
   frame.className = coverView ? "image" : "filter";
-  const image = document.createElement("img");
-  image.alt = ""; // The enclosing link already has a complete accessible name.
-  image.loading = "lazy";
-  image.decoding = "async";
-  image.referrerPolicy = "no-referrer";
   let resolveReady;
   const ready = new Promise(resolve => { resolveReady = resolve; });
-  let finalIconReady = false;
-  let initialPreview = null;
-  let fallbackPromise = null;
-  image.addEventListener("previewready", async () => {
-    finalIconReady = true;
-    if (initialPreview) {
-      initialPreview.remove();
-      // Restore the final gradient only when a temporary preview replaced it.
-      delete image.dataset.colorized;
-      await colorizeIconBackground(image);
-    }
-    image.style.removeProperty("display");
-    resolveReady();
-  }, { once: true });
-  const showFallback = async () => {
-    const replacement = new Image(42, 42);
-    replacement.className = "icon";
-    replacement.alt = "";
-    replacement.src = createInitialIcon(url, title);
-    try { await replacement.decode(); } catch { /* Keep the title usable. */ }
-    if (finalIconReady) return;
-    if (coverView) {
-      card.classList.replace("cover-cards", "icon-cards");
-      frame.className = "filter";
-      frame.replaceChildren(replacement);
-    } else {
-      // Keep the real image connected so provider validation and color analysis
-      // can finish, then swap only once the final image has decoded.
-      initialPreview = replacement;
-      image.style.display = "none";
-      frame.append(replacement);
-    }
-    await colorizeIconBackground(replacement);
-    rememberPreviewFallback(image, replacement);
+  let coverReady = false;
+  const initialHost = document.createElement("span");
+  initialHost.className = "icon";
+  if (coverView) initialHost.append(createInitialIcon(url, title));
+  const fallback = () => {
+    if (coverReady) return;
+    frame.classList.add("preview-initials");
+    frame.replaceChildren(initialHost);
+    applyFilterBackground(frame, initialIconData(url, title).color);
     resolveReady();
   };
-  const fallback = () => fallbackPromise ||= showFallback();
-  previewStates.set(anchor, { ready, fallback, fallbackDelay: coverView ? 2500 : 100 });
+  previewStates.set(anchor, { ready, fallback, fallbackDelay: coverView ? 2500 : 0 });
   if (coverView) {
     const cover = safeWebUrl(item.cover);
     if (cover) {
-      image.src = cover;
-      image.addEventListener("load", async () => {
-        try { await image.decode(); } catch { return fallback(); }
+      whenNearViewport(frame, async () => {
+        const image = await readIconImage(cover, false, 15000);
+        if (!anchor.isConnected) return;
+        if (!image) { fallback(); return; }
+        coverReady = true;
+        image.alt = "";
+        frame.classList.remove("preview-initials");
+        frame.style.removeProperty("background");
+        frame.replaceChildren(image);
         resolveReady();
-      }, { once: true });
-      image.addEventListener("error", fallback, { once: true });
-      frame.append(image);
-    } else queueMicrotask(fallback);
+      });
+    } else fallback();
   } else {
-    image.className = "icon";
-    image.width = 42;
-    image.height = 42;
-    loadFavicon(image, url, title);
-    frame.append(image);
+    frame.append(initialHost);
+    // HTML initials are ready synchronously. Remote icons upgrade this same
+    // surface only after decoding and color extraction, without a second reveal.
+    loadFavicon(initialHost, url, title);
+    resolveReady();
   }
   const label = document.createElement("div");
   label.className = "title";
@@ -170,6 +135,7 @@ function renderFavorites() {
     const card = createCard(item, toggle.checked);
     if (card) fragment.append(card);
   }
+  for (const anchor of grid.children) previewStates.get(anchor)?.animation?.cancel();
   previewObserver?.disconnect();
   previewGeneration += 1;
   grid.replaceChildren(fragment);

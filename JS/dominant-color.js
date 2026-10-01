@@ -46,6 +46,7 @@ function fetchReadableIconColor(source) {
     sample.src = `https://wsrv.nl/?url=${encodeURIComponent(source)}&output=png`;
   });
   pendingIconColors.set(source, request);
+  request.then(() => pendingIconColors.delete(source), () => pendingIconColors.delete(source));
   return request;
 }
 
@@ -187,35 +188,19 @@ function applyFilterBackground(filter, color) {
   filter.style.background = `linear-gradient(rgba(${overlayTone}, ${overlayOpacity}), rgba(${overlayTone}, ${overlayOpacity})), linear-gradient(135deg, rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b}), rgb(${accentColor.r}, ${accentColor.g}, ${accentColor.b}))`;
 }
 
-async function colorizeIconBackground(icon) {
-  if (icon.dataset.colorized) return true;
-  if (!icon.naturalWidth) return false;
-  const filter = icon.closest(".filter");
-  if (!filter) return false;
-  const source = icon.currentSrc || icon.src;
-  if (source.startsWith("data:image/")) {
-    const color = computeDominantColor(icon);
-    if (!validIconColor(color)) return false;
-    applyFilterBackground(filter, color);
-    icon.dataset.colorized = "true";
-    return true;
-  }
-  if (!source.startsWith("https://")) return false;
+async function resolveIconColor(image, source) {
   const saved = iconColors[source];
   let color = dominantColorCache.get(source);
   if (!validIconColor(color) && saved && validIconColor(saved.color) &&
       Number.isFinite(saved.savedAt) && Date.now() >= saved.savedAt &&
       Date.now() - saved.savedAt < ICON_COLOR_MAX_AGE) color = saved.color;
-  if (!validIconColor(color) && icon.crossOrigin === "anonymous") color = computeDominantColor(icon);
+  if (!validIconColor(color) && image.crossOrigin === "anonymous") color = computeDominantColor(image);
   if (!validIconColor(color)) color = await fetchReadableIconColor(source);
-  if (!validIconColor(color)) return false;
+  if (!validIconColor(color)) return null;
   dominantColorCache.set(source, color);
+  while (dominantColorCache.size > 500) dominantColorCache.delete(dominantColorCache.keys().next().value);
   if (!saved || saved.color !== color) rememberIconColor(source, color);
-  // A late sample must never recolor an icon that has since fallen back.
-  if ((icon.currentSrc || icon.src) !== source) return false;
-  applyFilterBackground(filter, color);
-  icon.dataset.colorized = "true";
-  return true;
+  return color;
 }
 
 // Reference captured from the exact Google URL supplied by the user:
@@ -310,6 +295,7 @@ function isGoogleDefault(source) {
         const color = computeDominantColor(image);
         if (validIconColor(color)) {
           dominantColorCache.set(source, color);
+          while (dominantColorCache.size > 500) dominantColorCache.delete(dominantColorCache.keys().next().value);
           rememberIconColor(source, color);
         }
       }
@@ -321,5 +307,6 @@ function isGoogleDefault(source) {
     }
   })();
   googlePlaceholderRequests.set(source, request);
+  request.then(() => googlePlaceholderRequests.delete(source), () => googlePlaceholderRequests.delete(source));
   return request;
 }

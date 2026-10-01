@@ -28,13 +28,15 @@ with the relevant access. GitHub Pages projects under the same hostname share
 an origin. Use a trusted browser profile.
 
 To remove this application's local data, run the following in its browser console
-and close the tab (other applications' storage is preserved):
+and close the tab. The flag prevents pending application writes from restoring removed data (other applications' storage is preserved):
 
 ```js
+resettingCache = true;
 for (const key of [
   'token', 'raindropFavoritesCacheV1', 'favoriteUsageCounts',
   'googleFaviconPriority', 'iconApiProvidersV1', 'switch',
-  'iconSampledColorsV1', 'vemetricMetadataV1', 'googlePlaceholderV1'
+  'iconSampledColorsV1', 'vemetricMetadataV1', 'googlePlaceholderV1',
+  'iconResultsV1', 'iconResultsV2', 'iconCacheEpoch', 'searchEnginesV1'
 ]) localStorage.removeItem(key);
 ```
 
@@ -62,8 +64,12 @@ for (const key of [
 - Google placeholder detection fetches a readable image through wsrv.nl without
   credentials and compares it with a local reference. Results are cached for
   24 hours (500 URLs). The same response supplies the sampled color.
-- Initials icons are generated locally with canvas and do not transmit titles
-  or images to a third-party service.
+- Initials are local HTML/CSS text. Their color is computed from the hostname;
+  no image conversion or third-party request is needed for this fallback.
+- Resolved icons are cached as readable PNG data or provider URLs for seven
+  days; missing results are cached for one day, or fifteen minutes after errors.
+  Search engine settings and icon caches can reveal domains used in this profile.
+  Search engine icon requests use only the engine origin, never query terms.
 
 ## Reporting
 

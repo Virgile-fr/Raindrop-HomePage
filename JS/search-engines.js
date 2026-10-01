@@ -43,16 +43,17 @@ function readSearchEngines() {
   const ids = new Set();
   const shortcuts = new Set();
   const valid = saved.slice(0, 60).filter(engine => {
-    if (!engine || typeof engine.id !== "string" || ids.has(engine.id) ||
+    if (!engine || typeof engine.id !== "string" || !/^[a-zA-Z0-9-]{1,80}$/.test(engine.id) || ids.has(engine.id) ||
         typeof engine.name !== "string" || !engine.name.trim() || !validSearchTemplate(engine.template)) return false;
     ids.add(engine.id);
     return true;
   }).map(engine => {
     const shortcut = /^[a-z]$/.test(engine.shortcut) && !shortcuts.has(engine.shortcut) ? engine.shortcut : "";
     if (shortcut) shortcuts.add(shortcut);
-    return { id: engine.id, name: engine.name.slice(0, 60), template: engine.template, shortcut, enabled: Boolean(engine.enabled) };
+    return { id: engine.id, name: engine.name.slice(0, 60), template: engine.template, shortcut, enabled: engine.enabled === true };
   });
-  return valid; // An empty list intentionally means favorites-only search.
+  // Preserve an intentionally empty list; recover from wholly malformed data.
+  return saved.length && !valid.length ? ENGINE_CATALOG.map(engine => ({ ...engine })) : valid;
 }
 let searchEngineSettings = readSearchEngines();
 function getSearchEngines() {
@@ -60,35 +61,13 @@ function getSearchEngines() {
     ...engine, url: query => engine.template.replaceAll("%s", query),
   }]));
 }
-const searchEngineIcons = new Map();
-document.addEventListener("iconproviderschange", () => searchEngineIcons.clear());
 function createSearchEngineIcon(engine) {
-  const image = new Image(20, 20);
-  image.className = "search-provider-icon";
-  image.alt = "";
-  image.decoding = "async";
-  image.referrerPolicy = "no-referrer";
-  // Only the engine's origin is sent to favicon providers, never a query.
-  const origin = new URL(engine.template.replaceAll("%s", "example")).origin;
-  const key = `${origin}|${engine.name}`;
-  let entry = searchEngineIcons.get(key);
-  if (entry) {
-    if (entry.src) image.src = entry.src;
-    else {
-      for (const pending of entry.waiting) if (!pending.isConnected) entry.waiting.delete(pending);
-      entry.waiting.add(image);
-    }
-  } else {
-    entry = { src: null, waiting: new Set() };
-    searchEngineIcons.set(key, entry);
-    image.addEventListener("previewready", () => {
-      entry.src = image.currentSrc || image.src;
-      for (const pending of entry.waiting) if (pending.isConnected) pending.src = entry.src;
-      entry.waiting.clear();
-    }, { once: true });
-    loadFavicon(image, origin, engine.name, true);
-  }
-  return image;
+  const host = document.createElement("span");
+  host.className = "search-provider-icon";
+  host.setAttribute("aria-hidden", "true");
+  // The resolver shares domain requests and never receives search terms.
+  loadFavicon(host, new URL(engine.template.replaceAll("%s", "example")).origin, engine.name);
+  return host;
 }
 
 const engineDialog = document.createElement("dialog");
@@ -105,7 +84,7 @@ engineDialog.innerHTML = `<h2 id="engines-title">Search engines</h2>
 <small>Replace the search terms with %s. Example: https://example.com/search?q=%s</small>
 <label>Shortcut (optional)<input name="shortcut" maxlength="1" pattern="[a-zA-Z]" placeholder="e" autocapitalize="none"></label>
 <p id="engine-editor-error" role="alert"></p>
-<button type="submit">Add engine</button><button id="engine-edit-cancel" type="button" hidden>Cancel edit</button>
+<button type="submit">Add engine</button><button id="engine-edit-cancel" type="button">Clear form</button>
 </form>
 <p class="icons-note">Icons use your configured icon APIs and cache. Missing icons use initials. Settings are saved in this browser.</p>
 <div class="icons-dialog-actions"><button id="engines-restore" type="button">Restore defaults</button><button id="engines-cancel" type="button">Cancel</button><button id="engines-save" type="button">Save</button></div>`;
@@ -119,7 +98,7 @@ function resetEngineEditor() {
   editor.reset();
   editor.querySelector("h3").textContent = "Add a custom engine";
   editor.querySelector('[type="submit"]').textContent = "Add engine";
-  editor.querySelector("#engine-edit-cancel").hidden = true;
+  editor.querySelector("#engine-edit-cancel").textContent = "Clear form";
   editor.querySelector('[role="alert"]').textContent = "";
 }
 function renderEngineSettings(focusId) {
@@ -162,13 +141,15 @@ function renderEngineSettings(focusId) {
       for (const key of ["name", "template", "shortcut"]) editor.elements[key].value = engine[key];
       editor.querySelector("h3").textContent = "Edit engine";
       editor.querySelector('[type="submit"]').textContent = "Apply edit";
-      editor.querySelector("#engine-edit-cancel").hidden = false;
+      editor.querySelector("#engine-edit-cancel").textContent = "Cancel edit";
+      editor.querySelector('[role="alert"]').textContent = "";
       editor.elements.name.focus();
     });
     action("Remove", "Remove", () => {
       engineDraft.splice(index, 1);
       if (editingEngine === engine.id) resetEngineEditor();
       renderEngineSettings();
+      (engineList.children[Math.min(index, engineDraft.length - 1)]?.querySelector("input") || editor.elements.name).focus();
     });
     row.append(controls);
     engineList.append(row);
@@ -197,6 +178,7 @@ editor.addEventListener("submit", event => {
   const shortcut = editor.elements.shortcut.value.trim().toLowerCase();
   const error = editor.querySelector('[role="alert"]');
   if (!name || !validSearchTemplate(template)) { error.textContent = "Enter a name and an HTTP(S) search URL containing %s outside the domain."; return; }
+  if (shortcut && !/^[a-z]$/.test(shortcut)) { error.textContent = "Use a single letter from a to z for the shortcut."; return; }
   if (shortcut && engineDraft.some(engine => engine.id !== editingEngine && engine.shortcut === shortcut)) { error.textContent = "This shortcut is already assigned to another engine."; return; }
   if (!editingEngine && engineDraft.length >= 60) { error.textContent = "You can save up to 60 engines."; return; }
   const existing = engineDraft.find(engine => engine.id === editingEngine);
@@ -219,7 +201,7 @@ engineDialog.querySelector("#engines-restore").addEventListener("click", () => {
 });
 engineDialog.querySelector("#engines-cancel").addEventListener("click", () => engineDialog.close());
 engineDialog.querySelector("#engines-save").addEventListener("click", () => {
-  if (editingEngine || editor.elements.name.value.trim() || editor.elements.template.value.trim()) { editor.querySelector('[role="alert"]').textContent = "Add or apply the engine below, or cancel the edit before saving."; editor.scrollIntoView({ block: "nearest" }); return; }
+  if (editingEngine || editor.elements.name.value.trim() || editor.elements.template.value.trim() || editor.elements.shortcut.value.trim()) { editor.querySelector('[role="alert"]').textContent = "Add or apply the engine below, or cancel the edit before saving."; editor.scrollIntoView({ block: "nearest" }); return; }
   const next = engineDraft.map(engine => ({ ...engine }));
   if (!storage.set(SEARCH_ENGINES_KEY, JSON.stringify(next))) {
     editor.querySelector('[role="alert"]').textContent = "Settings could not be saved. Browser storage may be blocked or full.";

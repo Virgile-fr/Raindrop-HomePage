@@ -16,7 +16,7 @@
   const shortcut = document.getElementById("search-shortcut");
   const empty = document.getElementById("search-empty");
   const announcement = document.getElementById("search-announcement");
-  const touchUI = matchMedia("(hover: none), (pointer: coarse)");
+  const touchUI = matchMedia("(max-width: 760px), (pointer: coarse)");
   const picker = document.createElement("div");
   picker.className = "search-engine-picker";
   picker.setAttribute("role", "group");
@@ -79,7 +79,7 @@
     mode = key;
     modeButtons.forEach((button, value) => button.setAttribute("aria-pressed", String(value === key)));
     const engine = engines[key];
-    // Only fixed, locally defined SVG markup is inserted here.
+    // Engine art is resolved separately; the neutral magnifier is local SVG.
     icon.replaceChildren();
     if (engine) icon.append(createSearchEngineIcon(engine));
     else icon.innerHTML = magnifier;
@@ -223,7 +223,7 @@
     }
     results.replaceChildren(fragment);
     results.hidden = renderedRows.length === 0;
-    tips.hidden = Boolean(mode || text || touchUI.matches);
+    tips.hidden = Boolean(mode || text || touchUI.matches || !tips.childElementCount);
     if (mode) {
       caption.textContent = text ? `Press Enter to search on ${engines[mode].name}` : `Search on ${engines[mode].name}`;
     } else if (text) {
@@ -234,11 +234,11 @@
       caption.textContent = mode ? `Search on ${engines[mode].name}` : text
         ? matches.length ? `${matches.length} favorite${matches.length === 1 ? "" : "s"} · Tap a result to open`
           : Object.keys(engines).length ? "No favorites · Search with an engine below" : "No matching favorites · Enable a search engine in settings"
-        : "Choose Favorites or a search engine";
+        : Object.keys(engines).length ? "Choose Favorites or a search engine" : "Search your favorites";
     }
     if (focused()) {
       panel.hidden = false;
-      input.setAttribute("aria-expanded", String(renderedRows.length > 0));
+      input.setAttribute("aria-expanded", "true");
     } else closePanel();
     announce(mode ? `${engines[mode].name}. ${touchUI.matches ? "Use your keyboard’s Search key or tap a result." : "Press Enter to search."}` : text ? caption.textContent : "Searching favorites");
   }
@@ -336,6 +336,7 @@
   };
   document.addEventListener("searchengineschange", refreshEngines);
   document.addEventListener("iconproviderschange", refreshEngines);
+  touchUI.addEventListener("change", update);
   new MutationObserver(reindex).observe(grid, { childList: true });
   setMode(null);
   reindex();
