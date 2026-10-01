@@ -36,7 +36,7 @@ for (const key of [
   'token', 'raindropFavoritesCacheV1', 'favoriteUsageCounts',
   'googleFaviconPriority', 'iconApiProvidersV1', 'switch',
   'iconSampledColorsV1', 'vemetricMetadataV1', 'googlePlaceholderV1',
-  'iconResultsV1', 'iconResultsV2', 'iconCacheEpoch', 'searchEnginesV1'
+  'iconResultsV1', 'iconResultsV2', 'iconCacheEpoch', 'searchEnginesV1', 'cardEffectsV1'
 ]) localStorage.removeItem(key);
 ```
 

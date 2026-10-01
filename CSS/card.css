@@ -46,7 +46,7 @@
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  opacity: var(--float-light, 0);
+  opacity: calc(var(--float-light, 0) * var(--effect-glare, 1));
   /* Broad softbox reflection with a gentle directional shoulder. */
   background-image:
     radial-gradient(ellipse 100% 85% at var(--float-light-x, 50%) var(--float-light-y, 40%),
@@ -253,15 +253,11 @@
   z-index: 1;
   border-radius: inherit;
   pointer-events: none;
-  opacity: var(--float-holo-alpha, 0);
+  opacity: calc(var(--float-holo-alpha, 0) * var(--effect-foil, .3) * var(--material-foil, 1));
   /* Saturated spectrum plus a travelling dark/light band. A direct color
      layer avoids the double soft-light blend that erased the previous foil. */
-  background-image:
-    repeating-linear-gradient(112deg, #ff63ca 0%, #985cff 12%, #35dfff 24%,
-      #61ffc5 36%, #fff391 48%, #ff9961 60%, #ff63ca 72%),
-    repeating-linear-gradient(112deg, #17132a 0%, #343450 18%, #fff 32%,
-      #b7b7c8 39%, #191529 55%, #17132a 72%);
-  background-size: 240% 240%, 210% 210%;
+  background-image: var(--material-spectrum), var(--material-band);
+  background-size: var(--material-size, 240% 240%), 210% 210%;
   background-position: var(--float-holo-x, 50%) var(--float-holo-y, 50%),
     var(--float-sheen-x, 50%) var(--float-sheen-y, 50%);
   background-blend-mode: multiply;
@@ -276,7 +272,7 @@
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  opacity: var(--float-holo-alpha, 0);
+  opacity: calc(var(--float-holo-alpha, 0) * var(--effect-foil, .3) * var(--material-foil, 1));
   background: linear-gradient(var(--float-sheen-angle, 118deg),
     rgba(154,231,255,.8), transparent 32%, rgba(255,194,239,.5) 65%, rgba(255,235,174,.65));
   box-shadow: inset 1px 1px 0 rgba(220,247,255,.8), inset -1px -1px 0 rgba(255,202,235,.6);
@@ -295,12 +291,10 @@
   z-index: 1;
   border-radius: inherit;
   pointer-events: none;
-  opacity: var(--float-grain-alpha, 0);
-  background-image: url("../assets/foil-grain.svg"),
-    repeating-linear-gradient(36deg, rgba(255,255,255,.275) 0 .5px,
-      rgba(0,0,0,.16) .5px 1px, transparent 1px 5px);
-  background-size: 96px 96px, 100% 100%;
-  background-position: var(--float-grain-x, 0px) var(--float-grain-y, 0px), center;
+  opacity: calc(var(--float-grain-alpha, 0) * var(--effect-texture, .5));
+  background-image: var(--effect-pattern, none);
+  background-size: var(--pattern-size, 100% 100%);
+  background-position: var(--float-grain-x, 0px) var(--float-grain-y, 0px);
   background-blend-mode: screen;
   mix-blend-mode: screen;
   -webkit-mask-image: radial-gradient(ellipse 85% 100% at var(--float-light-x, 50%) var(--float-light-y, 40%), #000 5%, rgba(0,0,0,.7) 42%, transparent 85%);
@@ -309,3 +303,40 @@
 @media (prefers-reduced-motion: reduce) {
   .card .filter::after, .card .image::after { display: none; }
 }
+
+[data-card-material] {
+  --material-foil: 1;
+  --material-size: 240% 240%;
+  --material-spectrum: repeating-linear-gradient(112deg, #ff63ca 0%, #985cff 12%, #35dfff 24%, #61ffc5 36%, #fff391 48%, #ff9961 60%, #ff63ca 72%);
+  --material-band: repeating-linear-gradient(112deg, #17132a 0%, #343450 18%, #fff 32%, #b7b7c8 39%, #191529 55%, #17132a 72%);
+}
+[data-card-material="glass"] { --material-foil: 0; }
+[data-card-material="beams"] {
+  --material-spectrum: repeating-linear-gradient(90deg, #54e7ff 0%, #cc76ff 10%, #ffc987 20%, #74ffd2 30%, #54e7ff 40%);
+  --material-band: repeating-linear-gradient(90deg, #161327 0%, #fff 7%, #333 11%, #111 20%);
+}
+[data-card-material="cosmos"] {
+  --material-spectrum: conic-gradient(from 35deg at 40% 55%, #183a86, #ce75ee, #51d5d9, #8054bb, #183a86);
+  --material-band: radial-gradient(ellipse at 55% 45%, #fff 0%, #a8adc9 30%, #272340 70%);
+}
+[data-card-material="radiant"] {
+  --material-spectrum: repeating-conic-gradient(from 45deg, #8aebff 0deg 90deg, #f2b5ff 90deg 180deg, #f9e8a0 180deg 270deg, #aaffd3 270deg 360deg);
+  --material-size: 44px 44px;
+  --material-band: repeating-linear-gradient(135deg, #fff 0%, #45405b 10%, #fff 20%);
+}
+[data-card-material="rainbow"] { --material-band: linear-gradient(125deg, #888, #fff 45%, #aaa); }
+[data-card-material="gold"] {
+  --material-spectrum: repeating-linear-gradient(115deg, #79521a 0%, #ffd85d 20%, #fff4bf 35%, #c88c25 50%, #79521a 70%);
+  --material-band: linear-gradient(115deg, #999, #fff, #888);
+}
+[data-card-material="etched"] {
+  --material-spectrum: repeating-linear-gradient(115deg, #637589 0%, #e4edff 20%, #fff 35%, #93a6b8 50%, #637589 70%);
+  --material-band: repeating-linear-gradient(35deg, #999 0%, #fff 10%, #999 20%);
+}
+[data-card-pattern] { --pattern-size: 100% 100%; }
+[data-card-pattern="none"] { --effect-pattern: none; }
+[data-card-pattern="lines"] { --effect-pattern: repeating-linear-gradient(36deg, #ffffff8c 0 .5px, #00000052 .5px 1px, transparent 1px 5px); }
+[data-card-pattern="cross"] { --effect-pattern: repeating-linear-gradient(45deg, #ffffff90 0 .7px, transparent .7px 9px), repeating-linear-gradient(-45deg, #ffffff70 0 .7px, transparent .7px 9px); }
+[data-card-pattern="dots"] { --effect-pattern: radial-gradient(circle, #fff 0 .65px, transparent 1px); --pattern-size: 6px 6px; }
+[data-card-pattern="grain"] { --effect-pattern: url("../assets/foil-grain.svg"); --pattern-size: 96px 96px; }
+[data-card-pattern="rings"] { --effect-pattern: repeating-radial-gradient(ellipse at 30% 40%, #ffffffa0 0 .6px, #0003 .6px 1px, transparent 1px 6px); }
