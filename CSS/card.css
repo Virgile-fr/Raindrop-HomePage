@@ -114,7 +114,7 @@
   /* A small foreground displacement adds depth without changing the icon. */
   background: linear-gradient(var(--icon-g1), var(--icon-g2));
 
-  transform: translate3d(var(--float-icon-x, 0px), var(--float-icon-y, 0px), 0) rotate(var(--float-icon-rotate, 0deg)) scale(var(--float-icon-scale, 1));
+  transform: perspective(360px) translate3d(var(--float-icon-x, 0px), var(--float-icon-y, 0px), 0) rotateX(var(--float-icon-tilt-x, 0deg)) rotateY(var(--float-icon-tilt-y, 0deg)) rotate(var(--float-icon-rotate, 0deg)) scale(var(--float-icon-scale, 1));
   transition: none;
 }
 
@@ -161,9 +161,9 @@
     opacity: calc(var(--float-depth, 0) * 0.85);
     background:
       conic-gradient(from var(--float-rim-angle, 0deg),
-        #fff 0deg, rgba(255, 255, 255, .5) 35deg,
+        #fff 0deg, rgba(180, 235, 255, .8) 35deg,
         rgba(255, 255, 255, .06) 95deg, rgba(0, 0, 0, .22) 180deg,
-        rgba(255, 255, 255, .06) 265deg, rgba(255, 255, 255, .5) 325deg, #fff 360deg);
+        rgba(255, 255, 255, .06) 265deg, rgba(255, 204, 237, .8) 325deg, #fff 360deg);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
@@ -240,4 +240,48 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .card .icon::after { display: none; }
+}
+
+/* Original foil treatment inspired by the material layering at
+   https://poke-holo.simey.me/ (Simon Goellner). No external texture assets. */
+.card .filter, .card .image { position: relative; isolation: isolate; }
+.card .icon { z-index: 2; }
+.card .filter::before, .card .image::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--float-holo-alpha, 0);
+  background-image:
+    repeating-linear-gradient(116deg,
+      #a0edff 0%, #bdacff 13%, #ffb7dc 26%, #ffe8a5 39%, #acffd6 52%, #a0edff 65%),
+    repeating-linear-gradient(32deg,
+      rgba(255,255,255,.38) 0px, rgba(255,255,255,.04) 1px,
+      rgba(0,0,0,.10) 2px, transparent 4px),
+    radial-gradient(ellipse at var(--float-light-x, 50%) var(--float-light-y, 40%),
+      #fff 0%, #aaa 35%, #303030 80%);
+  background-size: 280% 280%, 100% 100%, 100% 100%;
+  background-position: var(--float-holo-x, 50%) var(--float-holo-y, 50%), center, center;
+  background-blend-mode: soft-light, soft-light, normal;
+  mix-blend-mode: soft-light;
+  -webkit-mask-image: radial-gradient(ellipse 100% 100% at var(--float-light-x, 50%) var(--float-light-y, 40%), #000 8%, rgba(0,0,0,.6) 48%, transparent 95%);
+  mask-image: radial-gradient(ellipse 100% 100% at var(--float-light-x, 50%) var(--float-light-y, 40%), #000 8%, rgba(0,0,0,.6) 48%, transparent 95%);
+}
+/* The glass rim refracts the same spectrum; artwork stays above the foil. */
+.card .icon::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: var(--float-holo-alpha, 0);
+  background: linear-gradient(var(--float-sheen-angle, 118deg),
+    rgba(154,231,255,.8), transparent 32%, rgba(255,194,239,.5) 65%, rgba(255,235,174,.65));
+  box-shadow: inset 1px 1px 0 rgba(220,247,255,.8), inset -1px -1px 0 rgba(255,202,235,.6);
+}
+.card .icon > img, .card .icon > .initial-glyph { position: relative; z-index: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .card .filter::before, .card .image::before, .card .icon::before { display: none; }
 }
