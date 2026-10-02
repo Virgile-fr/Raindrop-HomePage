@@ -51,8 +51,9 @@ function createInitialIcon(address, title = "") {
 
 function readIconProviders() {
   const saved = storage.readJSON(ICON_PROVIDERS_KEY, null);
-  const valid = Array.isArray(saved)
-    ? [...new Set(saved.filter(id => Object.hasOwn(ICON_PROVIDERS, id)))]
+  const providers = Array.isArray(saved) ? saved : saved?.providers;
+  const valid = Array.isArray(providers)
+    ? [...new Set(providers.filter(id => Object.hasOwn(ICON_PROVIDERS, id)))]
     : [];
   if (valid.length) return valid;
   // Preserve the existing user's choice until they explicitly change it.
@@ -61,6 +62,18 @@ function readIconProviders() {
 }
 
 let selectedIconProviders = readIconProviders();
+const ICON_RESOLUTIONS = [0, 16, 32, 48, 64, 128];
+function normalizeIconResolution(value) { return ICON_RESOLUTIONS.includes(value) ? value : 0; }
+let selectedIconResolution = normalizeIconResolution(storage.readJSON(ICON_PROVIDERS_KEY, null)?.minResolution);
+function iconMeetsResolution(image, minimum) {
+  return minimum === 0 || Math.min(image.naturalWidth, image.naturalHeight) >= minimum;
+}
+function iconResultKey(address, providers, minimum) {
+  const parts = [new URL(address).hostname, providers];
+  // Preserve existing cache entries when filtering is disabled.
+  if (minimum) parts.push(minimum);
+  return JSON.stringify(parts);
+}
 
 const VEMETRIC_METADATA_KEY = "vemetricMetadataV1";
 const VEMETRIC_METADATA_MAX_AGE = 24 * 60 * 60 * 1000;
@@ -110,7 +123,7 @@ function isVemetricDefault(source) {
 }
 
 // Version 2 stores real image results or a small missing-icon marker, never
-// rendered initials. Keys are domain + provider order, independent of titles.
+// rendered initials. Keys include domain, provider order and quality threshold, independent of titles.
 const ICON_RESULT_KEY = "iconResultsV2";
 storage.remove("iconResultsV1");
 const savedIconResults = storage.readJSON(ICON_RESULT_KEY, {});
@@ -219,7 +232,7 @@ function drainIconRequests() {
   }
 }
 
-async function resolveFavicon(address, providers) {
+async function resolveFavicon(address, providers, minimum) {
   const domain = encodeURIComponent(new URL(address).hostname);
   let hadError = false;
   for (const id of providers) {
@@ -230,6 +243,7 @@ async function resolveFavicon(address, providers) {
     let image = await readIconImage(source, provider.cors);
     if (!image && provider.cors) image = await readIconImage(source, false);
     if (!image) { hadError = true; continue; }
+    if (!iconMeetsResolution(image, minimum)) continue;
     if (id === "google" && await isGoogleDefault(source)) continue;
     const color = await resolveIconColor(image, source);
     let src = source;
@@ -246,12 +260,12 @@ async function resolveFavicon(address, providers) {
   return { kind: "initials", expires: Date.now() + (hadError ? 15 * 60000 : 86400000) };
 }
 
-function resolvedFavicon(address, providers) {
-  const key = JSON.stringify([new URL(address).hostname, providers]);
+function resolvedFavicon(address, providers, minimum) {
+  const key = iconResultKey(address, providers, minimum);
   const saved = iconResults.get(key);
   if (validIconResult(saved)) return Promise.resolve(saved);
   if (pendingIconResults.has(key)) return pendingIconResults.get(key);
-  const request = scheduleIconRequest(() => resolveFavicon(address, providers)).then(result => {
+  const request = scheduleIconRequest(() => resolveFavicon(address, providers, minimum)).then(result => {
     iconResults.delete(key);
     iconResults.set(key, result);
     while (iconResults.size > 500) iconResults.delete(iconResults.keys().next().value);
@@ -265,23 +279,24 @@ function resolvedFavicon(address, providers) {
 
 function loadFavicon(host, address, title) {
   const providers = [...selectedIconProviders];
+  const minimum = selectedIconResolution;
   const initial = createInitialIcon(address, title);
   host.replaceChildren(initial);
   const filter = host.closest(".filter");
   if (filter) applyFilterBackground(filter, initialIconData(address, title).color);
   whenNearViewport(host, async () => {
-    let result = await resolvedFavicon(address, providers);
+    let result = await resolvedFavicon(address, providers, minimum);
     if (!host.isConnected || result.kind !== "image") return;
     let image = await readIconImage(result.src);
-    if (!image) {
-      // A once-valid cached image may disappear. Retry the provider chain once.
-      iconResults.delete(JSON.stringify([new URL(address).hostname, providers]));
+    if (!image || !iconMeetsResolution(image, minimum)) {
+      // A once-valid cached image may disappear or change resolution. Retry the provider chain once.
+      iconResults.delete(iconResultKey(address, providers, minimum));
       persistIconResults();
-      result = await resolvedFavicon(address, providers);
+      result = await resolvedFavicon(address, providers, minimum);
       if (result.kind !== "image") return;
       image = await readIconImage(result.src);
     }
-    if (!image || !host.isConnected) return;
+    if (!image || !iconMeetsResolution(image, minimum) || !host.isConnected) return;
     image.alt = "";
     host.replaceChildren(image);
     if (filter && validIconColor(result.color)) applyFilterBackground(filter, result.color);
@@ -300,14 +315,16 @@ function updateFaviconPriorityIndicator() {
   button.disabled = selectedIconProviders.length < 2;
 }
 
-function saveIconProviders(providers) {
-  if (!storage.set(ICON_PROVIDERS_KEY, JSON.stringify(providers))) {
+function saveIconProviders(providers, minimum = selectedIconResolution) {
+  minimum = normalizeIconResolution(minimum);
+  if (!storage.set(ICON_PROVIDERS_KEY, JSON.stringify({ providers, minResolution: minimum }))) {
     const message = "Icon settings could not be saved. Browser storage may be blocked or full.";
     document.getElementById("icons-feedback").textContent = message;
     setStatus(message);
     return false;
   }
   selectedIconProviders = [...providers];
+  selectedIconResolution = minimum;
   storage.set(GOOGLE_FAVICON_PRIORITY_KEY, String(selectedIconProviders[0] === "google"));
   updateFaviconPriorityIndicator();
   document.dispatchEvent(new Event("iconproviderschange"));
@@ -325,6 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const list = document.getElementById("icons-provider-list");
   const saveButton = document.getElementById("icons-save");
   const feedback = document.getElementById("icons-feedback");
+  const resolutionSelect = document.getElementById("icons-min-resolution");
   let draftOrder = [];
   let draftEnabled = new Set();
 
@@ -386,6 +404,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("icons-api").addEventListener("click", () => {
     draftOrder = [...selectedIconProviders, ...Object.keys(ICON_PROVIDERS).filter(id => !selectedIconProviders.includes(id))];
     draftEnabled = new Set(selectedIconProviders);
+    resolutionSelect.value = selectedIconResolution;
     renderProviderOptions();
     dialog.showModal();
   });
@@ -398,6 +417,6 @@ document.addEventListener("DOMContentLoaded", () => {
   saveButton.addEventListener("click", () => {
     const enabled = draftOrder.filter(id => draftEnabled.has(id));
     if (!enabled.length) return;
-    if (saveIconProviders(enabled)) dialog.close();
+    if (saveIconProviders(enabled, Number(resolutionSelect.value))) dialog.close();
   });
 });

@@ -81,6 +81,17 @@
     <h2 id="icons-dialog-title">Icons API</h2>
     <p id="icons-dialog-description">Enable providers and arrange them by priority. If an icon is missing, the next provider takes over.</p>
     <ul id="icons-provider-list"></ul>
+    <label class="icon-quality" for="icons-min-resolution">Minimum icon resolution
+      <select id="icons-min-resolution" aria-describedby="icons-resolution-help">
+        <option value="0">Any resolution (default)</option>
+        <option value="16">At least 16 × 16 px</option>
+        <option value="32">At least 32 × 32 px</option>
+        <option value="48">At least 48 × 48 px</option>
+        <option value="64">At least 64 × 64 px</option>
+        <option value="128">At least 128 × 128 px</option>
+      </select>
+    </label>
+    <p id="icons-resolution-help" class="icons-note">Smaller images are skipped in favor of the next provider, then initials. Dimensions are checked after downloading, before resizing; provider-upscaled images cannot be detected. Results are cached for each resolution setting.</p>
     <p class="icons-note">Recommended: Vemetric, then Google. Icon Horse is best for occasional use; browser caching does not guarantee quota savings. Missing icons use white initials on a colored background. Providers receive bookmark and search-engine domains. When needed, wsrv.nl receives the icon URL for color analysis and Google placeholder detection.</p>
     <p id="icons-feedback" role="status"></p>
     <div class="icons-dialog-actions">

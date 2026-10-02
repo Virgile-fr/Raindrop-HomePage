@@ -10,9 +10,14 @@ const EFFECT_PATTERNS = { none: "None", lines: "Fine stripes", cross: "Crosshatc
 const GLASS_MODES = { glass: "Gradient glass", frosted: "Frosted", clear: "Clear", solid: "Solid white" };
 const BACKGROUND_MODES = { balanced: "Balanced (original)", faithful: "Faithful to sampled color", pastel: "Pastel", vivid: "Vivid", mono: "Monochrome", complement: "Complementary" };
 const BACKGROUND_SHAPES = { linear: "Linear", radial: "Radial glow", solid: "Solid color" };
-const EFFECT_SELECTS = [["material", EFFECT_MATERIALS], ["pattern", EFFECT_PATTERNS], ["glassMode", GLASS_MODES], ["bgMode", BACKGROUND_MODES], ["bgShape", BACKGROUND_SHAPES]];
-const EFFECT_DEFAULTS = { material: "holo", pattern: "lines", foil: 30, texture: 50, glare: 100, depth: 100, glass: 100, shadow: 100, softness: 100, rim: 100, radius: 8, glassRadius: 22, saturation: 100, idleFoil: 0, idleSaturation: 100, idleBrightness: 100, idleShadow: 0, direction: "up", travel: 8, zoom: 1.6, iconShadow: 100, iconSoftness: 100, iconBorder: 100, iconSurface: 100, iconSize: 38, iconPadding: 10, artworkRadius: 12, iconOpacity: 100, iconSaturation: 100, iconBrightness: 100, iconRestShadow: 0, iconParallax: 100, iconTilt: 100, iconZoom: 11, iconFoil: 100, iconGlare: 100, glassAngle: 180, glassMode: "glass", bgMode: "balanced", bgSaturation: 100, bgLightness: 0, bgContrast: 100, bgSpread: 100, bgAngle: 135, bgHue: 0, bgShape: "linear" };
+const TEXT_FONTS = { system: "System", humanist: "Humanist", serif: "Serif", mono: "Monospace" };
+const TEXT_FONT_STACKS = { system: 'system-ui, sans-serif', humanist: 'Verdana, sans-serif', serif: 'Georgia, serif', mono: 'ui-monospace, monospace' };
+const EFFECT_SELECTS = [["material", EFFECT_MATERIALS], ["pattern", EFFECT_PATTERNS], ["glassMode", GLASS_MODES], ["bgMode", BACKGROUND_MODES], ["bgShape", BACKGROUND_SHAPES], ["textFont", TEXT_FONTS], ["textCase", { none: "Original", uppercase: "UPPERCASE", lowercase: "lowercase", capitalize: "Capitalize" }], ["textAlign", { left: "Left", center: "Center", right: "Right" }]];
+const EFFECT_DEFAULTS = { material: "holo", pattern: "lines", foil: 30, texture: 50, glare: 100, depth: 100, glass: 100, shadow: 100, softness: 100, rim: 100, radius: 8, glassRadius: 22, saturation: 100, idleFoil: 0, idleSaturation: 100, idleBrightness: 100, idleShadow: 0, direction: "up", travel: 8, zoom: 1.6, iconShadow: 100, iconSoftness: 100, iconBorder: 100, iconSurface: 100, iconSize: 38, iconPadding: 10, artworkRadius: 12, iconOpacity: 100, iconSaturation: 100, iconBrightness: 100, iconRestShadow: 0, iconParallax: 100, iconTilt: 100, iconZoom: 11, iconFoil: 100, iconGlare: 100, glassAngle: 180, glassMode: "glass", bgMode: "balanced", bgSaturation: 100, bgLightness: 0, bgContrast: 100, bgSpread: 100, bgAngle: 135, bgHue: 0, bgShape: "linear", textFont: "system", textCase: "none", textAlign: "left", textSize: 13.333, textWeight: 550, textPaddingX: 8, textPaddingY: 5, textSpacing: 0, textLineHeight: 160 };
 const EFFECT_CONTROLS = [
+  ["textSize", "Font size", 32, "px", "Typography"], ["textWeight", "Font weight", 900, "", "Typography"],
+  ["textSpacing", "Letter spacing", 5, "px", "Typography"], ["textLineHeight", "Line height", 220, "%", "Typography"],
+  ["textPaddingX", "Horizontal padding", 32, "px", "Spacing"], ["textPaddingY", "Vertical padding", 24, "px", "Spacing"],
   ["foil", "Iridescence", 100, "%", "Material"], ["texture", "Pattern intensity", 100, "%", "Material"],
   ["glare", "Light reflection", 100, "%", "Material"], ["saturation", "Color saturation", 180, "%", "Material"],
   ["depth", "3D depth", 300, "%", "Motion & lighting"], ["glass", "Glass lift & scale", 120, "%", "Motion & lighting"],
@@ -35,7 +40,7 @@ const EFFECT_CONTROLS = [
   ["idleBrightness", "Resting brightness", 120, "%", "Inactive cards"], ["idleShadow", "Resting shadow", 100, "%", "Inactive cards"],
 ];
 function effectMinimum(key) {
-  return { idleBrightness: 40, iconSize: 20, iconOpacity: 20, iconBrightness: 40, bgLightness: -30, bgHue: -180 }[key] ?? 0;
+  return { textSize: 10, textWeight: 300, textSpacing: -1, textLineHeight: 100, idleBrightness: 40, iconSize: 20, iconOpacity: 20, iconBrightness: 40, bgLightness: -30, bgHue: -180 }[key] ?? 0;
 }
 function normalizeCardEffects(value) {
   const result = { ...EFFECT_DEFAULTS };
@@ -54,8 +59,11 @@ function applyCardEffects(settings, target = document.documentElement) {
   target.dataset.cardMaterial = settings.material;
   target.dataset.cardPattern = settings.pattern;
   target.dataset.glassMode = settings.glassMode;
+  target.style.setProperty("--effect-textFont", TEXT_FONT_STACKS[settings.textFont]);
+  target.style.setProperty("--effect-textCase", settings.textCase);
+  target.style.setProperty("--effect-textAlign", settings.textAlign);
   for (const [key, , , unit] of EFFECT_CONTROLS) {
-    target.style.setProperty(`--effect-${key}`, unit === "px" ? `${settings[key]}px` : unit === "°" ? `${settings[key]}deg` : settings[key] / 100);
+    target.style.setProperty(`--effect-${key}`, unit === "px" ? `${settings[key]}px` : unit === "°" ? `${settings[key]}deg` : unit === "%" ? settings[key] / 100 : settings[key]);
   }
   if (target === document.documentElement) backgroundSettings = settings;
   for (const surface of target.querySelectorAll(".filter, .image")) {
@@ -65,8 +73,14 @@ function applyCardEffects(settings, target = document.documentElement) {
 }
 applyCardEffects(cardEffects);
 
+function effectScope(key) {
+  if (key.startsWith("idle") || key === "iconRestShadow") return "rest";
+  return ["direction", "depth", "glass", "shadow", "softness", "rim", "travel", "zoom", "glare", "iconShadow", "iconParallax", "iconTilt", "iconZoom", "iconGlare"].includes(key) ? "hover" : "both";
+}
 function effectTab(key) {
-  if (key.startsWith("icon") || key.startsWith("bg") || ["glass", "glassRadius", "glassAngle", "artworkRadius"].includes(key)) return "icon";
+  if (key.startsWith("bg")) return "background";
+  if (key.startsWith("text")) return "text";
+  if (key.startsWith("icon") || ["glass", "glassRadius", "glassAngle", "artworkRadius"].includes(key)) return "icon";
   if (key.startsWith("idle")) return "rest";
   return ["foil", "texture", "saturation", "radius", "glassRadius", "iconBorder", "iconSurface"].includes(key) ? "general" : "hover";
 }
@@ -78,18 +92,35 @@ effectsDialog.innerHTML = `<h2 id="effects-title">Card effects</h2>
 <p>Choose a reflective finish, mix in a pattern, and adjust its intensity.</p>
 <div class="effects-layout"><div class="effects-demo"><div id="effects-preview-stage"><div class="card icon-cards" id="effects-preview"><div class="filter"><span class="icon"><span class="initial-glyph">Aa</span></span></div><div class="title">Live preview</div></div></div><div class="effects-preview-modes" role="group" aria-label="Preview state"><button type="button" data-preview="hover" aria-pressed="true">Hover</button><button type="button" data-preview="rest" aria-pressed="false">At rest</button></div><p class="icons-note">Move over the preview or drag on touch. Settings apply to your cards after Save.</p></div>
 <form id="effects-form"><div class="effects-tabs" role="tablist" aria-label="Effect settings">
-${[["general","General"],["hover","Hover"],["rest","At rest"],["icon","Icon & glass"]].map(([id,label],i)=>`<button type="button" role="tab" id="effects-tab-${id}" aria-controls="effects-panel-${id}" aria-selected="${i===0}" tabindex="${i===0 ? 0 : -1}">${label}</button>`).join("")}</div>
-${["general","hover","rest","icon"].map((tab,i)=>`<section role="tabpanel" id="effects-panel-${tab}" aria-labelledby="effects-tab-${tab}" ${i ? "hidden" : ""}>
+${[["general","General"],["hover","Hover"],["rest","At rest"],["icon","Icon & glass"],["background","Background"],["text","Text"]].map(([id,label],i)=>`<button type="button" role="tab" id="effects-tab-${id}" aria-controls="effects-panel-${id}" aria-selected="${i===0}" tabindex="${i===0 ? 0 : -1}">${label}</button>`).join("")}</div>
+${["general","hover","rest","icon","background","text"].map((tab,i)=>`<section role="tabpanel" id="effects-panel-${tab}" aria-labelledby="effects-tab-${tab}" ${i ? "hidden" : ""}>
 ${tab === "general" ? '<p class="icons-note">Shared by hover and resting cards.</p><label>Material<select name="material"></select></label><label>Pattern<select name="pattern"></select></label>' : ""}
 ${tab === "hover" ? '<label>Movement direction<select name="direction"><option value="up">Up</option><option value="center">Centered</option><option value="down">Down</option></select></label>' : ""}
-${tab === "icon" ? '<p class="icons-note">Artwork, glass and background mapping. Hover-only controls can be compared using the preview switch.</p><label>Glass finish<select name="glassMode"></select></label><label>Background color mapping<select name="bgMode"></select></label><label>Background gradient<select name="bgShape"></select></label><p class="icons-note">Color mapping uses the cached sampled color, without downloading icons again. Covers keep their photograph.</p>' : ""}
-${[...new Set(EFFECT_CONTROLS.filter(control=>effectTab(control[0])===tab).map(control=>control[4]))].map(group=>`<fieldset><legend>${group}</legend>${EFFECT_CONTROLS.filter(control=>effectTab(control[0])===tab && control[4]===group).map(([key,label,max,unit])=>`<label for="effects-${key}">${label}<output for="effects-${key}" data-unit="${unit}"></output><input id="effects-${key}" name="${key}" type="range" min="${effectMinimum(key)}" max="${max}" step="${key === "zoom" ? .1 : 1}"></label>`).join("")}</fieldset>`).join("")}</section>`).join("")}</form></div>
+${tab === "icon" ? '<p class="icons-note">Shape, finish and movement of the inner glass and its artwork.</p><label>Glass finish<select name="glassMode"></select></label>' : ""}
+${tab === "background" ? '<label>Color mapping<select name="bgMode"></select></label><label>Gradient shape<select name="bgShape"></select></label><p class="icons-note">Uses the cached sampled color without downloading icons again. Photo covers keep their image.</p>' : ""}
+${tab === "text" ? '<label>Font family<select name="textFont"></select></label><label>Letter case<select name="textCase"></select></label><label>Alignment<select name="textAlign"></select></label><p class="icons-note">Local fonts only. Long titles remain on one line with an ellipsis.</p>' : ""}
+${[...new Set(EFFECT_CONTROLS.filter(control=>effectTab(control[0])===tab).map(control=>control[4]))].map(group=>`<fieldset><legend>${group}</legend>${EFFECT_CONTROLS.filter(control=>effectTab(control[0])===tab && control[4]===group).map(([key,label,max,unit])=>`<label for="effects-${key}">${label}<output for="effects-${key}" data-unit="${unit}"></output><input id="effects-${key}" name="${key}" type="range" min="${effectMinimum(key)}" max="${max}" step="${["zoom", "textSpacing"].includes(key) ? .1 : key === "textSize" ? "any" : key === "textWeight" ? 50 : 1}"></label>`).join("")}</fieldset>`).join("")}</section>`).join("")}</form></div>
 <p class="icons-note">Reduced-motion preferences take priority over animated effects. Saved in this browser; preserved when you reset the icon cache.</p>
 <p id="effects-feedback" role="status"></p><div class="icons-dialog-actions"><button type="button" id="effects-reset">Restore defaults</button><button type="button" id="effects-cancel">Cancel</button><button type="button" id="effects-save">Save</button></div>`;
 document.body.append(effectsDialog);
 const effectsForm = effectsDialog.querySelector("form");
 for (const [key, options] of EFFECT_SELECTS) {
   for (const [value, label] of Object.entries(options)) effectsForm.elements[key].add(new Option(label, value));
+}
+// Expose the scope beside every control, including selects, to sighted and screen-reader users.
+for (const label of effectsForm.querySelectorAll("label")) {
+  const control = label.querySelector("input, select");
+  const caption = document.createElement("span");
+  caption.className = "setting-caption";
+  caption.append(label.firstChild);
+  const badge = document.createElement("span");
+  badge.className = "setting-scope";
+  badge.dataset.scope = effectScope(control.name);
+  badge.textContent = { both: "Both", hover: "Hover", rest: "At rest" }[badge.dataset.scope];
+  badge.id = `scope-${control.name}`;
+  control.setAttribute("aria-describedby", badge.id);
+  caption.append(badge);
+  label.prepend(caption);
 }
 let effectsDraft;
 const effectsPreview = document.getElementById("effects-preview");
@@ -125,7 +156,7 @@ function drawEffectsPreview(time) {
 function updateEffectsDraft() {
   effectsDraft = normalizeCardEffects(Object.fromEntries([...effectsForm.elements].filter(el=>el.name).map(el=>[el.name, el.type === "range" ? Number(el.value) : el.value])));
   applyCardEffects(effectsDraft, effectsDemo);
-  for (const output of effectsForm.querySelectorAll("output")) output.value = `${document.getElementById(output.getAttribute("for")).value}${output.dataset.unit}`;
+  for (const output of effectsForm.querySelectorAll("output")) output.value = `${Number(Number(document.getElementById(output.getAttribute("for")).value).toFixed(2))}${output.dataset.unit}`;
   document.getElementById("effects-feedback").textContent = "";
   drawEffectsPreview();
 }
@@ -161,7 +192,16 @@ for (const [index,tab] of effectTabs.entries()) {
   });
 }
 effectsForm.addEventListener("submit", event=>event.preventDefault());
-effectsForm.addEventListener("input", updateEffectsDraft);
+function previewControlScope(event) {
+  if (!event.target.matches("input[name], select[name]")) return;
+  const scope = effectScope(event.target.name);
+  if (scope === "both") return;
+  previewRest = scope === "rest";
+  for (const option of effectsDialog.querySelectorAll("[data-preview]")) option.setAttribute("aria-pressed", String((option.dataset.preview === "rest") === previewRest));
+  drawEffectsPreview();
+}
+effectsForm.addEventListener("focusin", previewControlScope);
+effectsForm.addEventListener("input", event => { previewControlScope(event); updateEffectsDraft(); });
 document.getElementById("effects-preview-stage").addEventListener("pointermove", event => {
   const bounds = document.getElementById("effects-preview-stage").getBoundingClientRect();
   previewX = Math.max(-1, Math.min(1, (event.clientX-bounds.left)/bounds.width*2-1));

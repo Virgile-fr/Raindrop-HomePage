@@ -68,17 +68,20 @@
   border-radius: max(0px, calc(var(--effect-radius, 8px) - 2px)) max(0px, calc(var(--effect-radius, 8px) - 2px)) 0px 0px;
 }
 
-.title {
-  padding-left: 6px;
-  margin: 5px 0px;
+.card .title {
+  padding: var(--effect-textPaddingY, 5px) var(--effect-textPaddingX, 8px);
+  margin: 0;
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 1.6;
-  font-size: 10pt;
-  font-weight: 550;
-  text-indent: 2px;
+  line-height: var(--effect-textLineHeight, 1.6);
+  font-family: var(--effect-textFont, system-ui, sans-serif);
+  font-size: var(--effect-textSize, 13.333px);
+  font-weight: var(--effect-textWeight, 550);
+  letter-spacing: var(--effect-textSpacing, 0px);
+  text-transform: var(--effect-textCase, none);
+  text-align: var(--effect-textAlign, left);
 }
 
 .cover-cards .image {
@@ -86,11 +89,11 @@
   border-bottom: var(--image-border-color);
 }
 .cover-cards .title {
-  min-height: 1.6em;
+  min-height: 1em;
 }
 
 .icon-cards .title {
-  min-height: 1.6em;
+  min-height: 1em;
 }
 .icon-cards .image {
   aspect-ratio: 6/5;
