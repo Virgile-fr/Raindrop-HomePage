@@ -108,6 +108,7 @@ function createCard(item, coverView) {
         image.alt = "";
         frame.classList.remove("preview-initials");
         frame.style.removeProperty("background");
+        backgroundSources.delete(frame);
         frame.replaceChildren(image);
         resolveReady();
       });

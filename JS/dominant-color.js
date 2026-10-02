@@ -164,28 +164,34 @@ function computeDominantColor(image) {
   }
 }
 
-function applyFilterBackground(filter, color) {
+// Preserve source samples independently from visual settings: recoloring is
+// immediate and never invalidates image caches or starts a network request.
+const backgroundSources = new WeakMap();
+let backgroundSettings = {};
+function applyFilterBackground(filter, color, settings = backgroundSettings) {
+  if (!validIconColor(color)) return;
+  backgroundSources.set(filter, color);
   const { h, s, l } = rgbToHsl(color.r, color.g, color.b);
-
-  const balancedSaturation = Math.min(0.62, Math.max(0.28, s * 0.9 + 0.12));
-  const contrastBias = (0.5 - l) * 0.35;
-  const baseLightness = Math.min(
-    0.62,
-    Math.max(0.32, l + contrastBias + 0.08)
-  );
-  const accentLightness = Math.min(
-    0.68,
-    Math.max(0.26, baseLightness + (l < 0.5 ? 0.08 : -0.08))
-  );
-
-  const baseColor = hslToRgb(h, balancedSaturation, baseLightness);
-  const accentColor = hslToRgb(h, balancedSaturation * 0.92, accentLightness);
-
-  const overlayIsDark = baseLightness > 0.5;
-  const overlayOpacity = overlayIsDark ? 0.18 : 0.12;
-  const overlayTone = overlayIsDark ? "0, 0, 0" : "255, 255, 255";
-
-  filter.style.background = `linear-gradient(rgba(${overlayTone}, ${overlayOpacity}), rgba(${overlayTone}, ${overlayOpacity})), linear-gradient(135deg, rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b}), rgb(${accentColor.r}, ${accentColor.g}, ${accentColor.b}))`;
+  const mode = settings.bgMode || "balanced";
+  let hue = mode === "complement" ? (h + 180) % 360 : h;
+  let sat = Math.min(.62, Math.max(.28, s * .9 + .12));
+  let light = Math.min(.62, Math.max(.32, l + (0.5-l)*.35 + .08));
+  if (mode === "faithful") { sat = s; light = l; }
+  if (mode === "pastel") { sat = Math.min(.45, s*.5+.12); light = .72; }
+  if (mode === "vivid") { sat = Math.min(.95, s*1.25+.2); light = Math.max(.38, Math.min(.58,l)); }
+  if (mode === "mono") sat = 0;
+  sat = Math.min(1, Math.max(0, sat * (settings.bgSaturation ?? 100)/100));
+  light = Math.min(.95, Math.max(.05, light + (settings.bgLightness ?? 0)/100));
+  const accentLight = Math.min(.95, Math.max(.05, light + (l<.5 ? .08 : -.08)*(settings.bgSpread ?? 100)/100));
+  const base = hslToRgb(hue,sat,light);
+  const accent = hslToRgb((hue+(settings.bgHue ?? 0)+360)%360,sat*.92,accentLight);
+  const rgb = c => `rgb(${c.r}, ${c.g}, ${c.b})`;
+  const tone = light>.5 ? "0,0,0" : "255,255,255";
+  const opacity = (light>.5 ? .18 : .12)*(settings.bgContrast ?? 100)/100;
+  const fill = settings.bgShape === "solid" ? `linear-gradient(${rgb(base)},${rgb(base)})`
+    : settings.bgShape === "radial" ? `radial-gradient(ellipse at 35% 25%,${rgb(accent)},${rgb(base)})`
+    : `linear-gradient(${settings.bgAngle ?? 135}deg,${rgb(base)},${rgb(accent)})`;
+  filter.style.background = `linear-gradient(rgba(${tone},${opacity}),rgba(${tone},${opacity})),${fill}`;
 }
 
 async function resolveIconColor(image, source) {

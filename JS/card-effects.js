@@ -7,7 +7,11 @@ const EFFECT_MATERIALS = {
   radiant: "Radiant", rainbow: "Rainbow", gold: "Gold", etched: "Etched silver",
 };
 const EFFECT_PATTERNS = { none: "None", lines: "Fine stripes", cross: "Crosshatch", dots: "Dots", grain: "Sparkle grain", rings: "Engraved rings" };
-const EFFECT_DEFAULTS = { material: "holo", pattern: "lines", foil: 30, texture: 50, glare: 100, depth: 100, glass: 100, shadow: 100, softness: 100, rim: 100, radius: 8, glassRadius: 22, saturation: 100, idleFoil: 0, idleSaturation: 100, idleBrightness: 100, idleShadow: 0, direction: "up", travel: 8, zoom: 1.6, iconShadow: 100, iconSoftness: 100, iconBorder: 100, iconSurface: 100 };
+const GLASS_MODES = { glass: "Gradient glass", frosted: "Frosted", clear: "Clear", solid: "Solid white" };
+const BACKGROUND_MODES = { balanced: "Balanced (original)", faithful: "Faithful to sampled color", pastel: "Pastel", vivid: "Vivid", mono: "Monochrome", complement: "Complementary" };
+const BACKGROUND_SHAPES = { linear: "Linear", radial: "Radial glow", solid: "Solid color" };
+const EFFECT_SELECTS = [["material", EFFECT_MATERIALS], ["pattern", EFFECT_PATTERNS], ["glassMode", GLASS_MODES], ["bgMode", BACKGROUND_MODES], ["bgShape", BACKGROUND_SHAPES]];
+const EFFECT_DEFAULTS = { material: "holo", pattern: "lines", foil: 30, texture: 50, glare: 100, depth: 100, glass: 100, shadow: 100, softness: 100, rim: 100, radius: 8, glassRadius: 22, saturation: 100, idleFoil: 0, idleSaturation: 100, idleBrightness: 100, idleShadow: 0, direction: "up", travel: 8, zoom: 1.6, iconShadow: 100, iconSoftness: 100, iconBorder: 100, iconSurface: 100, iconSize: 38, iconPadding: 10, artworkRadius: 12, iconOpacity: 100, iconSaturation: 100, iconBrightness: 100, iconRestShadow: 0, iconParallax: 100, iconTilt: 100, iconZoom: 11, iconFoil: 100, iconGlare: 100, glassAngle: 180, glassMode: "glass", bgMode: "balanced", bgSaturation: 100, bgLightness: 0, bgContrast: 100, bgSpread: 100, bgAngle: 135, bgHue: 0, bgShape: "linear" };
 const EFFECT_CONTROLS = [
   ["foil", "Iridescence", 100, "%", "Material"], ["texture", "Pattern intensity", 100, "%", "Material"],
   ["glare", "Light reflection", 100, "%", "Material"], ["saturation", "Color saturation", 180, "%", "Material"],
@@ -17,18 +21,31 @@ const EFFECT_CONTROLS = [
   ["travel", "Vertical travel", 30, "px", "Motion & lighting"], ["zoom", "Card enlargement", 20, "%", "Motion & lighting"],
   ["iconShadow", "Glass shadow", 200, "%", "Icon glass"], ["iconSoftness", "Glass shadow softness", 200, "%", "Icon glass"],
   ["iconBorder", "Glass outline", 200, "%", "Icon glass"], ["iconSurface", "Glass opacity", 150, "%", "Icon glass"],
+  ["iconSize", "Artwork size", 64, "px", "Artwork"], ["iconPadding", "Glass padding", 24, "px", "Glass shape"],
+  ["artworkRadius", "Artwork corners", 32, "px", "Artwork"], ["iconOpacity", "Artwork opacity", 100, "%", "Artwork"],
+  ["iconSaturation", "Artwork saturation", 200, "%", "Artwork"], ["iconBrightness", "Artwork brightness", 160, "%", "Artwork"],
+  ["iconRestShadow", "Resting glass shadow", 100, "%", "Icon glass"], ["iconParallax", "Glass parallax", 200, "%", "Glass motion"],
+  ["iconTilt", "Glass tilt", 200, "%", "Glass motion"], ["iconZoom", "Glass enlargement", 30, "%", "Glass motion"],
+  ["iconFoil", "Glass iridescence", 200, "%", "Glass finish"], ["iconGlare", "Glass highlight", 200, "%", "Glass finish"],
+  ["glassAngle", "Glass gradient angle", 360, "°", "Glass finish"],
+  ["bgSaturation", "Background saturation", 200, "%", "Background color"], ["bgLightness", "Lightness offset", 30, "%", "Background color"],
+  ["bgContrast", "Contrast balancing", 150, "%", "Background color"], ["bgSpread", "Gradient separation", 250, "%", "Background color"],
+  ["bgHue", "Accent hue offset", 180, "°", "Background color"], ["bgAngle", "Background gradient angle", 360, "°", "Background color"],
   ["idleFoil", "Resting foil", 100, "%", "Inactive cards"], ["idleSaturation", "Resting saturation", 140, "%", "Inactive cards"],
   ["idleBrightness", "Resting brightness", 120, "%", "Inactive cards"], ["idleShadow", "Resting shadow", 100, "%", "Inactive cards"],
 ];
+function effectMinimum(key) {
+  return { idleBrightness: 40, iconSize: 20, iconOpacity: 20, iconBrightness: 40, bgLightness: -30, bgHue: -180 }[key] ?? 0;
+}
 function normalizeCardEffects(value) {
   const result = { ...EFFECT_DEFAULTS };
   if (!value || typeof value !== "object") return result;
-  for (const [key, options] of [["material", EFFECT_MATERIALS], ["pattern", EFFECT_PATTERNS]]) {
+  for (const [key, options] of EFFECT_SELECTS) {
     if (Object.hasOwn(options, value[key])) result[key] = value[key];
   }
   if (["up", "center", "down"].includes(value.direction)) result.direction = value.direction;
   for (const [key, , max] of EFFECT_CONTROLS) {
-    if (Number.isFinite(value[key])) result[key] = Math.max(key === "idleBrightness" ? 40 : 0, Math.min(max, value[key]));
+    if (Number.isFinite(value[key])) result[key] = Math.max(effectMinimum(key), Math.min(max, value[key]));
   }
   return result;
 }
@@ -36,13 +53,20 @@ let cardEffects = normalizeCardEffects(storage.readJSON(CARD_EFFECTS_KEY, null))
 function applyCardEffects(settings, target = document.documentElement) {
   target.dataset.cardMaterial = settings.material;
   target.dataset.cardPattern = settings.pattern;
+  target.dataset.glassMode = settings.glassMode;
   for (const [key, , , unit] of EFFECT_CONTROLS) {
-    target.style.setProperty(`--effect-${key}`, unit === "px" ? `${settings[key]}px` : settings[key] / 100);
+    target.style.setProperty(`--effect-${key}`, unit === "px" ? `${settings[key]}px` : unit === "°" ? `${settings[key]}deg` : settings[key] / 100);
+  }
+  if (target === document.documentElement) backgroundSettings = settings;
+  for (const surface of target.querySelectorAll(".filter, .image")) {
+    const color = backgroundSources.get(surface);
+    if (color) applyFilterBackground(surface, color, settings);
   }
 }
 applyCardEffects(cardEffects);
 
 function effectTab(key) {
+  if (key.startsWith("icon") || key.startsWith("bg") || ["glass", "glassRadius", "glassAngle", "artworkRadius"].includes(key)) return "icon";
   if (key.startsWith("idle")) return "rest";
   return ["foil", "texture", "saturation", "radius", "glassRadius", "iconBorder", "iconSurface"].includes(key) ? "general" : "hover";
 }
@@ -54,21 +78,24 @@ effectsDialog.innerHTML = `<h2 id="effects-title">Card effects</h2>
 <p>Choose a reflective finish, mix in a pattern, and adjust its intensity.</p>
 <div class="effects-layout"><div class="effects-demo"><div id="effects-preview-stage"><div class="card icon-cards" id="effects-preview"><div class="filter"><span class="icon"><span class="initial-glyph">Aa</span></span></div><div class="title">Live preview</div></div></div><div class="effects-preview-modes" role="group" aria-label="Preview state"><button type="button" data-preview="hover" aria-pressed="true">Hover</button><button type="button" data-preview="rest" aria-pressed="false">At rest</button></div><p class="icons-note">Move over the preview or drag on touch. Settings apply to your cards after Save.</p></div>
 <form id="effects-form"><div class="effects-tabs" role="tablist" aria-label="Effect settings">
-${[["general","General"],["hover","Hover"],["rest","At rest"]].map(([id,label],i)=>`<button type="button" role="tab" id="effects-tab-${id}" aria-controls="effects-panel-${id}" aria-selected="${i===0}" tabindex="${i===0 ? 0 : -1}">${label}</button>`).join("")}</div>
-${["general","hover","rest"].map((tab,i)=>`<section role="tabpanel" id="effects-panel-${tab}" aria-labelledby="effects-tab-${tab}" ${i ? "hidden" : ""}>
+${[["general","General"],["hover","Hover"],["rest","At rest"],["icon","Icon & glass"]].map(([id,label],i)=>`<button type="button" role="tab" id="effects-tab-${id}" aria-controls="effects-panel-${id}" aria-selected="${i===0}" tabindex="${i===0 ? 0 : -1}">${label}</button>`).join("")}</div>
+${["general","hover","rest","icon"].map((tab,i)=>`<section role="tabpanel" id="effects-panel-${tab}" aria-labelledby="effects-tab-${tab}" ${i ? "hidden" : ""}>
 ${tab === "general" ? '<p class="icons-note">Shared by hover and resting cards.</p><label>Material<select name="material"></select></label><label>Pattern<select name="pattern"></select></label>' : ""}
 ${tab === "hover" ? '<label>Movement direction<select name="direction"><option value="up">Up</option><option value="center">Centered</option><option value="down">Down</option></select></label>' : ""}
-${[...new Set(EFFECT_CONTROLS.filter(control=>effectTab(control[0])===tab).map(control=>control[4]))].map(group=>`<fieldset><legend>${group}</legend>${EFFECT_CONTROLS.filter(control=>effectTab(control[0])===tab && control[4]===group).map(([key,label,max,unit])=>`<label for="effects-${key}">${label}<output for="effects-${key}" data-unit="${unit}"></output><input id="effects-${key}" name="${key}" type="range" min="${key === "idleBrightness" ? 40 : 0}" max="${max}" step="${key === "zoom" ? .1 : 1}"></label>`).join("")}</fieldset>`).join("")}</section>`).join("")}</form></div>
+${tab === "icon" ? '<p class="icons-note">Artwork, glass and background mapping. Hover-only controls can be compared using the preview switch.</p><label>Glass finish<select name="glassMode"></select></label><label>Background color mapping<select name="bgMode"></select></label><label>Background gradient<select name="bgShape"></select></label><p class="icons-note">Color mapping uses the cached sampled color, without downloading icons again. Covers keep their photograph.</p>' : ""}
+${[...new Set(EFFECT_CONTROLS.filter(control=>effectTab(control[0])===tab).map(control=>control[4]))].map(group=>`<fieldset><legend>${group}</legend>${EFFECT_CONTROLS.filter(control=>effectTab(control[0])===tab && control[4]===group).map(([key,label,max,unit])=>`<label for="effects-${key}">${label}<output for="effects-${key}" data-unit="${unit}"></output><input id="effects-${key}" name="${key}" type="range" min="${effectMinimum(key)}" max="${max}" step="${key === "zoom" ? .1 : 1}"></label>`).join("")}</fieldset>`).join("")}</section>`).join("")}</form></div>
 <p class="icons-note">Reduced-motion preferences take priority over animated effects. Saved in this browser; preserved when you reset the icon cache.</p>
 <p id="effects-feedback" role="status"></p><div class="icons-dialog-actions"><button type="button" id="effects-reset">Restore defaults</button><button type="button" id="effects-cancel">Cancel</button><button type="button" id="effects-save">Save</button></div>`;
 document.body.append(effectsDialog);
 const effectsForm = effectsDialog.querySelector("form");
-for (const [key, options] of [["material", EFFECT_MATERIALS], ["pattern", EFFECT_PATTERNS]]) {
+for (const [key, options] of EFFECT_SELECTS) {
   for (const [value, label] of Object.entries(options)) effectsForm.elements[key].add(new Option(label, value));
 }
 let effectsDraft;
 const effectsPreview = document.getElementById("effects-preview");
 const effectsDemo = effectsDialog.querySelector(".effects-demo");
+// Same color pipeline as real favicon cards; no remote preview image is needed.
+applyFilterBackground(effectsPreview.querySelector(".filter"), { r: 36, g: 117, b: 158 });
 const effectsReducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 let previewRest = false;
 let previewX = -.3, previewY = -.25, previewFrame = 0;
@@ -119,7 +146,7 @@ function selectEffectTab(button) {
     tab.tabIndex = selected ? 0 : -1;
     document.getElementById(tab.getAttribute("aria-controls")).hidden = !selected;
   }
-  if (button.id !== "effects-tab-general") {
+  if (["effects-tab-hover", "effects-tab-rest"].includes(button.id)) {
     previewRest = button.id === "effects-tab-rest";
     for (const option of effectsDialog.querySelectorAll("[data-preview]")) option.setAttribute("aria-pressed", String((option.dataset.preview === "rest") === previewRest));
   }
