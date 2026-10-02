@@ -1,5 +1,53 @@
 "use strict";
 
+// Exact critically damped spring: frame-rate independent, with no oscillation
+// at rest. Velocity survives target changes instead of restarting a transition.
+function springCardValue(state, key, target, frequency, dt) {
+  const velocity = `${key}Velocity`;
+  const offset = state[key] - target;
+  const impulse = (state[velocity] || 0) + frequency * offset;
+  const decay = Math.exp(-frequency * dt);
+  state[key] = target + (offset + impulse * dt) * decay;
+  state[velocity] = ((state[velocity] || 0) - frequency * impulse * dt) * decay;
+}
+
+
+function renderCardMotion(state, settings) {
+  const { x, y, depth, card, lightX, lightY, iconX, iconY, iconDepth } = state;
+  const edge = Math.min(1, Math.hypot(x, y) / Math.SQRT2);
+  const strength = (state.touch ? 0.8 : 1) * settings.depth / 100;
+  const glassStrength = (state.touch ? 0.8 : 1) * settings.glass / 100;
+  card.style.transform = `perspective(900px) translate3d(${x * depth * 0.7 * settings.depth / 100}px, ${({up:-1,center:0,down:1}[settings.direction]) * settings.travel * depth}px, 0) rotateX(${-y * 9 * strength}deg) rotateY(${x * 11 * strength}deg) scale(${1 + depth * settings.zoom / 100})`;
+  card.style.setProperty("--float-depth", depth);
+  card.style.setProperty("--float-grain-alpha", depth * (0.48 + edge * 0.22) * (state.touch ? 0.8 : 1));
+  card.style.setProperty("--float-grain-x", `${lightX * 8}px`);
+  card.style.setProperty("--float-grain-y", `${lightY * 8}px`);
+  // Foil travels against the glare, like a second reflective material.
+  card.style.setProperty("--float-holo-x", `${Math.max(0, Math.min(100, 50 - lightX * 65))}%`);
+  card.style.setProperty("--float-holo-y", `${Math.max(0, Math.min(100, 50 - lightY * 55))}%`);
+  card.style.setProperty("--float-holo-alpha", depth * (0.62 + edge * 0.20) * (state.touch ? 0.8 : 1));
+  card.style.setProperty("--float-icon-tilt-x", `${-iconY * iconDepth * 7 * glassStrength}deg`);
+  card.style.setProperty("--float-icon-tilt-y", `${iconX * iconDepth * 9 * glassStrength}deg`);
+  card.style.setProperty("--float-light-x", `${50 + lightX * 42}%`);
+  card.style.setProperty("--float-light-y", `${42 + lightY * 40}%`);
+  card.style.setProperty("--float-light", depth * (0.23 + edge * 0.08));
+  card.style.setProperty("--float-sheen-angle", `${118 + lightX * 18 - lightY * 12}deg`);
+  card.style.setProperty("--float-sheen-x", `${50 + lightX * 32}%`);
+  card.style.setProperty("--float-sheen-y", `${50 + lightY * 28}%`);
+  card.style.setProperty("--float-rim-angle", `${Math.atan2(lightX, -lightY - 0.45) * 180 / Math.PI}deg`);
+  card.style.setProperty("--float-shadow-x", `${-lightX * depth * 13}px`);
+  card.style.setProperty("--float-shadow-y", `${4 + depth * 20 - lightY * depth * 7}px`);
+  card.style.setProperty("--float-shadow-alpha", depth * (0.19 + edge * 0.035));
+  card.style.setProperty("--float-shadow-blur", `${12 + depth * 24 + edge * depth * 6}px`);
+  card.style.setProperty("--float-icon-x", `${iconX * 5.5 * glassStrength}px`);
+  card.style.setProperty("--float-icon-y", `${iconY * 5 * glassStrength - iconDepth * 3 * glassStrength}px`);
+  card.style.setProperty("--float-icon-rotate", `${iconX * iconDepth * 1.4 * glassStrength}deg`);
+  card.style.setProperty("--float-icon-shadow-blur", `${8 + iconDepth * 12}px`);
+  card.style.setProperty("--float-icon-scale", 1 + iconDepth * 0.11 * glassStrength);
+  card.style.setProperty("--float-icon-shadow-x", `${-lightX * iconDepth * 5}px`);
+  card.style.setProperty("--float-icon-shadow-y", `${2 + iconDepth * 9 - lightY * iconDepth * 3}px`);
+}
+
 (() => {
   const grid = document.getElementById("grid");
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
@@ -22,16 +70,6 @@
     if (active === state) active = null;
   }
 
-  // Exact critically damped spring: frame-rate independent, with no oscillation
-  // at rest. Velocity survives target changes instead of restarting a transition.
-  function spring(state, key, target, frequency, dt) {
-    const velocity = `${key}Velocity`;
-    const offset = state[key] - target;
-    const impulse = (state[velocity] || 0) + frequency * offset;
-    const decay = Math.exp(-frequency * dt);
-    state[key] = target + (offset + impulse * dt) * decay;
-    state[velocity] = ((state[velocity] || 0) - frequency * impulse * dt) * decay;
-  }
 
   function animate(time) {
     const dt = (previousTime ? Math.min(time - previousTime, 40) : 16) / 1000;
@@ -47,13 +85,13 @@
       const targetY = engaged ? state.targetY : 0;
       const targetDepth = engaged ? (state.pressed ? 0.58 : 1) : 0;
       if (engaged) {
-        spring(state, "x", targetX, 28, dt);
-        spring(state, "y", targetY, 28, dt);
-        spring(state, "depth", targetDepth, 28, dt);
+        springCardValue(state, "x", targetX, 28, dt);
+        springCardValue(state, "y", targetY, 28, dt);
+        springCardValue(state, "depth", targetDepth, 28, dt);
         // The raised glass follows a slightly softer spring than the card.
-        spring(state, "iconX", targetX, 22, dt);
-        spring(state, "iconY", targetY, 22, dt);
-        spring(state, "iconDepth", targetDepth, 24, dt);
+        springCardValue(state, "iconX", targetX, 22, dt);
+        springCardValue(state, "iconY", targetY, 22, dt);
+        springCardValue(state, "iconDepth", targetDepth, 24, dt);
         const lightEase = 1 - Math.exp(-dt / 0.045);
         state.lightX += (targetX - state.lightX) * lightEase;
         state.lightY += (targetY - state.lightY) * lightEase;
@@ -74,39 +112,7 @@
         continue;
       }
       unsettled ||= error > 0.001 || speed > 0.01;
-      const { x, y, depth, card, lightX, lightY, iconX, iconY, iconDepth } = state;
-      const edge = Math.min(1, Math.hypot(x, y) / Math.SQRT2);
-      const strength = (state.touch ? 0.8 : 1) * cardEffects.depth / 100;
-      const glassStrength = (state.touch ? 0.8 : 1) * cardEffects.glass / 100;
-      card.style.transform = `perspective(900px) translate3d(${x * depth * 0.7 * cardEffects.depth / 100}px, ${-8 * depth * cardEffects.depth / 100}px, 0) rotateX(${-y * 9 * strength}deg) rotateY(${x * 11 * strength}deg) scale(${1 + depth * 0.016 * cardEffects.depth / 100})`;
-      card.style.setProperty("--float-depth", depth);
-      card.style.setProperty("--float-grain-alpha", depth * (0.48 + edge * 0.22) * (state.touch ? 0.8 : 1));
-      card.style.setProperty("--float-grain-x", `${lightX * 8}px`);
-      card.style.setProperty("--float-grain-y", `${lightY * 8}px`);
-      // Foil travels against the glare, like a second reflective material.
-      card.style.setProperty("--float-holo-x", `${50 - lightX * 65}%`);
-      card.style.setProperty("--float-holo-y", `${50 - lightY * 55}%`);
-      card.style.setProperty("--float-holo-alpha", depth * (0.62 + edge * 0.20) * (state.touch ? 0.8 : 1));
-      card.style.setProperty("--float-icon-tilt-x", `${-iconY * iconDepth * 7 * glassStrength}deg`);
-      card.style.setProperty("--float-icon-tilt-y", `${iconX * iconDepth * 9 * glassStrength}deg`);
-      card.style.setProperty("--float-light-x", `${50 + lightX * 42}%`);
-      card.style.setProperty("--float-light-y", `${42 + lightY * 40}%`);
-      card.style.setProperty("--float-light", depth * (0.23 + edge * 0.08));
-      card.style.setProperty("--float-sheen-angle", `${118 + lightX * 18 - lightY * 12}deg`);
-      card.style.setProperty("--float-sheen-x", `${50 + lightX * 32}%`);
-      card.style.setProperty("--float-sheen-y", `${50 + lightY * 28}%`);
-      card.style.setProperty("--float-rim-angle", `${Math.atan2(lightX, -lightY - 0.45) * 180 / Math.PI}deg`);
-      card.style.setProperty("--float-shadow-x", `${-lightX * depth * 13}px`);
-      card.style.setProperty("--float-shadow-y", `${4 + depth * 20 - lightY * depth * 7}px`);
-      card.style.setProperty("--float-shadow-alpha", depth * (0.19 + edge * 0.035));
-      card.style.setProperty("--float-shadow-blur", `${12 + depth * 24 + edge * depth * 6}px`);
-      card.style.setProperty("--float-icon-x", `${iconX * 5.5 * glassStrength}px`);
-      card.style.setProperty("--float-icon-y", `${iconY * 5 * glassStrength - iconDepth * 3 * glassStrength}px`);
-      card.style.setProperty("--float-icon-rotate", `${iconX * iconDepth * 1.4 * glassStrength}deg`);
-      card.style.setProperty("--float-icon-shadow-blur", `${8 + iconDepth * 12}px`);
-      card.style.setProperty("--float-icon-scale", 1 + iconDepth * 0.11 * glassStrength);
-      card.style.setProperty("--float-icon-shadow-x", `${-lightX * iconDepth * 5}px`);
-      card.style.setProperty("--float-icon-shadow-y", `${2 + iconDepth * 9 - lightY * iconDepth * 3}px`);
+      renderCardMotion(state, cardEffects);
     }
     // No animation loop when settled; only moving cards receive style writes.
     frame = unsettled ? requestAnimationFrame(animate) : 0;
