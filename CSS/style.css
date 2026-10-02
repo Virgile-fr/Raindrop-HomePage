@@ -146,3 +146,6 @@ footer button:active { transform: translateY(0); }
 #effects-preview { width: 100%; max-width: none; margin: 0; }
 #effects-form [role="tabpanel"] { min-width: 0; }
 @media (max-width: 580px) { #effects-preview-stage { width: 170px; margin-block: 20px; } }
+
+.effects-tabs { flex-wrap: wrap; border-radius: 16px; }
+#effects-dialog .effects-tabs button { flex: 1 0 auto; padding-inline: 10px; }

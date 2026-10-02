@@ -26,8 +26,8 @@ function renderCardMotion(state, settings) {
   card.style.setProperty("--float-holo-x", `${Math.max(0, Math.min(100, 50 - lightX * 65))}%`);
   card.style.setProperty("--float-holo-y", `${Math.max(0, Math.min(100, 50 - lightY * 55))}%`);
   card.style.setProperty("--float-holo-alpha", depth * (0.62 + edge * 0.20) * (state.touch ? 0.8 : 1));
-  card.style.setProperty("--float-icon-tilt-x", `${-iconY * iconDepth * 7 * glassStrength}deg`);
-  card.style.setProperty("--float-icon-tilt-y", `${iconX * iconDepth * 9 * glassStrength}deg`);
+  card.style.setProperty("--float-icon-tilt-x", `${-iconY * iconDepth * 7 * glassStrength * settings.iconTilt / 100}deg`);
+  card.style.setProperty("--float-icon-tilt-y", `${iconX * iconDepth * 9 * glassStrength * settings.iconTilt / 100}deg`);
   card.style.setProperty("--float-light-x", `${50 + lightX * 42}%`);
   card.style.setProperty("--float-light-y", `${42 + lightY * 40}%`);
   card.style.setProperty("--float-light", depth * (0.23 + edge * 0.08));
@@ -39,11 +39,11 @@ function renderCardMotion(state, settings) {
   card.style.setProperty("--float-shadow-y", `${4 + depth * 20 - lightY * depth * 7}px`);
   card.style.setProperty("--float-shadow-alpha", depth * (0.19 + edge * 0.035));
   card.style.setProperty("--float-shadow-blur", `${12 + depth * 24 + edge * depth * 6}px`);
-  card.style.setProperty("--float-icon-x", `${iconX * 5.5 * glassStrength}px`);
-  card.style.setProperty("--float-icon-y", `${iconY * 5 * glassStrength - iconDepth * 3 * glassStrength}px`);
+  card.style.setProperty("--float-icon-x", `${iconX * 5.5 * glassStrength * settings.iconParallax / 100}px`);
+  card.style.setProperty("--float-icon-y", `${(iconY * 5 - iconDepth * 3) * glassStrength * settings.iconParallax / 100}px`);
   card.style.setProperty("--float-icon-rotate", `${iconX * iconDepth * 1.4 * glassStrength}deg`);
   card.style.setProperty("--float-icon-shadow-blur", `${8 + iconDepth * 12}px`);
-  card.style.setProperty("--float-icon-scale", 1 + iconDepth * 0.11 * glassStrength);
+  card.style.setProperty("--float-icon-scale", 1 + iconDepth * settings.iconZoom / 100 * glassStrength);
   card.style.setProperty("--float-icon-shadow-x", `${-lightX * iconDepth * 5}px`);
   card.style.setProperty("--float-icon-shadow-y", `${2 + iconDepth * 9 - lightY * iconDepth * 3}px`);
 }
