@@ -105,11 +105,11 @@
   width: var(--icon-size);
   border-radius: var(--effect-glassRadius, var(--icon-radius));
   padding: var(--icon-inset);
-  box-shadow: 65px 39px 100px 100px rgba(255, 255, 255, 0), 0px 0px 0px 1px rgba(255, 255, 255, 0.4);
+  box-shadow: 65px 39px 100px 100px rgba(255, 255, 255, 0), 0px 0px 0px 1px rgba(255, 255, 255, calc(.4 * var(--effect-iconBorder, 1)));
 
   /* Preserve the original resting appearance. */
-  --icon-g1: rgba(255,255,255,calc(.6 + var(--float-depth, 0) * .18));
-  --icon-g2: rgba(255,255,255,calc(.2 + var(--float-depth, 0) * .08));
+  --icon-g1: rgba(255,255,255,calc((.6 + var(--float-depth, 0) * .18) * var(--effect-iconSurface, 1)));
+  --icon-g2: rgba(255,255,255,calc((.2 + var(--float-depth, 0) * .08) * var(--effect-iconSurface, 1)));
 
   /* A small foreground displacement adds depth without changing the icon. */
   background: linear-gradient(var(--icon-g1), var(--icon-g2));
@@ -120,9 +120,9 @@
 
 .card.is-floating .icon {
 
-  box-shadow: var(--float-icon-shadow-x, 0px) var(--float-icon-shadow-y, 3px) calc(var(--float-icon-shadow-blur, 14px) * var(--effect-softness, 1)) -5px
-      rgba(0, 0, 0, calc(var(--float-depth, 0) * 0.25 * var(--effect-shadow, 1))),
-    0 0 0 1px rgba(255, 255, 255, calc(0.4 + var(--float-depth, 0) * 0.24)),
+  box-shadow: var(--float-icon-shadow-x, 0px) var(--float-icon-shadow-y, 3px) calc(var(--float-icon-shadow-blur, 14px) * var(--effect-iconSoftness, 1)) -5px
+      rgba(0, 0, 0, calc(var(--float-depth, 0) * 0.25 * var(--effect-iconShadow, 1))),
+    0 0 0 1px rgba(255, 255, 255, calc((0.4 + var(--float-depth, 0) * 0.24) * var(--effect-iconBorder, 1))),
     inset 0 1px 0 rgba(255, 255, 255, calc(var(--float-depth, 0) * .45)),
     inset 0 -1px 0 rgba(0, 0, 0, calc(var(--float-depth, 0) * .08));
 }
@@ -307,6 +307,7 @@
 [data-card-material] {
   --material-foil: 1;
   --material-size: 240% 240%;
+  --material-repeat: no-repeat;
   --material-spectrum: repeating-linear-gradient(112deg, #ff63ca 0%, #985cff 12%, #35dfff 24%, #61ffc5 36%, #fff391 48%, #ff9961 60%, #ff63ca 72%);
   --material-band: repeating-linear-gradient(112deg, #17132a 0%, #343450 18%, #fff 32%, #b7b7c8 39%, #191529 55%, #17132a 72%);
 }
@@ -322,6 +323,7 @@
 [data-card-material="radiant"] {
   --material-spectrum: repeating-conic-gradient(from 45deg, #8aebff 0deg 90deg, #f2b5ff 90deg 180deg, #f9e8a0 180deg 270deg, #aaffd3 270deg 360deg);
   --material-size: 44px 44px;
+  --material-repeat: repeat;
   --material-band: repeating-linear-gradient(135deg, #fff 0%, #45405b 10%, #fff 20%);
 }
 [data-card-material="rainbow"] { --material-band: linear-gradient(125deg, #888, #fff 45%, #aaa); }
@@ -356,3 +358,9 @@
 }
 
 .card .filter { --base-saturation: 1.1; }
+
+/* Overscan only the texture that physically shifts, and clip at its parent.
+   Large spectral gradients use bounded positions and never tile at the edge. */
+.card .filter::before, .card .image::before { inset: -1px; background-repeat: var(--material-repeat, no-repeat), no-repeat; }
+.card .filter::after, .card .image::after { inset: -10px; border-radius: 0; }
+.card::after { background-repeat: no-repeat; }

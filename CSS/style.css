@@ -118,7 +118,7 @@ footer button:active { transform: translateY(0); }
 #effects-dialog { width: min(760px, calc(100% - 2rem)); }
 .effects-layout { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(220px, 1.2fr); gap: 2rem; }
 .effects-demo { padding: 28px 12px 0; }
-#effects-preview { max-width: 230px; margin: auto; touch-action: none; --float-depth: 1; --float-light: .28; --float-holo-alpha: .72; --float-grain-alpha: .58; }
+#effects-preview { max-width: 230px; margin: auto; touch-action: none; }
 #effects-preview .filter { background: linear-gradient(135deg, #327b91, #5f5b92); }
 #effects-preview .initial-glyph { background: #23596e; }
 #effects-form label { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin: 0 0 18px; font-size: 13px; }
@@ -137,5 +137,12 @@ footer button:active { transform: translateY(0); }
 .effects-preview-modes { display: flex; justify-content: center; gap: 6px; margin-top: 22px; }
 #effects-dialog .effects-preview-modes button { border-radius: 999px; font-size: 12px; }
 #effects-dialog .effects-preview-modes [aria-pressed="true"] { background: #219bc325; border-color: #219bc3; }
-#effects-preview[data-rest="true"] { --float-depth: 0; --float-light: 0; --float-holo-alpha: 0; --float-grain-alpha: 0; }
 @media (max-width: 580px) { .effects-demo { position: static; } }
+
+.effects-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 18px; border-radius: 999px; background: var(--card-background); border: var(--card-border); }
+#effects-dialog .effects-tabs button { flex: 1; border: 0; background: transparent; border-radius: 999px; font-size: 12px; min-height: 38px; }
+#effects-dialog .effects-tabs [aria-selected="true"] { background: var(--card-background-hover); box-shadow: 0 1px 5px #0002; }
+#effects-preview-stage { width: 230px; max-width: 100%; margin: 30px auto; touch-action: none; }
+#effects-preview { width: 100%; max-width: none; margin: 0; }
+#effects-form [role="tabpanel"] { min-width: 0; }
+@media (max-width: 580px) { #effects-preview-stage { width: 170px; margin-block: 20px; } }
