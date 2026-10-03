@@ -1,5 +1,5 @@
-header { gap: clamp(1rem, 3vw, 3.5rem); }
-header > .header-group { flex-shrink: 0; }
+body > header { gap: clamp(1rem, 3vw, 3.5rem); }
+body > header > .header-group { flex-shrink: 0; }
 .homepage-search {
   --search-surface: #f5f6f8;
   --search-panel: #f8f9fb;
@@ -89,7 +89,7 @@ header > .header-group { flex-shrink: 0; }
   .search-panel { box-shadow: 0 15px 45px #0005; }
 }
 @media (max-width: 760px) {
-  header { flex-wrap: wrap; gap: 1.15rem; }
+  body > header { flex-wrap: wrap; gap: 1.15rem; }
   .homepage-search { order: 3; flex-basis: 100%; max-width: none; }
   .search-pill { min-height: 46px; }
   #search-input { font-size: 16px; }
@@ -145,15 +145,14 @@ header > .header-group { flex-shrink: 0; }
   .search-result { min-height: 44px; }
   .icon-button, .raindrop-link { min-width: 44px; min-height: 44px; justify-content: center; align-items: center; }
   footer button { min-height: 44px; padding: 8px; }
-  #icons-dialog button { min-width: 44px; min-height: 44px; }
 }
 
 @media (pointer: coarse) {
-  header { flex-wrap: wrap; gap: 1.15rem; }
+  body > header { flex-wrap: wrap; gap: 1.15rem; }
   .homepage-search { order: 3; flex-basis: 100%; max-width: none; }
 }
 @media (max-width: 410px) {
-  header h1 { font-size: 1.4rem; }
+  body > header h1 { font-size: 1.4rem; }
   .raindrop-link { margin-inline: 0 4px; }
   .cover-indicator { margin-inline: 10px 0; }
   .controls { margin-left: auto; }
