@@ -36,7 +36,7 @@ for (const key of [
   'token', 'raindropFavoritesCacheV1', 'favoriteUsageCounts',
   'googleFaviconPriority', 'iconApiProvidersV1', 'switch',
   'iconSampledColorsV1', 'vemetricMetadataV1', 'googlePlaceholderV1',
-  'iconResultsV1', 'iconResultsV2', 'iconCacheEpoch', 'searchEnginesV1', 'cardEffectsV1'
+  'iconResultsV1', 'iconResultsV2', 'iconCacheEpoch', 'searchEnginesV1', 'cardEffectsV1', 'pageBackgroundV1'
 ]) localStorage.removeItem(key);
 ```
 
@@ -70,6 +70,10 @@ for (const key of [
   days; missing results are cached for one day, or fifteen minutes after errors.
   Search engine settings and icon caches can reveal domains used in this profile.
   Search engine icon requests use only the engine origin, never query terms.
+
+## Page backgrounds
+
+Imported raster wallpapers are resized locally and stored in `pageBackgroundV1`; no upload is performed. HTTP(S) wallpaper URLs are loaded as images without a referrer; the remote host still receives a request. Temporary blob image URLs are allowed by the image CSP for local previews and revoked after decoding. Unsupported schemes are rejected. Icon initials mode still contacts configured providers to obtain colors unless the shared cache already contains a result.
 
 ## Reporting
 

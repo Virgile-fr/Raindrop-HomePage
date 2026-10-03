@@ -163,3 +163,44 @@ footer button:active { transform: translateY(0); }
 #effects-dialog .pattern-gallery button { display: grid; gap: 5px; min-width: 0; padding: 6px; font-size: 10px; line-height: 1.3; border-radius: 10px; text-align: center; }
 #effects-dialog .pattern-gallery [aria-pressed="true"] { border-color: #219bc3; background: #219bc31a; box-shadow: inset 0 0 0 1px #219bc3; }
 .pattern-swatch { display: block; height: 32px; border-radius: 5px; background-color: #314556; background-image: var(--effect-pattern, none); background-size: var(--pattern-size, 100% 100%); }
+
+/* Shared settings shell: actions and horizontal tabs stay above scrolling content. */
+.settings-icon { width: 17px; height: 17px; flex: 0 0 auto; vertical-align: middle; }
+footer button { display: inline-flex; align-items: center; gap: 7px; }
+.settings-dialog[open] { display: flex; flex-direction: column; }
+dialog.settings-dialog { padding: 0; overflow: hidden; border-radius: 16px; max-height: calc(100dvh - 2rem); }
+.settings-header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 18px 20px; border-bottom: var(--card-border); }
+.settings-header h2 { display: flex; align-items: center; gap: 9px; margin: 0 !important; font-size: 17px !important; }
+.settings-header .icons-dialog-actions { gap: 6px; }
+.settings-header button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-size: 12px; border-radius: 999px !important; }
+.settings-header button[id$="save"] { background: #219bc321; border-color: #219bc380; }
+.settings-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 20px; }
+.settings-dialog .effects-tabs, .settings-tabs { display: flex; flex: 0 0 auto; flex-wrap: nowrap; gap: 5px; padding: 10px 16px; margin: 0; overflow-x: auto; border: 0; border-bottom: var(--card-border); border-radius: 0; scrollbar-width: thin; background: var(--card-background); }
+.settings-dialog :is(.effects-tabs, .settings-tabs) button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: 0 0 auto; white-space: nowrap; min-height: 38px; padding: 8px 12px; border: 0; border-radius: 999px; font-size: 12px; background: transparent; }
+.settings-dialog :is(.effects-tabs, .settings-tabs) :is([aria-selected="true"], [aria-checked="true"]) { background: #219bc31a; box-shadow: inset 0 0 0 1px #219bc340; }
+.settings-dialog button:focus-visible, .settings-dialog select:focus-visible { outline: 2px solid #219bc3; outline-offset: -2px; }
+#engines-dialog details > summary { display: none; }
+#background-dialog { width: min(620px, calc(100% - 2rem)); color: var(--text-color); background: var(--body-background-color); border: var(--card-border); box-shadow: 0 16px 60px #0005; }
+#background-dialog::backdrop { background: #0008; }
+#background-dialog button { border: var(--card-border); background: var(--card-background); border-radius: 8px; padding: 8px 12px; }
+#background-dialog .icons-note { font-size: 12px; line-height: 1.5; opacity: .8; }
+#wallpaper-form label { display: grid; gap: 7px; margin-block: 16px; font-size: 13px; }
+#wallpaper-form :is(select,input:not([type="checkbox"])) { box-sizing: border-box; width: 100%; min-width: 0; padding: 9px; border-radius: 8px; border: var(--card-border); color: var(--text-color); background: var(--card-background); font: inherit; }
+#wallpaper-form input[type="color"] { height: 42px; padding: 4px; }
+#wallpaper-form .wallpaper-check { display: flex; align-items: center; }
+#wallpaper-preview { height: 160px; border-radius: 10px; border: var(--card-border); background-repeat: no-repeat; }
+#wallpaper-feedback { font-size: 13px; line-height: 1.5; }
+#wallpaper-feedback:empty { display: none; }
+body { isolation: isolate; }
+#page-wallpaper { position: fixed; inset: 0; z-index: -1; pointer-events: none; background-repeat: no-repeat; }
+@media (max-width: 580px) {
+  .settings-header { padding: 14px; gap: 10px; }
+  .settings-header h2 { width: 100%; }
+  .settings-header .icons-dialog-actions { width: 100%; justify-content: flex-end; }
+  .settings-header button { min-height: 40px; }
+  .settings-body { padding: 14px; }
+  .settings-dialog :is(.effects-tabs, .settings-tabs) { padding-inline: 10px; }
+}
+
+.settings-feedback { flex-basis: 100%; margin: 0; font-size: 12px; }
+.settings-feedback:empty { display: none; }

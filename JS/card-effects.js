@@ -100,7 +100,7 @@ const EFFECT_SECTIONS = [
   { id: "icon", label: "Icon", description: "The logo or initials inside the glass. These settings do not resize the outer card.", groups: [
     ["Size & shape", ["iconSize", "artworkRadius"]], ["Color & opacity", ["iconOpacity", "iconSaturation", "iconBrightness"]],
   ] },
-  { id: "background", label: "Background", description: "Colors derived from the icon, using its cached color sample. Photo covers retain their image.", groups: [
+  { id: "background", label: "Card colors", description: "Colors derived from the icon, using its cached color sample. Photo covers retain their image.", groups: [
     ["Color mapping", ["bgMode", "bgSaturation", "bgLightness", "bgContrast"]],
     ["Gradient", ["bgShape", "bgSpread", "bgHue", "bgAngle"]],
   ] },
@@ -109,7 +109,7 @@ const EFFECT_SECTIONS = [
     ["Alignment & spacing", ["textAlign", "textSpacing", "textLineHeight", "textPaddingX", "textPaddingY"]],
   ] },
 ];
-const EFFECT_LABELS = { material: "Material", pattern: "Pattern", direction: "Movement direction", glassMode: "Glass finish", bgMode: "Color mapping", bgShape: "Gradient shape", textFont: "Font family", textCase: "Letter case", textAlign: "Alignment", glass: "Depth response", iconZoom: "Hover enlargement", idleFoil: "Resting visibility", saturation: "Overall saturation", rim: "Luminous edge", foil: "Iridescence intensity" };
+const EFFECT_LABELS = { depth: "Card tilt strength", iconParallax: "Follow pointer", iconTilt: "Glass tilt strength", iconSize: "Icon size", artworkRadius: "Icon corner radius", iconOpacity: "Icon opacity", iconSaturation: "Icon saturation", iconBrightness: "Icon brightness", bgSpread: "Gradient color difference", bgContrast: "Color contrast", bgHue: "Second color hue shift", iconSoftness: "Shadow blur", softness: "Shadow blur", iconBorder: "Glass border strength", material: "Material", pattern: "Pattern", direction: "Movement direction", glassMode: "Glass finish", bgMode: "Color treatment", bgShape: "Gradient shape", textFont: "Font family", textCase: "Letter case", textAlign: "Alignment", glass: "Overall glass movement", iconZoom: "Hover enlargement", idleFoil: "Resting visibility", saturation: "Overall saturation", rim: "Edge glow intensity", foil: "Iridescence intensity" };
 function renderEffectControl(key) {
   const control = EFFECT_CONTROLS.find(entry => entry[0] === key);
   const label = EFFECT_LABELS[key] || control?.[1];
@@ -119,8 +119,8 @@ function renderEffectControl(key) {
     return `<label for="effects-${key}">${label}<select id="effects-${key}" name="${key}">${choices}</select></label>${patterns}`;
   }
   const [, , max, unit] = control;
-  const step = ["zoom", "textSpacing"].includes(key) ? .1 : key === "textSize" ? "any" : key === "textWeight" ? 50 : 1;
-  return `<label for="effects-${key}">${label}<output for="effects-${key}" data-unit="${unit}"></output><input id="effects-${key}" name="${key}" type="range" min="${effectMinimum(key)}" max="${max}" step="${step}"></label>`;
+  const step = unit === "px" || ["zoom", "iconZoom"].includes(key) ? 1 : unit === "°" || max <= 100 ? 5 : 10;
+  return `<label for="effects-${key}">${label}<output for="effects-${key}" data-unit="${unit}"></output><input id="effects-${key}" name="${key}" type="range" min="${effectMinimum(key)}" max="${max}" step="any" data-coarse-step="${step}" data-fine-step="${key === "textWeight" ? 1 : .1}"></label>`;
 }
 
 const effectsDialog = document.createElement("dialog");
@@ -128,9 +128,9 @@ effectsDialog.id = "effects-dialog";
 effectsDialog.setAttribute("aria-labelledby", "effects-title");
 effectsDialog.innerHTML = `<h2 id="effects-title">Card effects</h2>
 <p>Choose an element to customize. Badges show whether a setting affects hover, rest, or both.</p>
-<div class="effects-layout"><div class="effects-demo"><div id="effects-preview-stage"><div class="card icon-cards" id="effects-preview"><div class="filter"><span class="icon"><span class="initial-glyph">Aa</span></span></div><div class="title">Live preview</div></div></div><div class="effects-preview-modes" role="group" aria-label="Preview state"><button type="button" data-preview="hover" aria-pressed="true">Hover</button><button type="button" data-preview="rest" aria-pressed="false">At rest</button></div><p class="icons-note">Move over the preview or drag on touch. Settings apply to your cards after Save.</p></div>
+<div class="effects-layout"><div class="effects-demo"><div id="effects-preview-stage"><div class="card icon-cards" id="effects-preview"><div class="filter"><span class="icon"><span class="initial-glyph">Aa</span></span></div><div class="title">Live preview</div></div></div><div class="effects-preview-modes" role="group" aria-label="Preview state"><button type="button" data-preview="hover" aria-pressed="true">Hover</button><button type="button" data-preview="rest" aria-pressed="false">At rest</button></div><p class="icons-note">Move over the preview or drag on touch. Hold Shift for fine slider adjustments. Changes apply after Save.</p></div>
 <form id="effects-form"><div class="effects-tabs" role="tablist" aria-label="Effect settings">
-${EFFECT_SECTIONS.map(({id,label},i)=>`<button type="button" role="tab" id="effects-tab-${id}" aria-controls="effects-panel-${id}" aria-selected="${i===0}" tabindex="${i===0 ? 0 : -1}">${label}</button>`).join("")}</div>
+${EFFECT_SECTIONS.map(({id,label},i)=>`<button type="button" role="tab" id="effects-tab-${id}" aria-controls="effects-panel-${id}" aria-selected="${i===0}" tabindex="${i===0 ? 0 : -1}">${settingsIcon(id)}${label}</button>`).join("")}</div>
 ${EFFECT_SECTIONS.map(({id,label,description,groups},i)=>`<section role="tabpanel" id="effects-panel-${id}" aria-labelledby="effects-tab-${id}" ${i ? "hidden" : ""}><h3>${label}</h3><p class="icons-note effects-section-description">${description}</p>${groups.map(([title,keys])=>`<fieldset><legend>${title}</legend>${keys.map(renderEffectControl).join("")}</fieldset>`).join("")}</section>`).join("")}</form></div>
 <p class="icons-note">Reduced-motion preferences take priority over animated effects. Saved in this browser; preserved when you reset the icon cache.</p>
 <p id="effects-feedback" role="status"></p><div class="icons-dialog-actions"><button type="button" id="effects-reset">Restore defaults</button><button type="button" id="effects-cancel">Cancel</button><button type="button" id="effects-save">Save</button></div>`;
@@ -202,8 +202,9 @@ for (const button of effectsDialog.querySelectorAll("[data-preview]")) button.ad
   for (const option of effectsDialog.querySelectorAll("[data-preview]")) option.setAttribute("aria-pressed", String(option === button));
   drawEffectsPreview();
 });
-const effectTabs = [...effectsForm.querySelectorAll('[role="tab"]')];
+const effectTabs = [...effectsDialog.querySelectorAll('[role="tab"]')];
 function selectEffectTab(button) {
+  button.scrollIntoView({ block: "nearest", inline: "nearest" });
   for (const tab of effectTabs) {
     const selected = tab === button;
     tab.setAttribute("aria-selected", String(selected));
