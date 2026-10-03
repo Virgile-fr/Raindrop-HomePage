@@ -6,14 +6,14 @@ const EFFECT_MATERIALS = {
   glass: "Glass", holo: "Holographic", beams: "Holo beams", cosmos: "Cosmos",
   radiant: "Radiant", rainbow: "Rainbow", gold: "Gold", etched: "Etched silver",
 };
-const EFFECT_PATTERNS = { none: "None", lines: "Fine stripes", cross: "Crosshatch", dots: "Dots", grain: "Sparkle grain", rings: "Engraved rings" };
+const EFFECT_PATTERNS = { none: "None", lines: "Fine stripes", cross: "Crosshatch", dots: "Dots", grain: "Sparkle grain", rings: "Engraved rings", grid: "Micro grid", woven: "Woven", brushed: "Brushed metal", waves: "Ripples", scales: "Scales", twinkle: "Starlight" };
 const GLASS_MODES = { glass: "Gradient glass", frosted: "Frosted", clear: "Clear", solid: "Solid white" };
 const BACKGROUND_MODES = { balanced: "Balanced (original)", faithful: "Faithful to sampled color", pastel: "Pastel", vivid: "Vivid", mono: "Monochrome", complement: "Complementary" };
 const BACKGROUND_SHAPES = { linear: "Linear", radial: "Radial glow", solid: "Solid color" };
 const TEXT_FONTS = { system: "System", humanist: "Humanist", serif: "Serif", mono: "Monospace" };
 const TEXT_FONT_STACKS = { system: 'system-ui, sans-serif', humanist: 'Verdana, sans-serif', serif: 'Georgia, serif', mono: 'ui-monospace, monospace' };
 const EFFECT_SELECTS = [["material", EFFECT_MATERIALS], ["pattern", EFFECT_PATTERNS], ["glassMode", GLASS_MODES], ["bgMode", BACKGROUND_MODES], ["bgShape", BACKGROUND_SHAPES], ["textFont", TEXT_FONTS], ["textCase", { none: "Original", uppercase: "UPPERCASE", lowercase: "lowercase", capitalize: "Capitalize" }], ["textAlign", { left: "Left", center: "Center", right: "Right" }]];
-const EFFECT_DEFAULTS = { material: "holo", pattern: "lines", foil: 30, texture: 50, glare: 100, depth: 100, glass: 100, shadow: 100, softness: 100, rim: 100, radius: 8, glassRadius: 22, saturation: 100, idleFoil: 0, idleSaturation: 100, idleBrightness: 100, idleShadow: 0, direction: "up", travel: 8, zoom: 1.6, iconShadow: 100, iconSoftness: 100, iconBorder: 100, iconSurface: 100, iconSize: 38, iconPadding: 10, artworkRadius: 12, iconOpacity: 100, iconSaturation: 100, iconBrightness: 100, iconRestShadow: 0, iconParallax: 100, iconTilt: 100, iconZoom: 11, iconFoil: 100, iconGlare: 100, glassAngle: 180, glassMode: "glass", bgMode: "balanced", bgSaturation: 100, bgLightness: 0, bgContrast: 100, bgSpread: 100, bgAngle: 135, bgHue: 0, bgShape: "linear", textFont: "system", textCase: "none", textAlign: "left", textSize: 13.333, textWeight: 550, textPaddingX: 8, textPaddingY: 5, textSpacing: 0, textLineHeight: 160 };
+const EFFECT_DEFAULTS = { material: "holo", pattern: "lines", foil: 30, texture: 50, glare: 100, depth: 100, glass: 100, shadow: 100, softness: 100, rim: 20, radius: 8, glassRadius: 22, saturation: 100, idleFoil: 0, idleSaturation: 100, idleBrightness: 100, idleShadow: 0, direction: "up", travel: 8, zoom: 1.6, iconShadow: 100, iconSoftness: 100, iconBorder: 100, iconSurface: 100, iconSize: 38, iconPadding: 10, artworkRadius: 12, iconOpacity: 100, iconSaturation: 100, iconBrightness: 100, iconRestShadow: 0, iconParallax: 100, iconTilt: 100, iconZoom: 11, iconFoil: 100, iconGlare: 100, glassAngle: 180, glassMode: "glass", bgMode: "balanced", bgSaturation: 100, bgLightness: 0, bgContrast: 100, bgSpread: 100, bgAngle: 135, bgHue: 0, bgShape: "linear", textFont: "system", textCase: "none", textAlign: "left", textSize: 13.333, textWeight: 550, textPaddingX: 8, textPaddingY: 5, textSpacing: 0, textLineHeight: 160 };
 const EFFECT_CONTROLS = [
   ["textSize", "Font size", 32, "px", "Typography"], ["textWeight", "Font weight", 900, "", "Typography"],
   ["textSpacing", "Letter spacing", 5, "px", "Typography"], ["textLineHeight", "Line height", 220, "%", "Typography"],
@@ -77,29 +77,61 @@ function effectScope(key) {
   if (key.startsWith("idle") || key === "iconRestShadow") return "rest";
   return ["direction", "depth", "glass", "shadow", "softness", "rim", "travel", "zoom", "glare", "iconShadow", "iconParallax", "iconTilt", "iconZoom", "iconGlare"].includes(key) ? "hover" : "both";
 }
-function effectTab(key) {
-  if (key.startsWith("bg")) return "background";
-  if (key.startsWith("text")) return "text";
-  if (key.startsWith("icon") || ["glass", "glassRadius", "glassAngle", "artworkRadius"].includes(key)) return "icon";
-  if (key.startsWith("idle")) return "rest";
-  return ["foil", "texture", "saturation", "radius", "glassRadius", "iconBorder", "iconSurface"].includes(key) ? "general" : "hover";
+// Each setting has exactly one home; state is conveyed by its badge, not by a second taxonomy.
+const EFFECT_SECTIONS = [
+  { id: "card", label: "Card", description: "The outer card shape and overall color treatment.", groups: [
+    ["Shape", ["radius"]], ["Overall color", ["saturation"]], ["At rest", ["idleSaturation", "idleBrightness"]],
+  ] },
+  { id: "motion", label: "Motion", description: "Tilt, movement and enlargement while interacting with a card.", groups: [
+    ["Whole card", ["direction", "depth", "travel", "zoom"]],
+    ["Inner glass", ["glass", "iconParallax", "iconTilt", "iconZoom"]],
+  ] },
+  { id: "lighting", label: "Light & shadow", description: "Reflections, luminous edges and shadows cast by the whole card.", groups: [
+    ["Light", ["glare", "rim"]], ["Hover shadow", ["shadow", "softness"]], ["Resting shadow", ["idleShadow"]],
+  ] },
+  { id: "surface", label: "Material & pattern", description: "Reflective finishes and fine surface textures. Resting visibility reveals both when idle.", groups: [
+    ["Reflective material", ["material", "foil"]], ["Surface pattern", ["pattern", "texture"]], ["At rest", ["idleFoil"]],
+  ] },
+  { id: "glass", label: "Inner glass", description: "The transparent square behind the icon. Its movement is in Motion.", groups: [
+    ["Shape & outline", ["iconPadding", "glassRadius", "iconBorder"]],
+    ["Surface & highlights", ["glassMode", "iconSurface", "glassAngle", "iconFoil", "iconGlare"]],
+    ["Glass shadow", ["iconShadow", "iconRestShadow", "iconSoftness"]],
+  ] },
+  { id: "icon", label: "Icon", description: "The logo or initials inside the glass. These settings do not resize the outer card.", groups: [
+    ["Size & shape", ["iconSize", "artworkRadius"]], ["Color & opacity", ["iconOpacity", "iconSaturation", "iconBrightness"]],
+  ] },
+  { id: "background", label: "Background", description: "Colors derived from the icon, using its cached color sample. Photo covers retain their image.", groups: [
+    ["Color mapping", ["bgMode", "bgSaturation", "bgLightness", "bgContrast"]],
+    ["Gradient", ["bgShape", "bgSpread", "bgHue", "bgAngle"]],
+  ] },
+  { id: "text", label: "Text", description: "Card titles. Local fonts only; long titles keep their ellipsis.", groups: [
+    ["Typography", ["textFont", "textSize", "textWeight", "textCase"]],
+    ["Alignment & spacing", ["textAlign", "textSpacing", "textLineHeight", "textPaddingX", "textPaddingY"]],
+  ] },
+];
+const EFFECT_LABELS = { material: "Material", pattern: "Pattern", direction: "Movement direction", glassMode: "Glass finish", bgMode: "Color mapping", bgShape: "Gradient shape", textFont: "Font family", textCase: "Letter case", textAlign: "Alignment", glass: "Depth response", iconZoom: "Hover enlargement", idleFoil: "Resting visibility", saturation: "Overall saturation", rim: "Luminous edge", foil: "Iridescence intensity" };
+function renderEffectControl(key) {
+  const control = EFFECT_CONTROLS.find(entry => entry[0] === key);
+  const label = EFFECT_LABELS[key] || control?.[1];
+  if (!control) {
+    const choices = key === "direction" ? '<option value="up">Up</option><option value="center">Centered</option><option value="down">Down</option>' : "";
+    const patterns = key === "pattern" ? `<div class="pattern-gallery" role="group" aria-label="Pattern samples">${Object.entries(EFFECT_PATTERNS).map(([id, name]) => `<button type="button" data-pattern-choice="${id}" aria-label="${name}" aria-pressed="false"><span class="pattern-swatch" data-card-pattern="${id}" aria-hidden="true"></span><span>${name}</span></button>`).join("")}</div>` : "";
+    return `<label for="effects-${key}">${label}<select id="effects-${key}" name="${key}">${choices}</select></label>${patterns}`;
+  }
+  const [, , max, unit] = control;
+  const step = ["zoom", "textSpacing"].includes(key) ? .1 : key === "textSize" ? "any" : key === "textWeight" ? 50 : 1;
+  return `<label for="effects-${key}">${label}<output for="effects-${key}" data-unit="${unit}"></output><input id="effects-${key}" name="${key}" type="range" min="${effectMinimum(key)}" max="${max}" step="${step}"></label>`;
 }
 
 const effectsDialog = document.createElement("dialog");
 effectsDialog.id = "effects-dialog";
 effectsDialog.setAttribute("aria-labelledby", "effects-title");
 effectsDialog.innerHTML = `<h2 id="effects-title">Card effects</h2>
-<p>Choose a reflective finish, mix in a pattern, and adjust its intensity.</p>
+<p>Choose an element to customize. Badges show whether a setting affects hover, rest, or both.</p>
 <div class="effects-layout"><div class="effects-demo"><div id="effects-preview-stage"><div class="card icon-cards" id="effects-preview"><div class="filter"><span class="icon"><span class="initial-glyph">Aa</span></span></div><div class="title">Live preview</div></div></div><div class="effects-preview-modes" role="group" aria-label="Preview state"><button type="button" data-preview="hover" aria-pressed="true">Hover</button><button type="button" data-preview="rest" aria-pressed="false">At rest</button></div><p class="icons-note">Move over the preview or drag on touch. Settings apply to your cards after Save.</p></div>
 <form id="effects-form"><div class="effects-tabs" role="tablist" aria-label="Effect settings">
-${[["general","General"],["hover","Hover"],["rest","At rest"],["icon","Icon & glass"],["background","Background"],["text","Text"]].map(([id,label],i)=>`<button type="button" role="tab" id="effects-tab-${id}" aria-controls="effects-panel-${id}" aria-selected="${i===0}" tabindex="${i===0 ? 0 : -1}">${label}</button>`).join("")}</div>
-${["general","hover","rest","icon","background","text"].map((tab,i)=>`<section role="tabpanel" id="effects-panel-${tab}" aria-labelledby="effects-tab-${tab}" ${i ? "hidden" : ""}>
-${tab === "general" ? '<p class="icons-note">Shared by hover and resting cards.</p><label>Material<select name="material"></select></label><label>Pattern<select name="pattern"></select></label>' : ""}
-${tab === "hover" ? '<label>Movement direction<select name="direction"><option value="up">Up</option><option value="center">Centered</option><option value="down">Down</option></select></label>' : ""}
-${tab === "icon" ? '<p class="icons-note">Shape, finish and movement of the inner glass and its artwork.</p><label>Glass finish<select name="glassMode"></select></label>' : ""}
-${tab === "background" ? '<label>Color mapping<select name="bgMode"></select></label><label>Gradient shape<select name="bgShape"></select></label><p class="icons-note">Uses the cached sampled color without downloading icons again. Photo covers keep their image.</p>' : ""}
-${tab === "text" ? '<label>Font family<select name="textFont"></select></label><label>Letter case<select name="textCase"></select></label><label>Alignment<select name="textAlign"></select></label><p class="icons-note">Local fonts only. Long titles remain on one line with an ellipsis.</p>' : ""}
-${[...new Set(EFFECT_CONTROLS.filter(control=>effectTab(control[0])===tab).map(control=>control[4]))].map(group=>`<fieldset><legend>${group}</legend>${EFFECT_CONTROLS.filter(control=>effectTab(control[0])===tab && control[4]===group).map(([key,label,max,unit])=>`<label for="effects-${key}">${label}<output for="effects-${key}" data-unit="${unit}"></output><input id="effects-${key}" name="${key}" type="range" min="${effectMinimum(key)}" max="${max}" step="${["zoom", "textSpacing"].includes(key) ? .1 : key === "textSize" ? "any" : key === "textWeight" ? 50 : 1}"></label>`).join("")}</fieldset>`).join("")}</section>`).join("")}</form></div>
+${EFFECT_SECTIONS.map(({id,label},i)=>`<button type="button" role="tab" id="effects-tab-${id}" aria-controls="effects-panel-${id}" aria-selected="${i===0}" tabindex="${i===0 ? 0 : -1}">${label}</button>`).join("")}</div>
+${EFFECT_SECTIONS.map(({id,label,description,groups},i)=>`<section role="tabpanel" id="effects-panel-${id}" aria-labelledby="effects-tab-${id}" ${i ? "hidden" : ""}><h3>${label}</h3><p class="icons-note effects-section-description">${description}</p>${groups.map(([title,keys])=>`<fieldset><legend>${title}</legend>${keys.map(renderEffectControl).join("")}</fieldset>`).join("")}</section>`).join("")}</form></div>
 <p class="icons-note">Reduced-motion preferences take priority over animated effects. Saved in this browser; preserved when you reset the icon cache.</p>
 <p id="effects-feedback" role="status"></p><div class="icons-dialog-actions"><button type="button" id="effects-reset">Restore defaults</button><button type="button" id="effects-cancel">Cancel</button><button type="button" id="effects-save">Save</button></div>`;
 document.body.append(effectsDialog);
@@ -157,6 +189,7 @@ function updateEffectsDraft() {
   effectsDraft = normalizeCardEffects(Object.fromEntries([...effectsForm.elements].filter(el=>el.name).map(el=>[el.name, el.type === "range" ? Number(el.value) : el.value])));
   applyCardEffects(effectsDraft, effectsDemo);
   for (const output of effectsForm.querySelectorAll("output")) output.value = `${Number(Number(document.getElementById(output.getAttribute("for")).value).toFixed(2))}${output.dataset.unit}`;
+  for (const button of effectsForm.querySelectorAll("[data-pattern-choice]")) button.setAttribute("aria-pressed", String(button.dataset.patternChoice === effectsDraft.pattern));
   document.getElementById("effects-feedback").textContent = "";
   drawEffectsPreview();
 }
@@ -177,8 +210,8 @@ function selectEffectTab(button) {
     tab.tabIndex = selected ? 0 : -1;
     document.getElementById(tab.getAttribute("aria-controls")).hidden = !selected;
   }
-  if (["effects-tab-hover", "effects-tab-rest"].includes(button.id)) {
-    previewRest = button.id === "effects-tab-rest";
+  if (button.id === "effects-tab-motion") {
+    previewRest = false;
     for (const option of effectsDialog.querySelectorAll("[data-preview]")) option.setAttribute("aria-pressed", String((option.dataset.preview === "rest") === previewRest));
   }
   drawEffectsPreview();
@@ -191,6 +224,10 @@ for (const [index,tab] of effectTabs.entries()) {
     event.preventDefault(); effectTabs[next].focus(); selectEffectTab(effectTabs[next]);
   });
 }
+for (const button of effectsForm.querySelectorAll("[data-pattern-choice]")) button.addEventListener("click", () => {
+  effectsForm.elements.pattern.value = button.dataset.patternChoice;
+  updateEffectsDraft();
+});
 effectsForm.addEventListener("submit", event=>event.preventDefault());
 function previewControlScope(event) {
   if (!event.target.matches("input[name], select[name]")) return;
