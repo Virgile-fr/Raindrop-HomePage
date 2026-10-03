@@ -1,4 +1,4 @@
-header {
+body > header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -8,7 +8,7 @@ header {
   padding: 4vh 0;
 }
 
-header h1{
+body > header h1{
   margin-bottom: 0px;
   margin-top: 0px;
 }
@@ -18,4 +18,4 @@ header h1{
 .icon-button { display: inline-flex; padding: 6px; border: 0; background: none; color: #707070; }
 .favorite-priority-toggle.google-priority { color: #0b9fe8; }
 .cover-indicator { margin-left: 15px; margin-right: 10px; color: #707070; }
-@media (max-width: 410px) { header h1 { font-size: 1.65rem; } }
+@media (max-width: 410px) { body > header h1 { font-size: 1.65rem; } }

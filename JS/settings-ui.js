@@ -81,7 +81,15 @@ function prepareSettingsDialog(dialog, icon) {
   const header = document.createElement("header"); header.className = "settings-header";
   addSettingsIcon(title, icon); header.append(title);
   if (actions) {
-    for (const button of actions.querySelectorAll("button")) addSettingsIcon(button, /save/.test(button.id) ? "save" : /cancel/.test(button.id) ? "close" : "reset");
+    for (const button of actions.querySelectorAll("button")) {
+      const originalLabel = button.textContent;
+      if (/reset|restore|recommended/.test(button.id)) {
+        button.textContent = /recommended/.test(button.id) ? "Reset order" : "Reset";
+        button.title = originalLabel;
+        button.setAttribute("aria-label", originalLabel);
+      }
+      addSettingsIcon(button, /save/.test(button.id) ? "save" : /cancel/.test(button.id) ? "close" : "reset");
+    }
     header.append(actions);
   }
   const feedback = dialog.querySelector("#effects-feedback, #icons-feedback, #wallpaper-feedback");
