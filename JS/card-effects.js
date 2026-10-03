@@ -6,14 +6,14 @@ const EFFECT_MATERIALS = {
   glass: "Glass", holo: "Holographic", beams: "Holo beams", cosmos: "Cosmos",
   radiant: "Radiant", rainbow: "Rainbow", gold: "Gold", etched: "Etched silver",
 };
-const EFFECT_PATTERNS = { none: "None", lines: "Fine stripes", cross: "Crosshatch", dots: "Dots", grain: "Sparkle grain", rings: "Engraved rings", grid: "Micro grid", woven: "Woven", brushed: "Brushed metal", waves: "Ripples", scales: "Scales", twinkle: "Starlight" };
+const EFFECT_PATTERNS = { none: "None", lines: "Fine stripes", cross: "Crosshatch", dots: "Dots", grain: "Sparkle grain", rings: "Engraved rings", grid: "Micro grid", woven: "Woven", brushed: "Brushed metal", waves: "Ripples", scales: "Scales", twinkle: "Starlight", diamonds: "Diamond mesh", pinstripe: "Pinstripes", confetti: "Foil flakes", honeycomb: "Honeycomb" };
 const GLASS_MODES = { glass: "Gradient glass", frosted: "Frosted", clear: "Clear", solid: "Solid white" };
 const BACKGROUND_MODES = { balanced: "Balanced (original)", faithful: "Faithful to sampled color", pastel: "Pastel", vivid: "Vivid", mono: "Monochrome", complement: "Complementary" };
 const BACKGROUND_SHAPES = { linear: "Linear", radial: "Radial glow", solid: "Solid color" };
-const TEXT_FONTS = { system: "System", humanist: "Humanist", serif: "Serif", mono: "Monospace" };
-const TEXT_FONT_STACKS = { system: 'system-ui, sans-serif', humanist: 'Verdana, sans-serif', serif: 'Georgia, serif', mono: 'ui-monospace, monospace' };
+const TEXT_FONTS = { system: "System", humanist: "Humanist", serif: "Serif", mono: "Monospace", arial: "Arial", helvetica: "Helvetica Neue", segoe: "Segoe UI", roboto: "Roboto", inter: "Inter", avenir: "Avenir Next", trebuchet: "Trebuchet MS", tahoma: "Tahoma" };
+const TEXT_FONT_STACKS = { system: 'system-ui, sans-serif', humanist: 'Verdana, sans-serif', serif: 'Georgia, serif', mono: 'ui-monospace, monospace', arial: 'Arial, Helvetica, sans-serif', helvetica: '"Helvetica Neue", Helvetica, Arial, sans-serif', segoe: '"Segoe UI", system-ui, sans-serif', roboto: 'Roboto, Arial, sans-serif', inter: 'Inter, system-ui, sans-serif', avenir: '"Avenir Next", Avenir, system-ui, sans-serif', trebuchet: '"Trebuchet MS", Arial, sans-serif', tahoma: 'Tahoma, Verdana, sans-serif' };
 const EFFECT_SELECTS = [["material", EFFECT_MATERIALS], ["pattern", EFFECT_PATTERNS], ["glassMode", GLASS_MODES], ["bgMode", BACKGROUND_MODES], ["bgShape", BACKGROUND_SHAPES], ["textFont", TEXT_FONTS], ["textCase", { none: "Original", uppercase: "UPPERCASE", lowercase: "lowercase", capitalize: "Capitalize" }], ["textAlign", { left: "Left", center: "Center", right: "Right" }]];
-const EFFECT_DEFAULTS = { material: "holo", pattern: "lines", foil: 30, texture: 50, glare: 100, depth: 100, glass: 100, shadow: 100, softness: 100, rim: 20, radius: 8, glassRadius: 22, saturation: 100, idleFoil: 0, idleSaturation: 100, idleBrightness: 100, idleShadow: 0, direction: "up", travel: 8, zoom: 1.6, iconShadow: 100, iconSoftness: 100, iconBorder: 100, iconSurface: 100, iconSize: 38, iconPadding: 10, artworkRadius: 12, iconOpacity: 100, iconSaturation: 100, iconBrightness: 100, iconRestShadow: 0, iconParallax: 100, iconTilt: 100, iconZoom: 11, iconFoil: 100, iconGlare: 100, glassAngle: 180, glassMode: "glass", bgMode: "balanced", bgSaturation: 100, bgLightness: 0, bgContrast: 100, bgSpread: 100, bgAngle: 135, bgHue: 0, bgShape: "linear", textFont: "system", textCase: "none", textAlign: "left", textSize: 13.333, textWeight: 550, textPaddingX: 8, textPaddingY: 5, textSpacing: 0, textLineHeight: 160 };
+const EFFECT_DEFAULTS = { material: "holo", pattern: "lines", foil: 30, texture: 50, glare: 100, depth: 100, glass: 100, shadow: 100, softness: 100, rim: 20, radius: 8, glassRadius: 22, saturation: 100, idleFoil: 0, idleSaturation: 100, idleBrightness: 100, idleShadow: 0, direction: "up", travel: 8, zoom: 1.6, iconShadow: 100, iconSoftness: 100, iconBorder: 100, iconSurface: 100, iconSize: 38, iconPadding: 10, artworkRadius: 12, iconOpacity: 100, iconSaturation: 100, iconBrightness: 100, iconRestShadow: 0, iconParallax: 100, iconTilt: 100, iconZoom: 11, iconFoil: 100, iconGlare: 100, glassAngle: 180, glassMode: "glass", bgMode: "faithful", bgSaturation: 100, bgLightness: 0, bgContrast: 100, bgSpread: 100, bgAngle: 135, bgHue: 0, bgShape: "radial", textFont: "system", textCase: "none", textAlign: "left", textSize: 13.333, textWeight: 550, textPaddingX: 8, textPaddingY: 5, textSpacing: 0, textLineHeight: 160 };
 const EFFECT_CONTROLS = [
   ["textSize", "Font size", 32, "px", "Typography"], ["textWeight", "Font weight", 900, "", "Typography"],
   ["textSpacing", "Letter spacing", 5, "px", "Typography"], ["textLineHeight", "Line height", 220, "%", "Typography"],
@@ -104,7 +104,7 @@ const EFFECT_SECTIONS = [
     ["Color mapping", ["bgMode", "bgSaturation", "bgLightness", "bgContrast"]],
     ["Gradient", ["bgShape", "bgSpread", "bgHue", "bgAngle"]],
   ] },
-  { id: "text", label: "Text", description: "Card titles. Local fonts only; long titles keep their ellipsis.", groups: [
+  { id: "text", label: "Text", description: "Card titles. Fonts use a system fallback when unavailable; nothing is downloaded.", groups: [
     ["Typography", ["textFont", "textSize", "textWeight", "textCase"]],
     ["Alignment & spacing", ["textAlign", "textSpacing", "textLineHeight", "textPaddingX", "textPaddingY"]],
   ] },

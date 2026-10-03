@@ -172,7 +172,7 @@ function applyFilterBackground(filter, color, settings = backgroundSettings) {
   if (!validIconColor(color)) return;
   backgroundSources.set(filter, color);
   const { h, s, l } = rgbToHsl(color.r, color.g, color.b);
-  const mode = settings.bgMode || "balanced";
+  const mode = settings.bgMode || "faithful";
   let hue = mode === "complement" ? (h + 180) % 360 : h;
   let sat = Math.min(.62, Math.max(.28, s * .9 + .12));
   let light = Math.min(.62, Math.max(.32, l + (0.5-l)*.35 + .08));
@@ -189,7 +189,7 @@ function applyFilterBackground(filter, color, settings = backgroundSettings) {
   const tone = light>.5 ? "0,0,0" : "255,255,255";
   const opacity = (light>.5 ? .18 : .12)*(settings.bgContrast ?? 100)/100;
   const fill = settings.bgShape === "solid" ? `linear-gradient(${rgb(base)},${rgb(base)})`
-    : settings.bgShape === "radial" ? `radial-gradient(ellipse at 35% 25%,${rgb(accent)},${rgb(base)})`
+    : (settings.bgShape || "radial") === "radial" ? `radial-gradient(ellipse at 35% 25%,${rgb(accent)},${rgb(base)})`
     : `linear-gradient(${settings.bgAngle ?? 135}deg,${rgb(base)},${rgb(accent)})`;
   filter.style.background = `linear-gradient(rgba(${tone},${opacity}),rgba(${tone},${opacity})),${fill}`;
 }

@@ -1,109 +1,37 @@
-<img src="./readme.png" alt="Raindrop Homepage preview">
-
 # Raindrop Homepage
 
-A lightweight, unofficial start page for your Raindrop.io favorites. Static HTML, CSS and JavaScript; no build step or runtime dependencies.
+A start page for the links you actually use. It brings your Raindrop favorites into a grid, puts the ones you open most near the top, and lets you search without reaching for the mouse.
 
 [Open the homepage](https://virgile-fr.github.io/Raindrop-HomePage/)
 
-## Setup
+I started this because I wanted a nicer way to browse my bookmarks. It has grown into a small workspace with search shortcuts, custom backgrounds and cards you can make your own.
 
-Create a test token from your app in [Raindrop integrations](https://app.raindrop.io/settings/integrations), then paste it into the homepage prompt. Use **token** in the footer to replace it. Never publish a token in source code.
+You can use website icons, cover images or initials. Card colors come from the icons, with a choice of providers and a cache so they do not need to be worked out again on every visit. There is also a minimum-resolution setting to skip small icons.
 
-Legacy UUID tokens in the URL path are still accepted. The app removes them from the current address, but cannot erase hosting logs or browser history/sync. Prefer the prompt and never share a token URL. See [SECURITY.md](SECURITY.md).
+Start typing to find a favorite. When nothing matches, choose a search engine. You can also type a letter and a space: `g` for Google, `y` for YouTube, `i` for Google Images, `b` for Brave, `h` for Hugging Face, `x` for X or `s` for Spotify. Engines can be added, edited, reordered or disabled, and there are buttons for mobile.
 
-Set the clean page URL as your browser homepage. New-tab replacement depends on your browser or an extension. On iOS, Add to Home Screen provides a convenient entry point.
+The appearance settings cover the cards, icons, text, shadows and 3D movement. Reflective materials and patterns have a live preview, with separate hover and resting adjustments. Hold Shift to fine-tune a slider. The page background can be a color, gradient or your own image, with optional scroll parallax. Changes stay in the preview until you save.
 
-## Favorites and previews
+## Getting started
 
-- All favorites are retrieved with pagination, sorted by local usage and creation date.
-- The last complete list is cached for 24 hours and scoped to a token fingerprint. Each page load refreshes it; failed network refreshes preserve saved data, while authorization failures clear it.
-- The switch selects favicon or cover view. Changing views or icon settings reuses loaded bookmarks.
-- Favicon cards show white HTML/CSS initials immediately. Their background color is derived directly from the hostname; no image conversion, decoding or pixel analysis is needed for initials.
-- Real favicons load near the viewport and replace initials after decoding and color extraction. Domain requests are shared across cards and search engines, with at most six resolution jobs running concurrently.
-- Cover cards retain their geometry while loading. After 2.5 seconds, initials replace the loading surface; a cover arriving within the 15-second request window can still replace them.
-- Cards reveal individually with a staggered entrance. Pointer position drives the 3D hover. A short touch tap gives 140 ms of feedback before same-tab navigation; reduced-motion users navigate immediately. Scrolling, long presses and modified clicks retain native behavior.
+Open the homepage and choose **token**. The window explains how to create a personal Test token in [Raindrop integrations](https://app.raindrop.io/settings/integrations) and where to paste it. Keep that token private.
 
-## Search
+Then set the page as your browser homepage. Replacing the new-tab page may require an extension, depending on your browser.
 
-Type on the page or press Ctrl/Cmd+K to focus search. Editing another field, open dialogs, text selection, shortcuts and input composition are respected. The page does not open a mobile keyboard on load.
+Settings, cached favorites and imported wallpapers are kept in your browser. The **reset cache** button refreshes the icons and favorites without removing your settings. Icon services and remote wallpaper hosts receive image requests; more details are in [SECURITY.md](SECURITY.md).
 
-Search matches bookmark titles and URLs without case or accent sensitivity. Up to eight bookmark suggestions appear, followed by enabled search engines. Arrow keys select a suggestion; Enter opens it. With no matching bookmark, Enter uses the first enabled engine. Disabling all engines leaves favorites-only search.
+## Where this is going
 
-Default shortcuts are a letter followed by a space:
+The plan is to turn this into an independent bookmark manager, while keeping Raindrop as an optional connection. It still needs Raindrop today. Saving and organizing bookmarks directly in the app is the next direction, not something this version already does.
 
-| Letter | Engine |
-| --- | --- |
-| g | Google |
-| y | YouTube |
-| i | Google Images |
-| b | Brave Search |
-| h | Hugging Face |
-| x | X |
-| s | Spotify |
+## Run it yourself
 
-A prefix selects its engine inside the pill. Backspace in an empty engine field returns to Favorites; Escape or Clear resets search. Ctrl/Cmd+Enter opens a new tab. Mobile and narrow layouts also provide engine buttons, including image search. Search terms leave the page only when submitted.
-
-Use **search engines** in the footer to enable, disable, reorder, edit, remove or add engines. The catalog contains 25 sources, including documentation, code, research, maps and image services. Custom engines need an HTTP(S) search URL containing `%s`, a name, and optionally a unique one-letter shortcut. Up to 60 engines can be saved. Changes apply on Save; Cancel discards the draft.
-
-## Icon providers and colors
-
-Use **icons api** to enable and reorder Vemetric, Google, Favicon.im and Icon Horse. Vemetric → Google is the default order. The header star cycles enabled providers' priority. At least one icon provider must remain enabled.
-
-Vemetric metadata identifies its generated default icon. Google's known generic globe is compared against a stored reference through a readable image relay. Unknown placeholder variants and other providers' generic icons may not be recognized. Detection does not rely on byte size.
-
-Real icons share a dominant-color algorithm and card gradient. Providers without readable pixels use a copy through wsrv.nl for color extraction; this relay receives the public favicon URL, never the Raindrop token. If color extraction fails, the initial background remains. Provider availability, upstream caches and quota accounting are outside this project's control; the app does not guarantee a particular request cost.
-
-## Cache and reset
-
-Resolved icon results are keyed by hostname and provider order:
-
-- Successful icons: seven days. Readable images are stored as PNG data; others retain their URL and depend on browser HTTP caching.
-- Confirmed missing icons: one day. Failed provider requests: fifteen minutes.
-- Temporary on-screen initials are never cached as a completed result.
-- At most 500 results and approximately 2 MB of encoded result data are persisted, with batched writes and quota-aware eviction.
-- Sampled colors last 30 days; placeholder metadata lasts 24 hours. Each cache is bounded to 500 entries.
-
-**reset cache** clears bookmark, icon, color and placeholder caches, then reloads with a new icon URL revision. Token, usage counts, view and provider/search settings are preserved. Ctrl+Shift+R / Cmd+Shift+R does the same when the browser delivers the shortcut to the page. Browser-reserved refresh actions cannot reliably be intercepted; the footer action is the explicit reset. Upstream CDN caches cannot be cleared by this app.
-
-The first load after upgrading the icon-cache format resolves icons again. Initials remain immediately available. Storage is best effort; blocked or full browser storage can prevent persistence.
-
-## Development and hosting
-
-Serve the repository as static files, for example:
+It is plain HTML, CSS and JavaScript, with no build step. Clone the repository and run:
 
 ```sh
 python3 -m http.server 8000
 ```
 
-Deploy the same files to GitHub Pages or another static host. If the deployment path changes, update the base path in `404.html`, which supports legacy token URLs. Keep `404.html` aligned with `index.html` apart from that base element.
+Open `http://localhost:8000`. The same files can be hosted on GitHub Pages or another static host. If you change the hosting path, update the base URL in `404.html` too.
 
-The existing Node test suite is historical and contains assumptions that no longer match the application interfaces. It has not been run or updated during the current static review, at the owner's request. Its presence is not evidence that these changes pass automated checks. See [CODE_REVIEW.md](CODE_REVIEW.md) for the review scope and remaining uncertainties.
-
-This project is not affiliated with or endorsed by Raindrop.io.
-
-## Card effects
-
-Open **card effects** in the footer. Combine Glass, Holographic, Holo beams, Cosmos, Radiant, Rainbow, Gold or Etched silver with no pattern, Fine stripes, Crosshatch, Dots, Sparkle grain or Engraved rings. These are original interpretations inspired by [Simon Goellner's demonstration](https://poke-holo.simey.me/), not copies of each Pokémon card treatment.
-
-Adjust iridescence, pattern intensity, light reflection, 3D depth and glass lift/scale. The preview responds to pointer movement or touch; sliders and selects also work with the keyboard. Save applies the draft to all cards and stores it locally; Cancel or Escape discards it. Restore defaults updates the draft only. Default iridescence is 30% and pattern intensity 50%. Reduced-motion preferences override animated effects. Icon-cache reset preserves these settings.
-
-The appearance controls also adjust hover-shadow strength and softness, luminous edges, card/glass corners and color saturation. Inactive cards have separate foil, saturation, brightness and shadow settings. Switch the preview between **Hover** and **At rest** to compare them. Existing saved settings receive neutral defaults for the new controls.
-
-Hover movement can go up, down or stay centered; vertical travel (0–30 px) and card enlargement (0–20%) are independent of tilt strength (up to 300%). The icon glass has separate shadow strength/softness, outline and opacity controls. The preview and grid share the same motion/style calculations and spring response; the preview stays engaged for editing.
-
-The **Icon** and **Inner glass** tabs separate artwork size, opacity, saturation, brightness and corners from glass padding, corners, finish, outline, resting/hover shadow, highlights and motion (parallax, tilt and enlargement). Background mapping offers Balanced, Faithful, Pastel, Vivid, Monochrome and Complementary treatments, plus saturation, lightness offset, contrast balancing, gradient separation, accent hue, angle and linear/radial/solid styles. These transforms reuse the original sampled RGB color; they do not resample images or request new icons. Cover photographs are not recolored.
-
-### Settings organization and icon quality
-
-Card effects uses one consistent classification: Card, Motion, Light & shadow, Material & pattern, Inner glass, Icon, Background and Text. Each setting appears once, in a named group. State-specific settings sit alongside the related shared controls. Every appearance control shows its applicability; focusing or changing a Hover/At rest control selects that preview state. Shared controls retain the selected preview state; Motion opens the hover preview. Pattern swatches show all 12 options, including micro grid, woven, brushed metal, ripples, scales and starlight. The luminous edge defaults to 20%; existing saved values are preserved, and Restore defaults applies the softer setting. Text controls cover local font families, case, alignment, size, weight, letter spacing, line height and padding, with the same saved settings and isolated preview as other effects.
-
-Icons API can require a minimum image size (16–128 px on both sides). Undersized decoded images fall through to the next enabled provider, then initials. Filtering happens before canvas resizing and color analysis. Cache entries and pending requests are separated by threshold; the default accepts all resolutions and reuses existing caches. Provider-upscaled images cannot be identified by dimensions alone. Legacy provider arrays migrate on the next save.
-
-### Settings windows and page backgrounds
-
-Settings actions stay at the top, above a horizontal tab bar. Local SVG icons identify footer actions and sections. Card sliders snap to steps of 1, 5 or 10; hold Shift for fine adjustments (0.1, or 1 for font weight), including keyboard arrows. Existing fractional settings are retained until edited. Curved patterns use small seamless local SVG tiles.
-
-Icons API → Appearance & quality offers **Initials + API colors**: letters remain visible, while the existing provider chain and shared cache supply their color and the card gradient.
-
-The **background** footer button opens a separate page-wallpaper editor: theme default, solid color, two-color gradient, or a local/HTTP(S) image. Images can fill the screen, fit entirely, or fit its width without distortion, aligned top/center/bottom. Optional scroll parallax pans through excess image height only; reduced-motion preferences are respected. The preview is isolated until Save. Local raster images are resized to at most 2560 px and stored in the browser; save failures are reported without replacing current settings. Background preferences survive icon-cache resets.
+The reflective card effects were inspired by [Simon Goellner's Pokémon card demo](https://poke-holo.simey.me/). This project is not affiliated with Raindrop.io.

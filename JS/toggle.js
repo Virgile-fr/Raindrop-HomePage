@@ -11,13 +11,13 @@ document.querySelector(".favorite-priority-toggle").addEventListener("click", to
 updateFaviconPriorityIndicator();
 
 document.getElementById("change-token").addEventListener("click", async (event) => {
-  const nextToken = requestToken();
+  const button = event.currentTarget;
+  const nextToken = await requestToken();
   if (!nextToken) return;
   cancelFavoritesRefresh();
   token = nextToken;
   storage.set("token", nextToken);
   storage.remove(FAVORITES_CACHE_KEY);
-  const button = event.currentTarget;
   button.disabled = true;
   try {
     favoriteItems = null;

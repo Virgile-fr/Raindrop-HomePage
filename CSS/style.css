@@ -214,3 +214,9 @@ body { isolation: isolate; }
   .provider-move button { width: 40px; }
 }
 @media (max-height: 500px) { .settings-header { padding-block: 8px; } .settings-dialog :is(.effects-tabs, .settings-tabs) button { min-height: 34px; padding-block: 6px; } }
+
+.token-steps { margin: 0 0 16px; padding-left: 20px; }
+.token-steps li { padding: 3px 0; }
+.token-link { color: #1684ae; text-decoration: underline; text-underline-offset: 3px; }
+#token-form label { display: grid; gap: 6px; margin-bottom: 12px; }
+#token-value { width: 100%; min-width: 0; height: 38px; padding: 6px 9px; border: 1px solid var(--settings-border); border-radius: 6px; background: var(--settings-field); color: inherit; font: inherit; }

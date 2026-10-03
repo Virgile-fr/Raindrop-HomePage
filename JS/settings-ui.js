@@ -115,5 +115,5 @@ document.addEventListener("DOMContentLoaded", () => {
     ["My engines", "search", [engines.querySelector("p"), engines.querySelector("#engine-settings-list")]],
     ["Catalog", "list", [catalog]], ["Custom engine", "add", [engines.querySelector("#engine-editor")]],
   ]);
-  for (const [id, icon] of [["effects-dialog","card"],["icons-dialog","icon"],["engines-dialog","search"],["background-dialog","background"]]) prepareSettingsDialog(document.getElementById(id), icon);
+  for (const [id, icon] of [["effects-dialog","card"],["icons-dialog","icon"],["engines-dialog","search"],["background-dialog","background"],["token-dialog","key"]]) prepareSettingsDialog(document.getElementById(id), icon);
 });
