@@ -277,8 +277,8 @@
   pointer-events: none;
   opacity: calc(max(var(--float-holo-alpha, 0), var(--effect-idleFoil, 0)) * var(--effect-foil, .3) * var(--material-foil, 1) * var(--effect-iconFoil, 1));
   background: linear-gradient(var(--float-sheen-angle, 118deg),
-    rgba(154,231,255,.8), transparent 32%, rgba(255,194,239,.5) 65%, rgba(255,235,174,.65));
-  box-shadow: inset 1px 1px 0 rgba(220,247,255,.8), inset -1px -1px 0 rgba(255,202,235,.6);
+    var(--material-rim-start), transparent 32%, var(--material-rim-mid) 65%, var(--material-rim-end));
+  box-shadow: inset 1px 1px 0 var(--material-rim-start), inset -1px -1px 0 var(--material-rim-end);
 }
 .card .icon > img, .card .icon > .initial-glyph { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) {
@@ -294,7 +294,7 @@
   z-index: 1;
   border-radius: inherit;
   pointer-events: none;
-  opacity: calc(max(var(--float-grain-alpha, 0), var(--effect-idleFoil, 0)) * var(--effect-texture, .5));
+  opacity: calc(max(var(--float-grain-alpha, 0), var(--effect-idleFoil, 0)) * var(--effect-texture, .5) * var(--pattern-strength, 1));
   background-image: var(--effect-pattern, none);
   background-size: var(--pattern-size, 100% 100%);
   background-position: var(--float-grain-x, 0px) var(--float-grain-y, 0px);
@@ -309,6 +309,9 @@
 
 [data-card-material] {
   --material-foil: 1;
+  --material-rim-start: rgba(154,231,255,.8);
+  --material-rim-mid: rgba(255,194,239,.5);
+  --material-rim-end: rgba(255,235,174,.65);
   --material-size: 240% 240%;
   --material-repeat: no-repeat;
   --material-spectrum: repeating-linear-gradient(112deg, #ff63ca 0%, #985cff 12%, #35dfff 24%, #61ffc5 36%, #fff391 48%, #ff9961 60%, #ff63ca 72%);
@@ -320,8 +323,10 @@
   --material-band: repeating-linear-gradient(90deg, #161327 0%, #fff 7%, #333 11%, #111 20%);
 }
 [data-card-material="cosmos"] {
-  --material-spectrum: conic-gradient(from 35deg at 40% 55%, #183a86, #ce75ee, #51d5d9, #8054bb, #183a86);
-  --material-band: radial-gradient(ellipse at 55% 45%, #fff 0%, #a8adc9 30%, #272340 70%);
+  --material-foil: 1.8;
+  --material-spectrum: conic-gradient(from 35deg at 40% 55%, #080b3e, #6329b9, #ca52ee, #174aab, #11b7cb, #26105c, #080b3e);
+  --material-band: radial-gradient(ellipse at 55% 45%, #eee5ff 0%, #a49bcf 30%, #222045 70%);
+  --material-rim-start: #9169ff; --material-rim-mid: #e976ff; --material-rim-end: #56daed;
 }
 [data-card-material="radiant"] {
   --material-spectrum: repeating-conic-gradient(from 45deg, #8aebff 0deg 90deg, #f2b5ff 90deg 180deg, #f9e8a0 180deg 270deg, #aaffd3 270deg 360deg);
@@ -331,20 +336,24 @@
 }
 [data-card-material="rainbow"] { --material-band: linear-gradient(125deg, #888, #fff 45%, #aaa); }
 [data-card-material="gold"] {
-  --material-spectrum: repeating-linear-gradient(115deg, #79521a 0%, #ffd85d 20%, #fff4bf 35%, #c88c25 50%, #79521a 70%);
-  --material-band: linear-gradient(115deg, #999, #fff, #888);
+  --material-foil: 2.1;
+  --material-spectrum: repeating-linear-gradient(115deg, #774006 0%, #d99b17 16%, #ffd652 27%, #fff1ae 35%, #e1ab26 43%, #a7650b 58%, #774006 70%);
+  --material-band: linear-gradient(115deg, #b49a65, #fff8d9 45%, #b49a65);
+  --material-rim-start: #ffcf48; --material-rim-mid: #fff1b2; --material-rim-end: #d99520;
 }
 [data-card-material="etched"] {
-  --material-spectrum: repeating-linear-gradient(115deg, #637589 0%, #e4edff 20%, #fff 35%, #93a6b8 50%, #637589 70%);
-  --material-band: repeating-linear-gradient(35deg, #999 0%, #fff 10%, #999 20%);
+  --material-foil: 2.2;
+  --material-spectrum: repeating-linear-gradient(115deg, #545b65 0%, #bbc3cd 18%, #f9fcff 30%, #87909b 43%, #dce2e9 56%, #545b65 70%);
+  --material-band: repeating-linear-gradient(98deg, #8d939c 0 1px, #fff 1px 2px, #c1c6ce 2px 4px);
+  --material-rim-start: #e1e7ee; --material-rim-mid: #fff; --material-rim-end: #919eae;
 }
-[data-card-pattern] { --pattern-size: 100% 100%; }
+[data-card-pattern] { --pattern-strength: 1; --pattern-size: 100% 100%; }
 [data-card-pattern="none"] { --effect-pattern: none; }
 [data-card-pattern="lines"] { --effect-pattern: repeating-linear-gradient(36deg, #ffffff8c 0 .5px, #00000052 .5px 1px, transparent 1px 5px); }
 [data-card-pattern="cross"] { --effect-pattern: repeating-linear-gradient(45deg, #ffffff90 0 .7px, transparent .7px 9px), repeating-linear-gradient(-45deg, #ffffff70 0 .7px, transparent .7px 9px); }
 [data-card-pattern="dots"] { --effect-pattern: radial-gradient(circle, #fff 0 .65px, transparent 1px); --pattern-size: 6px 6px; }
-[data-card-pattern="grain"] { --effect-pattern: url("../assets/foil-grain.svg"); --pattern-size: 96px 96px; }
-[data-card-pattern="rings"] { --effect-pattern: repeating-radial-gradient(circle at 50% 50%, transparent 0 13px, #ffffff60 13px 13.7px, transparent 13.7px 28px); }
+[data-card-pattern="grain"] { --effect-pattern: url("../assets/foil-grain.svg"); --pattern-size: 144px 144px; --pattern-strength: 1.8; }
+[data-card-pattern="rings"] { --effect-pattern: repeating-radial-gradient(ellipse at 30% 40%, #ffffffa0 0 .6px, #0003 .6px 1px, transparent 1px 6px); }
 
 /* Inactive appearance is static: no animation loop is needed at rest. */
 .card:not(.is-floating) {
@@ -388,7 +397,12 @@
 /* Lightweight tiled patterns shared by cards and the settings swatches. */
 [data-card-pattern="grid"] { --effect-pattern: linear-gradient(#ffffff70 .6px, transparent .6px), linear-gradient(90deg, #ffffff70 .6px, transparent .6px); --pattern-size: 9px 9px; }
 [data-card-pattern="woven"] { --effect-pattern: repeating-conic-gradient(#ffffff60 0% 25%, transparent 0% 50%); --pattern-size: 6px 6px; }
-[data-card-pattern="brushed"] { --effect-pattern: repeating-linear-gradient(0deg, transparent 0 1px, #ffffff60 1px 1.4px, transparent 1.4px 3px, #ffffff30 3px 3.4px, transparent 3.4px 7px); }
+[data-card-pattern="brushed"] { --effect-pattern: repeating-linear-gradient(8deg, transparent 0 1px, #ffffff60 1px 1.4px, transparent 1.4px 3px, #ffffff30 3px 3.4px, transparent 3.4px 7px); }
 [data-card-pattern="waves"] { --effect-pattern: url("../assets/pattern-waves.svg"); --pattern-size: 48px 24px; }
 [data-card-pattern="scales"] { --effect-pattern: url("../assets/pattern-scales.svg"); --pattern-size: 32px 24px; }
-[data-card-pattern="twinkle"] { --effect-pattern: radial-gradient(ellipse 1px 4px at 50% 50%, #ffffffb0, transparent), radial-gradient(ellipse 4px 1px at 50% 50%, #ffffffb0, transparent), radial-gradient(circle at 20% 25%, #ffffff60 0 .5px, transparent .9px); --pattern-size: 22px 22px; }
+[data-card-pattern="twinkle"] { --effect-pattern: radial-gradient(ellipse 1px 4px at 50% 50%, #ffffffb0, transparent), radial-gradient(ellipse 4px 1px at 50% 50%, #ffffffb0, transparent), radial-gradient(circle at 20% 25%, #ffffff60 0 .5px, transparent .9px); --pattern-size: 14px 14px; }
+
+[data-card-pattern="diamonds"] { --effect-pattern: repeating-linear-gradient(60deg, #ffffff90 0 .7px, transparent .7px 12px), repeating-linear-gradient(-60deg, #ffffff70 0 .7px, transparent .7px 12px); }
+[data-card-pattern="pinstripe"] { --effect-pattern: repeating-linear-gradient(100deg, #ffffff90 0 .6px, transparent .6px 3px, #ffffff45 3px 3.6px, transparent 3.6px 12px); }
+[data-card-pattern="confetti"] { --effect-pattern: url("../assets/pattern-flakes.svg"); --pattern-size: 72px 72px; }
+[data-card-pattern="honeycomb"] { --effect-pattern: url("../assets/pattern-honeycomb.svg"); --pattern-size: 24px 42px; }

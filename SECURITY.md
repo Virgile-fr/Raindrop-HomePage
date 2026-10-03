@@ -2,14 +2,14 @@
 
 ## Credentials
 
-Enter your Raindrop test token in the browser prompt or use **token**.
+Enter your Raindrop test token in the Token dialog or use **token**.
 Never place a real token in `token.js`, a commit, or a shared URL. The app sends
 it only to `https://api.raindrop.io` as an Authorization Bearer header.
 
 Legacy UUID tokens in the URL path are accepted and removed from the current
 address using `history.replaceState`. This does not remove the initial request
 from server logs, previously saved bookmarks, browser sync, or other records.
-Pasting the token in the prompt is preferred.
+Pasting the token in the Token dialog is preferred.
 
 ## Local data
 

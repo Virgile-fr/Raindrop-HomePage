@@ -172,13 +172,13 @@
         fragment.append(row);
       });
     }
-    if (text && Object.keys(engines).length) {
+    if (!mode && (!text || matches.length === 0) && Object.keys(engines).length) {
       const separator = document.createElement("div");
       separator.className = "search-engine-section";
       separator.textContent = "Search on";
       separator.setAttribute("role", "presentation");
       fragment.append(separator);
-      const engineKeys = mode ? [mode, ...Object.keys(engines).filter(key => key !== mode)] : Object.keys(engines);
+      const engineKeys = Object.keys(engines);
       engineKeys.forEach(key => {
         const engine = engines[key];
         const index = renderedRows.length;
@@ -187,7 +187,7 @@
         row.className = "search-result search-engine-result";
         row.setAttribute("role", "option");
         row.setAttribute("aria-selected", "false");
-        row.setAttribute("aria-label", `Search for ${text} on ${engine.name}`);
+        row.setAttribute("aria-label", text ? `Search for ${text} on ${engine.name}` : `Select ${engine.name}`);
         const logo = document.createElement("span");
         logo.className = "search-result-initial search-engine-logo";
         logo.append(createSearchEngineIcon(engine));
@@ -198,7 +198,7 @@
         title.textContent = engine.name;
         const term = document.createElement("span");
         term.className = "search-result-domain";
-        term.textContent = text;
+        term.textContent = text || "Select this engine";
         copy.append(title, term);
         const hint = document.createElement("kbd");
         hint.className = "search-engine-key";
@@ -206,7 +206,10 @@
         hint.hidden = !engine.shortcut;
         hint.setAttribute("aria-hidden", "true");
         row.append(logo, copy, hint);
-        const action = newTab => navigate(engine.url(encodeURIComponent(query())), newTab);
+        const action = newTab => {
+          if (query()) navigate(engine.url(encodeURIComponent(query())), newTab);
+          else { setMode(key); input.focus({ preventScroll: true }); update(); }
+        };
         row.addEventListener("pointerdown", event => {
           if (event.pointerType === "mouse") event.preventDefault();
           else selectingResult = true;
@@ -223,7 +226,7 @@
     }
     results.replaceChildren(fragment);
     results.hidden = renderedRows.length === 0;
-    tips.hidden = Boolean(mode || text || touchUI.matches || !tips.childElementCount);
+    tips.hidden = Boolean(mode || text || renderedRows.length || touchUI.matches || !tips.childElementCount);
     if (mode) {
       caption.textContent = text ? `Press Enter to search on ${engines[mode].name}` : `Search on ${engines[mode].name}`;
     } else if (text) {
@@ -240,7 +243,7 @@
       panel.hidden = false;
       input.setAttribute("aria-expanded", "true");
     } else closePanel();
-    announce(mode ? `${engines[mode].name}. ${touchUI.matches ? "Use your keyboard’s Search key or tap a result." : "Press Enter to search."}` : text ? caption.textContent : "Searching favorites");
+    announce(mode ? `${engines[mode].name}. ${touchUI.matches ? "Use your keyboard’s Search key." : "Press Enter to search."}` : text ? caption.textContent : "Searching favorites");
   }
 
   function processInput() {
@@ -289,7 +292,11 @@
       update();
     } else if (event.key === "Enter") {
       event.preventDefault();
-      if (!query()) return;
+      if (mode) {
+        if (query()) navigate(engines[mode].url(encodeURIComponent(query())), event.ctrlKey || event.metaKey);
+        return;
+      }
+      if (!query() && active < 0) return;
       const action = rowActions[active < 0 ? 0 : active];
       if (action) action(event.ctrlKey || event.metaKey);
     } else if (renderedRows.length && ["ArrowDown", "ArrowUp"].includes(event.key)) {

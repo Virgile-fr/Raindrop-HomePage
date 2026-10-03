@@ -28,7 +28,7 @@ const ICON_PROVIDERS = {
     url: domain => `https://icon.horse/icon/${domain}`,
   },
 };
-const RECOMMENDED_ICON_PROVIDERS = ["vemetric", "google"];
+const RECOMMENDED_ICON_PROVIDERS = ["vemetric", "google", "faviconim"];
 function initialIconData(address, title = "") {
   const domain = new URL(address).hostname.replace(/^www\./, "");
   const words = (String(title).trim() || domain.split(".")[0]).match(/[\p{L}\p{N}]+/gu) || ["?"];
@@ -58,7 +58,7 @@ function readIconProviders() {
   if (valid.length) return valid;
   // Preserve the existing user's choice until they explicitly change it.
   return storage.get(GOOGLE_FAVICON_PRIORITY_KEY) === "true"
-    ? ["google", "vemetric"] : ["vemetric", "google"];
+    ? ["google", "vemetric", "faviconim"] : [...RECOMMENDED_ICON_PROVIDERS];
 }
 
 let selectedIconProviders = readIconProviders();
