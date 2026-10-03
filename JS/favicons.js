@@ -62,6 +62,7 @@ function readIconProviders() {
 }
 
 let selectedIconProviders = readIconProviders();
+let selectedIconDisplay = storage.readJSON(ICON_PROVIDERS_KEY, null)?.display === "initials" ? "initials" : "icons";
 const ICON_RESOLUTIONS = [0, 16, 32, 48, 64, 128];
 function normalizeIconResolution(value) { return ICON_RESOLUTIONS.includes(value) ? value : 0; }
 let selectedIconResolution = normalizeIconResolution(storage.readJSON(ICON_PROVIDERS_KEY, null)?.minResolution);
@@ -280,6 +281,7 @@ function resolvedFavicon(address, providers, minimum) {
 function loadFavicon(host, address, title) {
   const providers = [...selectedIconProviders];
   const minimum = selectedIconResolution;
+  const display = selectedIconDisplay;
   const initial = createInitialIcon(address, title);
   host.replaceChildren(initial);
   const filter = host.closest(".filter");
@@ -287,6 +289,13 @@ function loadFavicon(host, address, title) {
   whenNearViewport(host, async () => {
     let result = await resolvedFavicon(address, providers, minimum);
     if (!host.isConnected || result.kind !== "image") return;
+    if (display === "initials") {
+      if (validIconColor(result.color)) {
+        if (filter) applyFilterBackground(filter, result.color);
+        initial.style.backgroundColor = `rgb(${result.color.r}, ${result.color.g}, ${result.color.b})`;
+      }
+      return;
+    }
     let image = await readIconImage(result.src);
     if (!image || !iconMeetsResolution(image, minimum)) {
       // A once-valid cached image may disappear or change resolution. Retry the provider chain once.
@@ -315,9 +324,9 @@ function updateFaviconPriorityIndicator() {
   button.disabled = selectedIconProviders.length < 2;
 }
 
-function saveIconProviders(providers, minimum = selectedIconResolution) {
+function saveIconProviders(providers, minimum = selectedIconResolution, display = selectedIconDisplay) {
   minimum = normalizeIconResolution(minimum);
-  if (!storage.set(ICON_PROVIDERS_KEY, JSON.stringify({ providers, minResolution: minimum }))) {
+  if (!storage.set(ICON_PROVIDERS_KEY, JSON.stringify({ providers, minResolution: minimum, display }))) {
     const message = "Icon settings could not be saved. Browser storage may be blocked or full.";
     document.getElementById("icons-feedback").textContent = message;
     setStatus(message);
@@ -325,10 +334,11 @@ function saveIconProviders(providers, minimum = selectedIconResolution) {
   }
   selectedIconProviders = [...providers];
   selectedIconResolution = minimum;
+  selectedIconDisplay = display;
   storage.set(GOOGLE_FAVICON_PRIORITY_KEY, String(selectedIconProviders[0] === "google"));
   updateFaviconPriorityIndicator();
   document.dispatchEvent(new Event("iconproviderschange"));
-  if (!toggle.checked) renderFavorites();
+  renderFavorites();
   return true;
 }
 
@@ -342,6 +352,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const list = document.getElementById("icons-provider-list");
   const saveButton = document.getElementById("icons-save");
   const feedback = document.getElementById("icons-feedback");
+  const displaySelect = document.getElementById("icons-display");
   const resolutionSelect = document.getElementById("icons-min-resolution");
   let draftOrder = [];
   let draftEnabled = new Set();
@@ -405,6 +416,7 @@ document.addEventListener("DOMContentLoaded", () => {
     draftOrder = [...selectedIconProviders, ...Object.keys(ICON_PROVIDERS).filter(id => !selectedIconProviders.includes(id))];
     draftEnabled = new Set(selectedIconProviders);
     resolutionSelect.value = selectedIconResolution;
+    displaySelect.value = selectedIconDisplay;
     renderProviderOptions();
     dialog.showModal();
   });
@@ -417,6 +429,6 @@ document.addEventListener("DOMContentLoaded", () => {
   saveButton.addEventListener("click", () => {
     const enabled = draftOrder.filter(id => draftEnabled.has(id));
     if (!enabled.length) return;
-    if (saveIconProviders(enabled, Number(resolutionSelect.value))) dialog.close();
+    if (saveIconProviders(enabled, Number(resolutionSelect.value), displaySelect.value)) dialog.close();
   });
 });

@@ -344,7 +344,7 @@
 [data-card-pattern="cross"] { --effect-pattern: repeating-linear-gradient(45deg, #ffffff90 0 .7px, transparent .7px 9px), repeating-linear-gradient(-45deg, #ffffff70 0 .7px, transparent .7px 9px); }
 [data-card-pattern="dots"] { --effect-pattern: radial-gradient(circle, #fff 0 .65px, transparent 1px); --pattern-size: 6px 6px; }
 [data-card-pattern="grain"] { --effect-pattern: url("../assets/foil-grain.svg"); --pattern-size: 96px 96px; }
-[data-card-pattern="rings"] { --effect-pattern: repeating-radial-gradient(ellipse at 30% 40%, #ffffffa0 0 .6px, #0003 .6px 1px, transparent 1px 6px); }
+[data-card-pattern="rings"] { --effect-pattern: repeating-radial-gradient(circle at 50% 50%, transparent 0 13px, #ffffff60 13px 13.7px, transparent 13.7px 28px); }
 
 /* Inactive appearance is static: no animation loop is needed at rest. */
 .card:not(.is-floating) {
@@ -389,6 +389,6 @@
 [data-card-pattern="grid"] { --effect-pattern: linear-gradient(#ffffff70 .6px, transparent .6px), linear-gradient(90deg, #ffffff70 .6px, transparent .6px); --pattern-size: 9px 9px; }
 [data-card-pattern="woven"] { --effect-pattern: repeating-conic-gradient(#ffffff60 0% 25%, transparent 0% 50%); --pattern-size: 6px 6px; }
 [data-card-pattern="brushed"] { --effect-pattern: repeating-linear-gradient(0deg, transparent 0 1px, #ffffff60 1px 1.4px, transparent 1.4px 3px, #ffffff30 3px 3.4px, transparent 3.4px 7px); }
-[data-card-pattern="waves"] { --effect-pattern: repeating-radial-gradient(ellipse at 50% 100%, transparent 0 5px, #ffffff70 5px 5.7px, transparent 5.7px 10px); --pattern-size: 40px 20px; }
-[data-card-pattern="scales"] { --effect-pattern: radial-gradient(ellipse at 50% 0%, transparent 60%, #ffffff85 62% 65%, transparent 67%); --pattern-size: 16px 12px; }
+[data-card-pattern="waves"] { --effect-pattern: url("../assets/pattern-waves.svg"); --pattern-size: 48px 24px; }
+[data-card-pattern="scales"] { --effect-pattern: url("../assets/pattern-scales.svg"); --pattern-size: 32px 24px; }
 [data-card-pattern="twinkle"] { --effect-pattern: radial-gradient(ellipse 1px 4px at 50% 50%, #ffffffb0, transparent), radial-gradient(ellipse 4px 1px at 50% 50%, #ffffffb0, transparent), radial-gradient(circle at 20% 25%, #ffffff60 0 .5px, transparent .9px); --pattern-size: 22px 22px; }

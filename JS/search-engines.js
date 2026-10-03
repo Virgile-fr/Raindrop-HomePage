@@ -143,6 +143,7 @@ function renderEngineSettings(focusId) {
       editor.querySelector('[type="submit"]').textContent = "Apply edit";
       editor.querySelector("#engine-edit-cancel").textContent = "Cancel edit";
       editor.querySelector('[role="alert"]').textContent = "";
+      selectSettingsTab(engineDialog, "engines-dialog-section-2");
       editor.elements.name.focus();
     });
     action("Remove", "Remove", () => {
@@ -201,11 +202,11 @@ engineDialog.querySelector("#engines-restore").addEventListener("click", () => {
 });
 engineDialog.querySelector("#engines-cancel").addEventListener("click", () => engineDialog.close());
 engineDialog.querySelector("#engines-save").addEventListener("click", () => {
-  if (editingEngine || editor.elements.name.value.trim() || editor.elements.template.value.trim() || editor.elements.shortcut.value.trim()) { editor.querySelector('[role="alert"]').textContent = "Add or apply the engine below, or cancel the edit before saving."; editor.scrollIntoView({ block: "nearest" }); return; }
+  if (editingEngine || editor.elements.name.value.trim() || editor.elements.template.value.trim() || editor.elements.shortcut.value.trim()) { editor.querySelector('[role="alert"]').textContent = "Add or apply this engine, or clear the form before saving."; selectSettingsTab(engineDialog, "engines-dialog-section-2"); editor.scrollIntoView({ block: "nearest" }); return; }
   const next = engineDraft.map(engine => ({ ...engine }));
   if (!storage.set(SEARCH_ENGINES_KEY, JSON.stringify(next))) {
     editor.querySelector('[role="alert"]').textContent = "Settings could not be saved. Browser storage may be blocked or full.";
-    editor.scrollIntoView({ block: "nearest" });
+    selectSettingsTab(engineDialog, "engines-dialog-section-2"); editor.scrollIntoView({ block: "nearest" });
     return;
   }
   searchEngineSettings = next;

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; connect-src 'self' https://api.raindrop.io https://favicon.vemetric.com https://wsrv.nl; object-src 'none'; base-uri 'self'; form-action 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:; connect-src 'self' https://api.raindrop.io https://favicon.vemetric.com https://wsrv.nl; object-src 'none'; base-uri 'self'; form-action 'none';">
   <meta name="description" content="Your Raindrop favorites in a fast, minimal homepage.">
   <meta name="apple-mobile-web-app-title" content="HomePage">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🧭%3C/text%3E%3C/svg%3E">
@@ -18,6 +18,7 @@
   <link href="./CSS/toggle.css" rel="stylesheet">
   <link href="./CSS/colors.css" rel="stylesheet">
   <script src="./JS/storage.js" defer></script>
+  <script src="./JS/settings-ui.js" defer></script>
   <script src="./token.js" defer></script>
   <script src="./JS/dominant-color.js" defer></script>
   <script src="./JS/favicons.js" defer></script>
@@ -28,6 +29,7 @@
   <script src="./JS/search.js" defer></script>
   <script src="./JS/card-effects.js" defer></script>
   <script src="./JS/card-motion.js" defer></script>
+  <script src="./JS/page-background.js" defer></script>
 </head>
 <body>
   <header>
@@ -76,11 +78,16 @@
     <button id="search-engines" type="button" aria-haspopup="dialog">search engines</button>
     <button id="icons-api" type="button" aria-haspopup="dialog">icons api</button>
     <button id="card-effects" type="button" aria-haspopup="dialog">card effects</button>
+    <button id="page-background" type="button" aria-haspopup="dialog">background</button>
   </footer>
   <dialog id="icons-dialog" aria-labelledby="icons-dialog-title" aria-describedby="icons-dialog-description">
     <h2 id="icons-dialog-title">Icons API</h2>
     <p id="icons-dialog-description">Enable providers and arrange them by priority. If an icon is missing, the next provider takes over.</p>
     <ul id="icons-provider-list"></ul>
+    <label class="icon-quality" for="icons-display">Display
+      <select id="icons-display"><option value="icons">Website icons</option><option value="initials">Initials + API colors</option></select>
+    </label>
+    <p class="icons-note">Initials mode keeps the letters visible. Icon APIs are still used to sample colors and results share the same cache.</p>
     <label class="icon-quality" for="icons-min-resolution">Minimum icon resolution
       <select id="icons-min-resolution" aria-describedby="icons-resolution-help">
         <option value="0">Any resolution (default)</option>
